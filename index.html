@@ -1,103 +1,190 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Block Fruis</title>
-  <style>
-    body { margin: 0; overflow: hidden; background: #87ceeb; }
-    canvas { display: block; }
-  </style>
+<meta charset="UTF-8">
+<title>Block Fruis</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{margin:0;overflow:hidden;background:#87ceeb}
+canvas{display:block}
+
+/* JOYSTICK */
+#joy{
+  position:fixed;
+  bottom:30px;left:30px;
+  width:120px;height:120px;
+  border-radius:50%;
+  background:rgba(0,0,0,.3);
+  touch-action:none;
+}
+#stick{
+  position:absolute;
+  left:40px;top:40px;
+  width:40px;height:40px;
+  border-radius:50%;
+  background:#fff;
+}
+
+/* CREATIVE BUTTONS */
+#ui{
+  position:fixed;
+  right:20px;bottom:30px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.btn{
+  padding:10px 14px;
+  background:#333;color:#fff;
+  border-radius:8px;
+  text-align:center;
+  user-select:none;
+}
+.btn.active{background:#2ecc71}
+</style>
 </head>
 <body>
 
 <canvas id="game"></canvas>
 
-<script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+<div id="joy"><div id="stick"></div></div>
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+<div id="ui">
+  <div id="creativeBtn" class="btn">CREATIVE</div>
+  <div id="upBtn" class="btn">▲</div>
+  <div id="downBtn" class="btn">▼</div>
+</div>
+
+<script>
+const c = document.getElementById("game");
+const ctx = c.getContext("2d");
+c.width = innerWidth;
+c.height = innerHeight;
 
 const TILE = 32;
-const MAP_SIZE = 64;
+const MAP = 64;
 
-// ===== PLAYER (TIDAK DIGAMBAR) =====
-const player = { x: MAP_SIZE * TILE / 2, y: MAP_SIZE * TILE / 2, speed: 3 };
+// PLAYER (DATA SAJA)
+const player = {
+  x: MAP*TILE/2,
+  y: MAP*TILE/2,
+  z: 0,
+  speed: 3,
+  flySpeed: 3
+};
 
-// ===== KAMERA =====
-const camera = { x: 0, y: 0 };
+// CAMERA
+const cam = {x:0,y:0};
 
-// ===== INPUT =====
-const keys = {};
-addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
-
-// ===== MAP =====
-const map = [];
-for (let y = 0; y < MAP_SIZE; y++) {
-  map[y] = [];
-  for (let x = 0; x < MAP_SIZE; x++) {
-    map[y][x] = Math.random() < 0.1 ? "stone" : "grass";
+// MAP
+const world=[];
+for(let y=0;y<MAP;y++){
+  world[y]=[];
+  for(let x=0;x<MAP;x++){
+    world[y][x]=Math.random()<0.15?"stone":"grass";
   }
 }
 
-// ===== BATU LIAR =====
-const rocks = [];
-for (let i = 0; i < 150; i++) {
-  rocks.push({
-    x: Math.floor(Math.random() * MAP_SIZE),
-    y: Math.floor(Math.random() * MAP_SIZE)
-  });
+// INPUT MOVE
+let mx=0,my=0;
+let flyUp=false, flyDown=false;
+let creative=false;
+
+// UPDATE
+function update(){
+  player.x += mx*player.speed;
+  player.y += my*player.speed;
+
+  if(creative){
+    if(flyUp) player.z += player.flySpeed;
+    if(flyDown) player.z -= player.flySpeed;
+  }
+
+  cam.x = player.x - c.width/2;
+  cam.y = player.y - c.height/2;
 }
 
-// ===== UPDATE =====
-function update() {
-  if (keys["w"]) player.y -= player.speed;
-  if (keys["s"]) player.y += player.speed;
-  if (keys["a"]) player.x -= player.speed;
-  if (keys["d"]) player.x += player.speed;
+// DRAW
+function draw(){
+  ctx.clearRect(0,0,c.width,c.height);
 
-  camera.x = player.x - canvas.width / 2;
-  camera.y = player.y - canvas.height / 2;
-}
+  for(let y=0;y<MAP;y++){
+    for(let x=0;x<MAP;x++){
+      const sx = x*TILE - cam.x;
+      const sy = y*TILE - cam.y + player.z;
 
-// ===== DRAW =====
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if(world[y][x]==="grass") ctx.fillStyle="#3cb043";
+      else ctx.fillStyle="#777";
 
-  // MAP
-  for (let y = 0; y < MAP_SIZE; y++) {
-    for (let x = 0; x < MAP_SIZE; x++) {
-      const sx = x * TILE - camera.x;
-      const sy = y * TILE - camera.y;
-
-      if (map[y][x] === "grass") ctx.fillStyle = "#3cb043";
-      else ctx.fillStyle = "#888";
-
-      ctx.fillRect(sx, sy, TILE, TILE);
+      ctx.fillRect(sx,sy,TILE,TILE);
+      ctx.strokeStyle="rgba(0,0,0,.2)";
+      ctx.strokeRect(sx,sy,TILE,TILE);
     }
   }
 
-  // BATU LIAR
-  ctx.fillStyle = "#555";
-  for (const r of rocks) {
-    ctx.fillRect(
-      r.x * TILE - camera.x,
-      r.y * TILE - camera.y,
-      TILE,
-      TILE
-    );
-  }
+  // CROSSHAIR
+  ctx.strokeStyle="#000";
+  ctx.beginPath();
+  ctx.moveTo(c.width/2-10,c.height/2);
+  ctx.lineTo(c.width/2+10,c.height/2);
+  ctx.moveTo(c.width/2,c.height/2-10);
+  ctx.lineTo(c.width/2,c.height/2+10);
+  ctx.stroke();
 }
 
-// ===== LOOP =====
-function loop() {
+// LOOP
+(function loop(){
   update();
   draw();
   requestAnimationFrame(loop);
-}
-loop();
-</script>
+})();
 
+// BREAK & PLACE
+let hold=false;
+c.addEventListener("touchstart",()=>hold=true);
+c.addEventListener("touchend",()=>{
+  const x=Math.floor((c.width/2+cam.x)/TILE);
+  const y=Math.floor((c.height/2+cam.y)/TILE);
+  if(world[y]){
+    world[y][x]=hold?"stone":"grass";
+  }
+  hold=false;
+});
+
+// JOYSTICK
+const joy=document.getElementById("joy");
+const stick=document.getElementById("stick");
+let drag=false;
+
+joy.addEventListener("touchstart",()=>drag=true);
+joy.addEventListener("touchend",()=>{
+  drag=false;
+  mx=my=0;
+  stick.style.left="40px";
+  stick.style.top="40px";
+});
+joy.addEventListener("touchmove",e=>{
+  if(!drag)return;
+  const r=joy.getBoundingClientRect();
+  let x=e.touches[0].clientX-r.left-60;
+  let y=e.touches[0].clientY-r.top-60;
+  const m=Math.hypot(x,y);
+  if(m>40){x=x/m*40;y=y/m*40;}
+  stick.style.left=40+x+"px";
+  stick.style.top=40+y+"px";
+  mx=x/40;
+  my=y/40;
+});
+
+// CREATIVE BUTTONS
+const creativeBtn=document.getElementById("creativeBtn");
+creativeBtn.onclick=()=>{
+  creative=!creative;
+  creativeBtn.classList.toggle("active",creative);
+};
+
+document.getElementById("upBtn").ontouchstart=()=>flyUp=true;
+document.getElementById("upBtn").ontouchend=()=>flyUp=false;
+document.getElementById("downBtn").ontouchstart=()=>flyDown=true;
+document.getElementById("downBtn").ontouchend=()=>flyDown=false;
+</script>
 </body>
 </html>
