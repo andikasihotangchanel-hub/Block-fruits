@@ -2,185 +2,176 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Block Fruits v2.5</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Block Fruis</title>
 <style>
-body { margin:0; overflow:hidden; background:#7ec850; font-family:Arial }
-canvas { display:block }
-.btn {
-  position:fixed; width:60px; height:60px; border-radius:50%;
-  background:rgba(0,0,0,.5); color:#fff; font-size:22px;
-  text-align:center; line-height:60px; user-select:none;
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #87ceeb;
+  font-family: sans-serif;
 }
-#left{left:20px;bottom:20px}
-#right{left:100px;bottom:20px}
-#jump{left:60px;bottom:90px}
-#down{right:20px;bottom:20px}
-#run{right:20px;bottom:90px}
-#fly{right:20px;bottom:160px}
-#inv{
-  position:fixed; top:10px; left:10px;
-  background:rgba(0,0,0,.5); color:#fff;
-  padding:6px 10px; border-radius:8px; font-size:14px;
+
+#ui {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+}
+
+.btn {
+  width: 60px;
+  height: 60px;
+  background: rgba(0,0,0,0.5);
+  color: white;
+  font-size: 20px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+#inventory {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  gap: 5px;
+}
+
+.slot {
+  width: 40px;
+  height: 40px;
+  background: #555;
+  border: 2px solid #222;
+}
+.active {
+  border: 2px solid yellow;
 }
 </style>
 </head>
-<body>
 
+<body>
 <canvas id="game"></canvas>
 
-<div id="inv">🪨 Batu: <span id="batu">0</span></div>
+<div id="inventory">
+  <div class="slot active" data-block="grass"></div>
+  <div class="slot" data-block="wood"></div>
+  <div class="slot" data-block="leaf"></div>
+</div>
 
-<div id="left" class="btn">◀</div>
-<div id="right" class="btn">▶</div>
-<div id="jump" class="btn">▲</div>
-<div id="down" class="btn">▼</div>
-<div id="run" class="btn">⚡</div>
-<div id="fly" class="btn">✈</div>
+<div id="ui">
+  <div class="btn" id="left">◀</div>
+  <div class="btn" id="up">▲</div>
+  <div class="btn" id="down">▼</div>
+  <div class="btn" id="right">▶</div>
+</div>
 
 <script>
-const c = document.getElementById("game");
-const ctx = c.getContext("2d");
-c.width = innerWidth;
-c.height = innerHeight;
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+canvas.width = innerWidth;
+canvas.height = innerHeight;
 
-const worldWidth = 3000;
-let camX = 0;
+const TILE = 32;
+const MAP = 64;
 
-const player = {
-  x:100,y:200,w:30,h:30,
-  vy:0,onGround:false,
-  speed:3,run:false,
-  fly:false
-};
-
-const gravity = 0.6;
+let player = { x: 32, y: 32, speed: 4 };
+let camera = { x: 0, y: 0 };
 let keys = {};
-let inventory = { batu:0 };
 
-const rocks=[], trees=[];
+let selectedBlock = "grass";
 
-// batu liar
-for(let i=0;i<30;i++){
-  rocks.push({
-    x:Math.random()*worldWidth,
-    y:c.height-60,
-    w:40,h:40
-  });
-}
+const world = [];
 
-// pohon
-for(let i=0;i<25;i++){
-  trees.push({
-    x:Math.random()*worldWidth,
-    y:c.height-120
-  });
-}
-
-function collide(a,b){
-  return a.x<a.bx+b.w&&a.x+a.w>b.bx&&a.y<b.y+b.h&&a.y+a.h>b.y;
-}
-
-function rect(a,b){
-  return a.x<a.x2+b.w&&a.x+a.w>b.x2&&a.y<b.y+b.h&&a.y+a.h>b.y;
-}
-
-function update(){
-  let sp = player.run ? 6 : 3;
-  if(keys.left) player.x -= sp;
-  if(keys.right) player.x += sp;
-
-  if(!player.fly){
-    player.vy += gravity;
-    player.y += player.vy;
+// generate world
+for (let y = 0; y < MAP; y++) {
+  world[y] = [];
+  for (let x = 0; x < MAP; x++) {
+    world[y][x] = "grass";
   }
+}
 
-  player.onGround=false;
+// trees
+for (let i = 0; i < 30; i++) {
+  let x = Math.floor(Math.random() * MAP);
+  let y = Math.floor(Math.random() * MAP);
 
-  if(player.y+player.h>=c.height-20){
-    player.y=c.height-player.h-20;
-    player.vy=0;
-    player.onGround=true;
-  }
+  world[y][x] = "wood";
+  if (y > 0) world[y - 1][x] = "leaf";
+}
 
-  for(let r of rocks){
-    if(player.x<r.x+r.w && player.x+player.w>r.x &&
-       player.y<r.y+r.h && player.y+player.h>r.y){
-      if(player.vy>0){
-        player.y=r.y-player.h;
-        player.vy=0;
-        player.onGround=true;
-      }
+function drawBlock(type, x, y) {
+  if (type === "grass") ctx.fillStyle = "#3cb371";
+  if (type === "wood") ctx.fillStyle = "#8b4513";
+  if (type === "leaf") ctx.fillStyle = "#228b22";
+
+  ctx.fillRect(x, y, TILE, TILE);
+}
+
+function update() {
+  if (keys["w"]) player.y -= player.speed;
+  if (keys["s"]) player.y += player.speed;
+  if (keys["a"]) player.x -= player.speed;
+  if (keys["d"]) player.x += player.speed;
+
+  camera.x = player.x - canvas.width / 2;
+  camera.y = player.y - canvas.height / 2;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let y = 0; y < MAP; y++) {
+    for (let x = 0; x < MAP; x++) {
+      drawBlock(
+        world[y][x],
+        x * TILE - camera.x,
+        y * TILE - camera.y
+      );
     }
   }
 
-  camX = player.x - c.width/2;
-  camX = Math.max(0, Math.min(camX, worldWidth-c.width));
+  ctx.fillStyle = "red";
+  ctx.fillRect(
+    player.x - camera.x,
+    player.y - camera.y,
+    TILE, TILE
+  );
 }
 
-function draw(){
-  ctx.clearRect(0,0,c.width,c.height);
-
-  ctx.save();
-  ctx.translate(-camX,0);
-
-  // tanah
-  ctx.fillStyle="#795548";
-  ctx.fillRect(0,c.height-20,worldWidth,20);
-
-  // pohon
-  for(let t of trees){
-    ctx.fillStyle="#8d6e63";
-    ctx.fillRect(t.x+10,t.y+40,20,40);
-    ctx.fillStyle="#2e7d32";
-    ctx.beginPath();
-    ctx.arc(t.x+20,t.y+30,30,0,Math.PI*2);
-    ctx.fill();
-  }
-
-  // batu
-  ctx.fillStyle="gray";
-  for(let r of rocks){
-    ctx.fillRect(r.x,r.y,r.w,r.h);
-  }
-
-  // player
-  ctx.fillStyle="red";
-  ctx.fillRect(player.x,player.y,player.w,player.h);
-
-  ctx.restore();
-}
-
-function loop(){
-  update(); draw();
+function loop() {
+  update();
+  draw();
   requestAnimationFrame(loop);
 }
 loop();
 
-// tombol HP
-left.ontouchstart=()=>keys.left=true;
-left.ontouchend=()=>keys.left=false;
-right.ontouchstart=()=>keys.right=true;
-right.ontouchend=()=>keys.right=false;
-jump.ontouchstart=()=>{ if(player.onGround) player.vy=-12 };
-down.ontouchstart=()=>player.y+=5;
-run.ontouchstart=()=>player.run=true;
-run.ontouchend=()=>player.run=false;
-fly.ontouchstart=()=>player.fly=!player.fly;
+// keyboard
+addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
-// keyboard PC
-onkeydown=e=>{
-  if(e.key==="ArrowLeft")keys.left=true;
-  if(e.key==="ArrowRight")keys.right=true;
-  if(e.key==="ArrowUp"&&player.onGround)player.vy=-12;
-  if(e.key==="Shift")player.run=true;
-  if(e.key==="f")player.fly=!player.fly;
-};
-onkeyup=e=>{
-  if(e.key==="ArrowLeft")keys.left=false;
-  if(e.key==="ArrowRight")keys.right=false;
-  if(e.key==="Shift")player.run=false;
-};
+// mobile buttons
+function bind(id, key) {
+  document.getElementById(id).ontouchstart = () => keys[key] = true;
+  document.getElementById(id).ontouchend = () => keys[key] = false;
+}
+bind("up", "w");
+bind("down", "s");
+bind("left", "a");
+bind("right", "d");
+
+// inventory
+document.querySelectorAll(".slot").forEach(slot => {
+  slot.onclick = () => {
+    document.querySelectorAll(".slot").forEach(s => s.classList.remove("active"));
+    slot.classList.add("active");
+    selectedBlock = slot.dataset.block;
+  };
+});
 </script>
 </body>
 </html>
+    
