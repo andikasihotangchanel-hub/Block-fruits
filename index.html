@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Block Fruis</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body{margin:0;overflow:hidden;background:#87ceeb;font-family:sans-serif}
 canvas{display:block}
@@ -26,6 +27,7 @@ canvas{display:block}
   border-radius:50%;
   background:rgba(0,0,0,.3);
   touch-action:none;
+  z-index:10
 }
 #stick{
   position:absolute;
@@ -40,68 +42,94 @@ canvas{display:block}
 <body>
 <canvas id="game"></canvas>
 
+<!-- INVENTORY -->
 <div id="inventory">
   <div class="slot active" data-block="grass"></div>
   <div class="slot" data-block="wood"></div>
   <div class="slot" data-block="stone"></div>
 </div>
 
+<!-- JOYSTICK -->
 <div id="joystick">
   <div id="stick"></div>
 </div>
 
 <script>
 /* ===== SETUP ===== */
-const c=document.getElementById("game"),ctx=c.getContext("2d");
-c.width=innerWidth;c.height=innerHeight;
-const TILE=32,MAP=64;
+const c = document.getElementById("game");
+const ctx = c.getContext("2d");
+c.width = innerWidth;
+c.height = innerHeight;
 
-/* ===== PLAYER (FIRST PERSON) ===== */
-let player={x:5*TILE,y:5*TILE,speed:4};
-let cam={x:0,y:0};
+const TILE = 32;
+const MAP = 64;
+
+/* ===== CAMERA PLAYER (FIRST PERSON) ===== */
+let cam = {
+  x: 5 * TILE,
+  y: 5 * TILE,
+  speed: 4
+};
 
 /* ===== WORLD ===== */
-const world=[];
+const world = [];
 for(let y=0;y<MAP;y++){
   world[y]=[];
-  for(let x=0;x<MAP;x++)world[y][x]="grass";
+  for(let x=0;x<MAP;x++){
+    world[y][x]="grass";
+  }
 }
+
+// pohon
 for(let i=0;i<30;i++){
-  let x=r(),y=r();
-  world[y][x]="wood"; if(y>0)world[y-1][x]="leaf";
+  let x=r(), y=r();
+  world[y][x]="wood";
+  if(y>0) world[y-1][x]="leaf";
 }
-for(let i=0;i<40;i++)world[r()][r()]="stone";
-function r(){return Math.floor(Math.random()*MAP);}
+
+// batu liar
+for(let i=0;i<40;i++){
+  world[r()][r()]="stone";
+}
+
+function r(){ return Math.floor(Math.random()*MAP); }
 
 /* ===== DRAW BLOCK ===== */
 function drawBlock(t,x,y){
-  if(t==="grass")ctx.fillStyle="#3cb371";
-  if(t==="wood")ctx.fillStyle="#8b4513";
-  if(t==="leaf")ctx.fillStyle="#228b22";
-  if(t==="stone")ctx.fillStyle="#777";
+  if(t==="grass") ctx.fillStyle="#3cb371";
+  if(t==="wood")  ctx.fillStyle="#8b4513";
+  if(t==="leaf")  ctx.fillStyle="#228b22";
+  if(t==="stone") ctx.fillStyle="#777";
   ctx.fillRect(x,y,TILE,TILE);
 }
 
 /* ===== UPDATE ===== */
-let moveX=0,moveY=0;
+let moveX=0, moveY=0;
 function update(){
-  player.x+=moveX*player.speed;
-  player.y+=moveY*player.speed;
-
-  cam.x=player.x-c.width/2;
-  cam.y=player.y-c.height/2;
+  cam.x += moveX * cam.speed;
+  cam.y += moveY * cam.speed;
 }
 
 /* ===== DRAW ===== */
 function draw(){
   ctx.clearRect(0,0,c.width,c.height);
-  for(let y=0;y<MAP;y++)
-    for(let x=0;x<MAP;x++)
-      drawBlock(world[y][x],x*TILE-cam.x,y*TILE-cam.y);
+  for(let y=0;y<MAP;y++){
+    for(let x=0;x<MAP;x++){
+      drawBlock(
+        world[y][x],
+        x*TILE - cam.x,
+        y*TILE - cam.y
+      );
+    }
+  }
 }
 
 /* ===== LOOP ===== */
-(function loop(){update();draw();requestAnimationFrame(loop)})();
+(function loop(){
+  update();
+  draw();
+  requestAnimationFrame(loop);
+})();
 
 /* ===== INVENTORY ===== */
 let selectedBlock="grass";
@@ -110,48 +138,47 @@ document.querySelectorAll(".slot").forEach(s=>{
     document.querySelectorAll(".slot").forEach(a=>a.classList.remove("active"));
     s.classList.add("active");
     selectedBlock=s.dataset.block;
-  }
+  };
 });
 
 /* ===== BREAK & PLACE ===== */
-c.onclick=e=>{
-  let x=Math.floor((e.clientX+cam.x)/TILE);
-  let y=Math.floor((e.clientY+cam.y)/TILE);
-  if(world[y])world[y][x]="grass";
+c.onclick = e => {
+  let x = Math.floor((e.clientX + cam.x)/TILE);
+  let y = Math.floor((e.clientY + cam.y)/TILE);
+  if(world[y] && world[y][x]) world[y][x]="grass";
 };
-c.oncontextmenu=e=>{
+
+c.oncontextmenu = e => {
   e.preventDefault();
-  let x=Math.floor((e.clientX+cam.x)/TILE);
-  let y=Math.floor((e.clientY+cam.y)/TILE);
-  if(world[y])world[y][x]=selectedBlock;
+  let x = Math.floor((e.clientX + cam.x)/TILE);
+  let y = Math.floor((e.clientY + cam.y)/TILE);
+  if(world[y]) world[y][x]=selectedBlock;
 };
 
 /* ===== JOYSTICK ===== */
-const joy=document.getElementById("joystick");
-const stick=document.getElementById("stick");
+const joy = document.getElementById("joystick");
+const stick = document.getElementById("stick");
 let dragging=false;
 
-joy.addEventListener("touchstart",e=>{
-  dragging=true;
-});
-joy.addEventListener("touchend",e=>{
+joy.addEventListener("touchstart",()=>dragging=true);
+joy.addEventListener("touchend",()=>{
   dragging=false;
   moveX=moveY=0;
   stick.style.left="40px";
   stick.style.top="40px";
 });
 joy.addEventListener("touchmove",e=>{
-  if(!dragging)return;
-  const rect=joy.getBoundingClientRect();
-  let x=e.touches[0].clientX-rect.left-60;
-  let y=e.touches[0].clientY-rect.top-60;
-  const max=40;
-  const dist=Math.hypot(x,y);
-  if(dist>max){x=x/dist*max;y=y/dist*max}
-  stick.style.left=40+x+"px";
-  stick.style.top=40+y+"px";
-  moveX=x/max;
-  moveY=y/max;
+  if(!dragging) return;
+  const rect = joy.getBoundingClientRect();
+  let x = e.touches[0].clientX - rect.left - 60;
+  let y = e.touches[0].clientY - rect.top  - 60;
+  const max = 40;
+  const d = Math.hypot(x,y);
+  if(d>max){ x=x/d*max; y=y/d*max; }
+  stick.style.left = 40 + x + "px";
+  stick.style.top  = 40 + y + "px";
+  moveX = x/max;
+  moveY = y/max;
 });
 </script>
 </body>
