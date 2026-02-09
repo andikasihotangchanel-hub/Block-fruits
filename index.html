@@ -1,185 +1,103 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Block Fruis</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-body{margin:0;overflow:hidden;background:#87ceeb;font-family:sans-serif}
-canvas{display:block}
-
-/* INVENTORY */
-#inventory{
-  position:fixed;top:10px;left:10px;
-  display:flex;gap:5px;z-index:10
-}
-.slot{
-  width:40px;height:40px;
-  background:#555;border:2px solid #222
-}
-.active{border-color:yellow}
-
-/* JOYSTICK */
-#joystick{
-  position:fixed;
-  bottom:30px;left:30px;
-  width:120px;height:120px;
-  border-radius:50%;
-  background:rgba(0,0,0,.3);
-  touch-action:none;
-  z-index:10
-}
-#stick{
-  position:absolute;
-  left:40px;top:40px;
-  width:40px;height:40px;
-  border-radius:50%;
-  background:rgba(255,255,255,.7);
-}
-</style>
+  <title>Block Fruis</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #87ceeb; }
+    canvas { display: block; }
+  </style>
 </head>
-
 <body>
+
 <canvas id="game"></canvas>
 
-<!-- INVENTORY -->
-<div id="inventory">
-  <div class="slot active" data-block="grass"></div>
-  <div class="slot" data-block="wood"></div>
-  <div class="slot" data-block="stone"></div>
-</div>
-
-<!-- JOYSTICK -->
-<div id="joystick">
-  <div id="stick"></div>
-</div>
-
 <script>
-/* ===== SETUP ===== */
-const c = document.getElementById("game");
-const ctx = c.getContext("2d");
-c.width = innerWidth;
-c.height = innerHeight;
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
 const TILE = 32;
-const MAP = 64;
+const MAP_SIZE = 64;
 
-/* ===== CAMERA PLAYER (FIRST PERSON) ===== */
-let cam = {
-  x: 5 * TILE,
-  y: 5 * TILE,
-  speed: 4
-};
+// ===== PLAYER (TIDAK DIGAMBAR) =====
+const player = { x: MAP_SIZE * TILE / 2, y: MAP_SIZE * TILE / 2, speed: 3 };
 
-/* ===== WORLD ===== */
-const world = [];
-for(let y=0;y<MAP;y++){
-  world[y]=[];
-  for(let x=0;x<MAP;x++){
-    world[y][x]="grass";
+// ===== KAMERA =====
+const camera = { x: 0, y: 0 };
+
+// ===== INPUT =====
+const keys = {};
+addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+// ===== MAP =====
+const map = [];
+for (let y = 0; y < MAP_SIZE; y++) {
+  map[y] = [];
+  for (let x = 0; x < MAP_SIZE; x++) {
+    map[y][x] = Math.random() < 0.1 ? "stone" : "grass";
   }
 }
 
-// pohon
-for(let i=0;i<30;i++){
-  let x=r(), y=r();
-  world[y][x]="wood";
-  if(y>0) world[y-1][x]="leaf";
+// ===== BATU LIAR =====
+const rocks = [];
+for (let i = 0; i < 150; i++) {
+  rocks.push({
+    x: Math.floor(Math.random() * MAP_SIZE),
+    y: Math.floor(Math.random() * MAP_SIZE)
+  });
 }
 
-// batu liar
-for(let i=0;i<40;i++){
-  world[r()][r()]="stone";
+// ===== UPDATE =====
+function update() {
+  if (keys["w"]) player.y -= player.speed;
+  if (keys["s"]) player.y += player.speed;
+  if (keys["a"]) player.x -= player.speed;
+  if (keys["d"]) player.x += player.speed;
+
+  camera.x = player.x - canvas.width / 2;
+  camera.y = player.y - canvas.height / 2;
 }
 
-function r(){ return Math.floor(Math.random()*MAP); }
+// ===== DRAW =====
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-/* ===== DRAW BLOCK ===== */
-function drawBlock(t,x,y){
-  if(t==="grass") ctx.fillStyle="#3cb371";
-  if(t==="wood")  ctx.fillStyle="#8b4513";
-  if(t==="leaf")  ctx.fillStyle="#228b22";
-  if(t==="stone") ctx.fillStyle="#777";
-  ctx.fillRect(x,y,TILE,TILE);
-}
+  // MAP
+  for (let y = 0; y < MAP_SIZE; y++) {
+    for (let x = 0; x < MAP_SIZE; x++) {
+      const sx = x * TILE - camera.x;
+      const sy = y * TILE - camera.y;
 
-/* ===== UPDATE ===== */
-let moveX=0, moveY=0;
-function update(){
-  cam.x += moveX * cam.speed;
-  cam.y += moveY * cam.speed;
-}
+      if (map[y][x] === "grass") ctx.fillStyle = "#3cb043";
+      else ctx.fillStyle = "#888";
 
-/* ===== DRAW ===== */
-function draw(){
-  ctx.clearRect(0,0,c.width,c.height);
-  for(let y=0;y<MAP;y++){
-    for(let x=0;x<MAP;x++){
-      drawBlock(
-        world[y][x],
-        x*TILE - cam.x,
-        y*TILE - cam.y
-      );
+      ctx.fillRect(sx, sy, TILE, TILE);
     }
   }
+
+  // BATU LIAR
+  ctx.fillStyle = "#555";
+  for (const r of rocks) {
+    ctx.fillRect(
+      r.x * TILE - camera.x,
+      r.y * TILE - camera.y,
+      TILE,
+      TILE
+    );
+  }
 }
 
-/* ===== LOOP ===== */
-(function loop(){
+// ===== LOOP =====
+function loop() {
   update();
   draw();
   requestAnimationFrame(loop);
-})();
-
-/* ===== INVENTORY ===== */
-let selectedBlock="grass";
-document.querySelectorAll(".slot").forEach(s=>{
-  s.onclick=()=>{
-    document.querySelectorAll(".slot").forEach(a=>a.classList.remove("active"));
-    s.classList.add("active");
-    selectedBlock=s.dataset.block;
-  };
-});
-
-/* ===== BREAK & PLACE ===== */
-c.onclick = e => {
-  let x = Math.floor((e.clientX + cam.x)/TILE);
-  let y = Math.floor((e.clientY + cam.y)/TILE);
-  if(world[y] && world[y][x]) world[y][x]="grass";
-};
-
-c.oncontextmenu = e => {
-  e.preventDefault();
-  let x = Math.floor((e.clientX + cam.x)/TILE);
-  let y = Math.floor((e.clientY + cam.y)/TILE);
-  if(world[y]) world[y][x]=selectedBlock;
-};
-
-/* ===== JOYSTICK ===== */
-const joy = document.getElementById("joystick");
-const stick = document.getElementById("stick");
-let dragging=false;
-
-joy.addEventListener("touchstart",()=>dragging=true);
-joy.addEventListener("touchend",()=>{
-  dragging=false;
-  moveX=moveY=0;
-  stick.style.left="40px";
-  stick.style.top="40px";
-});
-joy.addEventListener("touchmove",e=>{
-  if(!dragging) return;
-  const rect = joy.getBoundingClientRect();
-  let x = e.touches[0].clientX - rect.left - 60;
-  let y = e.touches[0].clientY - rect.top  - 60;
-  const max = 40;
-  const d = Math.hypot(x,y);
-  if(d>max){ x=x/d*max; y=y/d*max; }
-  stick.style.left = 40 + x + "px";
-  stick.style.top  = 40 + y + "px";
-  moveX = x/max;
-  moveY = y/max;
-});
+}
+loop();
 </script>
+
 </body>
 </html>
