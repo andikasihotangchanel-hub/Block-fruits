@@ -1,239 +1,342 @@
-/* ===============================
-   EVENT TAHUN BARU IMLEK
-================================= */
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Roblox City Imlek Admin Fly</title>
+<style>
+body{margin:0;overflow:hidden;touch-action:none;background:black;}
 
-// ===== CEK TANGGAL IMLEK =====
-let isImlek = false;
-
-function checkImlek(){
-    const today = new Date();
-    const year = today.getFullYear();
-
-    // Perkiraan tanggal Imlek 2026-2028
-    const imlekDates = {
-        2026: "2026-02-17",
-        2027: "2027-02-06",
-        2028: "2028-01-26"
-    };
-
-    if(imlekDates[year]){
-        const imlek = new Date(imlekDates[year]);
-        if(
-            today.getDate() === imlek.getDate() &&
-            today.getMonth() === imlek.getMonth()
-        ){
-            isImlek = true;
-        }
-    }
+#joystick{
+ position:fixed;
+ left:30px;
+ bottom:40px;
+ width:120px;
+ height:120px;
+ border-radius:50%;
+ background:rgba(255,255,255,0.2);
+}
+#stick{
+ position:absolute;
+ left:40px;
+ top:40px;
+ width:40px;
+ height:40px;
+ border-radius:50%;
+ background:white;
 }
 
-checkImlek();
+#jumpBtn{
+ position:fixed;
+ right:30px;
+ bottom:40px;
+ width:70px;
+ height:70px;
+ border-radius:50%;
+ border:none;
+ background:red;
+ color:white;
+ font-weight:bold;
+}
+</style>
+</head>
+<body>
+
+<div id="joystick"><div id="stick"></div></div>
+<button id="jumpBtn">JUMP</button>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+
+<script>
 
 /* ===============================
-   PERLUAS AREA SPAWN
+   CEK IMLEK
 ================================= */
 
-const spawnArea = new THREE.Mesh(
-    new THREE.PlaneGeometry(80,80),
-    new THREE.MeshLambertMaterial({color:0x66bb66})
+let isImlek=false;
+const today=new Date();
+const year=today.getFullYear();
+
+const imlekDates={
+ 2026:"2026-02-17",
+ 2027:"2027-02-06",
+ 2028:"2028-01-26"
+};
+
+if(imlekDates[year]){
+ const imlek=new Date(imlekDates[year]);
+ if(today.getDate()===imlek.getDate() &&
+    today.getMonth()===imlek.getMonth()){
+   isImlek=true;
+ }
+}
+
+/* ===============================
+   SCENE
+================================= */
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87CEEB);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,2000);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.7));
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(50,100,50);
+scene.add(light);
+
+/* ===============================
+   GROUND + SPAWN
+================================= */
+
+const ground=new THREE.Mesh(
+ new THREE.PlaneGeometry(500,500),
+ new THREE.MeshLambertMaterial({color:0x3cb371})
 );
-spawnArea.rotation.x = -Math.PI/2;
-spawnArea.position.set(0, -0.01, 0);
+ground.rotation.x=-Math.PI/2;
+scene.add(ground);
+
+const spawnArea=new THREE.Mesh(
+ new THREE.PlaneGeometry(80,80),
+ new THREE.MeshLambertMaterial({color:0x66bb66})
+);
+spawnArea.rotation.x=-Math.PI/2;
+spawnArea.position.y=0.01;
 scene.add(spawnArea);
 
-
 /* ===============================
-   ATUR ULANG POSISI RUMAH
+   PLAYER
 ================================= */
 
-houses.forEach((house,i)=>{
-    house.position.x = (i % 4) * 35 - 60;
-    house.position.z = Math.floor(i/4) * 35 - 60;
+const player=new THREE.Group();
+
+const body=new THREE.Mesh(
+ new THREE.BoxGeometry(2,3,1.5),
+ new THREE.MeshLambertMaterial({color:0x0066ff})
+);
+body.position.y=2;
+player.add(body);
+
+const head=new THREE.Mesh(
+ new THREE.BoxGeometry(1.5,1.5,1.5),
+ new THREE.MeshLambertMaterial({color:0xffcc99})
+);
+head.position.y=4;
+player.add(head);
+
+scene.add(player);
+
+let moveX=0,moveZ=0;
+let velocityY=0;
+let isJump=false;
+let isAdmin=false;
+let canFly=false;
+
+/* ===============================
+   RUMAH TIDAK MEPET
+================================= */
+
+for(let x=-150;x<=150;x+=40){
+ for(let z=-150;z<=150;z+=40){
+
+  if(Math.abs(x)<50 && Math.abs(z)<50) continue;
+
+  const house=new THREE.Mesh(
+   new THREE.BoxGeometry(20,15,20),
+   new THREE.MeshLambertMaterial({
+    color:Math.random()*0xffffff
+   })
+  );
+
+  house.position.set(x,7.5,z);
+  scene.add(house);
+ }
+}
+
+/* ===============================
+   JOYSTICK
+================================= */
+
+const joy=document.getElementById("joystick");
+const stick=document.getElementById("stick");
+
+joy.addEventListener("touchmove",e=>{
+ const rect=joy.getBoundingClientRect();
+ let x=e.touches[0].clientX-rect.left-60;
+ let y=e.touches[0].clientY-rect.top-60;
+
+ const max=40;
+ x=Math.max(-max,Math.min(max,x));
+ y=Math.max(-max,Math.min(max,y));
+
+ moveX=x/max;
+ moveZ=y/max;
+
+ stick.style.left=(x+40)+"px";
+ stick.style.top=(y+40)+"px";
 });
 
+joy.addEventListener("touchend",()=>{
+ moveX=0;moveZ=0;
+ stick.style.left="40px";
+ stick.style.top="40px";
+});
+
+/* ===============================
+   JUMP + ADMIN FLY
+================================= */
+
+document.getElementById("jumpBtn").onclick=()=>{
+
+ if(isAdmin && canFly){
+  velocityY=0.5;
+  return;
+ }
+
+ if(!isJump){
+  velocityY=0.35;
+  isJump=true;
+ }
+};
 
 /* ===============================
    PARKOUR IMLEK
 ================================= */
 
-let parkourBlocks = [];
-let parkourFinished = false;
+let parkourBlocks=[];
+let parkourFinished=false;
 
 if(isImlek){
-
-    for(let i=0;i<15;i++){
-
-        const block = new THREE.Mesh(
-            new THREE.BoxGeometry(6,2,6),
-            new THREE.MeshLambertMaterial({
-                color: i % 2 === 0 ? 0xff0000 : 0xffd700
-            })
-        );
-
-        block.position.set(
-            10,
-            2 + (i*4),
-            -20 - (i*10)
-        );
-
-        scene.add(block);
-        parkourBlocks.push(block);
-    }
-
+ for(let i=0;i<12;i++){
+  const block=new THREE.Mesh(
+   new THREE.BoxGeometry(6,2,6),
+   new THREE.MeshLambertMaterial({
+    color:i%2==0?0xff0000:0xffd700
+   })
+  );
+  block.position.set(0,2+(i*4),-20-(i*12));
+  scene.add(block);
+  parkourBlocks.push(block);
+ }
 }
 
-
 /* ===============================
-   CEK MENANG PARKOUR
+   FIREWORK
 ================================= */
 
-function checkParkourWin(){
+let fireworks=[];
 
-    if(!isImlek || parkourFinished) return;
-
-    const lastBlock = parkourBlocks[parkourBlocks.length-1];
-
-    if(lastBlock){
-        const dist = player.position.distanceTo(lastBlock.position);
-
-        if(dist < 5){
-            parkourFinished = true;
-            showAdminEventButton();
-        }
-    }
+function createFirework(x,y,z){
+ const particles=[];
+ for(let i=0;i<60;i++){
+  const p=new THREE.Mesh(
+   new THREE.SphereGeometry(0.3,8,8),
+   new THREE.MeshBasicMaterial({
+    color:Math.random()>0.5?0xff0000:0xffd700
+   })
+  );
+  p.position.set(x,y,z);
+  p.userData.velocity=new THREE.Vector3(
+   (Math.random()-0.5)*2,
+   Math.random()*2,
+   (Math.random()-0.5)*2
+  );
+  scene.add(p);
+  particles.push(p);
+ }
+ fireworks.push(particles);
 }
-
-
-/* ===============================
-   TOMBOL ADMIN EVENT
-================================= */
-
-function showAdminEventButton(){
-
-    if(!isImlek) return;
-
-    const btn = document.createElement("button");
-    btn.innerText = "ADMIN EVENT";
-    btn.style.position = "absolute";
-    btn.style.top = "150px";
-    btn.style.right = "20px";
-    btn.style.padding = "15px";
-    btn.style.background = "gold";
-    btn.style.fontWeight = "bold";
-    btn.style.zIndex = "999";
-
-    btn.onclick = function(){
-        alert("Selamat! Kamu menjadi Admin Event Imlek 🎉");
-        player.material.color.set(0xffd700);
-    }
-
-    document.body.appendChild(btn);
-}
-
-
-/* ===============================
-   UPDATE LOOP TAMBAHAN
-================================= */
-
-const oldAnimate = animate;
-
-animate = function(){
-    oldAnimate();
-    checkParkourWin();
-};/* ===============================
-   EFEK PETASAN IMLEK
-================================= */
-
-let fireworks = [];
-
-function createFirework(x, y, z){
-
-    const particles = [];
-    const particleCount = 80;
-
-    for(let i=0;i<particleCount;i++){
-
-        const geometry = new THREE.SphereGeometry(0.3,8,8);
-        const material = new THREE.MeshBasicMaterial({
-            color: Math.random() > 0.5 ? 0xff0000 : 0xffd700
-        });
-
-        const particle = new THREE.Mesh(geometry, material);
-
-        particle.position.set(x,y,z);
-
-        // arah acak
-        particle.userData.velocity = new THREE.Vector3(
-            (Math.random()-0.5)*2,
-            Math.random()*2,
-            (Math.random()-0.5)*2
-        );
-
-        scene.add(particle);
-        particles.push(particle);
-    }
-
-    fireworks.push(particles);
-}
-
-
-/* ===============================
-   UPDATE PETASAN
-================================= */
 
 function updateFireworks(){
-
-    fireworks.forEach((group,gi)=>{
-        group.forEach((p,pi)=>{
-
-            p.position.add(p.userData.velocity);
-            p.userData.velocity.y -= 0.05;
-
-            // hilangkan kalau jatuh
-            if(p.position.y < 0){
-                scene.remove(p);
-                group.splice(pi,1);
-            }
-
-        });
-    });
+ fireworks.forEach(group=>{
+  group.forEach(p=>{
+   p.position.add(p.userData.velocity);
+   p.userData.velocity.y-=0.05;
+  });
+ });
 }
 
-
 /* ===============================
-   MODIFIKASI MENANG PARKOUR
+   CHECK WIN
 ================================= */
 
-// Simpan fungsi lama
-const oldShowAdminEventButton = showAdminEventButton;
+function checkParkour(){
+ if(!isImlek || parkourFinished) return;
 
-showAdminEventButton = function(){
+ const last=parkourBlocks[parkourBlocks.length-1];
+ if(!last) return;
 
-    if(!isImlek) return;
+ if(player.position.distanceTo(last.position)<5){
+  parkourFinished=true;
 
-    oldShowAdminEventButton();
+  const btn=document.createElement("button");
+  btn.innerText="ADMIN EVENT";
+  btn.style.position="fixed";
+  btn.style.top="100px";
+  btn.style.right="20px";
+  btn.style.padding="15px";
+  btn.style.background="gold";
+  btn.style.fontWeight="bold";
+  document.body.appendChild(btn);
 
-    // Mulai petasan langsung
-    for(let i=0;i<5;i++){
-        setTimeout(()=>{
-            createFirework(
-                player.position.x,
-                player.position.y + 15,
-                player.position.z
-            );
-        }, i*600);
-    }
+  for(let i=0;i<5;i++){
+   setTimeout(()=>{
+    createFirework(
+     player.position.x,
+     player.position.y+15,
+     player.position.z
+    );
+   },i*500);
+  }
 
-};
-
+  setTimeout(()=>{
+   isAdmin=true;
+   canFly=true;
+   alert("🔥 MODE ADMIN AKTIF! Kamu bisa terbang!");
+  },3000);
+ }
+}
 
 /* ===============================
-   TAMBAH KE LOOP ANIMATE
+   ANIMATE
 ================================= */
 
-const oldAnimateImlek = animate;
+function animate(){
+ requestAnimationFrame(animate);
 
-animate = function(){
-    oldAnimateImlek();
-    updateFireworks();
-};
+ player.position.x+=moveX*0.6;
+ player.position.z+=moveZ*0.6;
+
+ player.position.y+=velocityY;
+
+ if(!(isAdmin && canFly)){
+  velocityY-=0.015;
+ }else{
+  velocityY*=0.9;
+ }
+
+ if(player.position.y<=0){
+  player.position.y=0;
+  velocityY=0;
+  isJump=false;
+ }
+
+ checkParkour();
+ updateFireworks();
+
+ camera.position.set(
+  player.position.x,
+  player.position.y+10,
+  player.position.z+20
+ );
+ camera.lookAt(player.position);
+
+ renderer.render(scene,camera);
+}
+animate();
+
+</script>
+</body>
+</html>
