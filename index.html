@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Roblox Mobile PRO</title>
+<title>Roblox Mobile City</title>
 <style>
 body { margin:0; overflow:hidden; touch-action:none; }
 
@@ -48,6 +48,8 @@ body { margin:0; overflow:hidden; touch-action:none; }
 <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 
 <script>
+
+// ===== SCENE =====
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87CEEB);
 
@@ -56,13 +58,12 @@ const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Light
 scene.add(new THREE.AmbientLight(0xffffff,0.6));
 const light=new THREE.DirectionalLight(0xffffff,1);
 light.position.set(50,100,50);
 scene.add(light);
 
-// Ground
+// ===== GROUND =====
 const ground=new THREE.Mesh(
  new THREE.PlaneGeometry(500,500),
  new THREE.MeshLambertMaterial({color:0x2e8b57})
@@ -70,20 +71,7 @@ const ground=new THREE.Mesh(
 ground.rotation.x=-Math.PI/2;
 scene.add(ground);
 
-// Buildings
-for(let i=-100;i<100;i+=15){
- for(let j=-100;j<100;j+=15){
-  const h=Math.random()*20+5;
-  const b=new THREE.Mesh(
-   new THREE.BoxGeometry(8,h,8),
-   new THREE.MeshLambertMaterial({color:0xb0b0b0})
-  );
-  b.position.set(i,h/2,j);
-  scene.add(b);
- }
-}
-
-// Player
+// ===== PLAYER =====
 const player=new THREE.Group();
 
 const body=new THREE.Mesh(
@@ -102,10 +90,57 @@ player.add(head);
 
 scene.add(player);
 
+// ===== RUMAH WARNA =====
+let houses=[];
+let insideHouse=false;
+
+const colors=[
+ 0xff4d4d,0x4da6ff,0x4dff88,
+ 0xffff66,0xff66ff,0xff944d
+];
+
+for(let x=-120;x<=120;x+=15){
+ for(let z=-120;z<=120;z+=15){
+
+  const house=new THREE.Mesh(
+   new THREE.BoxGeometry(14,12,14),
+   new THREE.MeshLambertMaterial({
+    color:colors[Math.floor(Math.random()*colors.length)]
+   })
+  );
+
+  house.position.set(x,6,z);
+  scene.add(house);
+  houses.push(house);
+ }
+}
+
+// ===== INTERIOR =====
+const interior=new THREE.Group();
+interior.visible=false;
+scene.add(interior);
+
+const walls=new THREE.Mesh(
+ new THREE.BoxGeometry(20,12,20),
+ new THREE.MeshLambertMaterial({
+  color:0xffffff,
+  side:THREE.BackSide
+ })
+);
+interior.add(walls);
+
+const floor=new THREE.Mesh(
+ new THREE.PlaneGeometry(20,20),
+ new THREE.MeshLambertMaterial({color:0xdddddd})
+);
+floor.rotation.x=-Math.PI/2;
+floor.position.y=-6;
+interior.add(floor);
+
+// ===== CONTROL =====
 let velocityY=0;
 let isJump=false;
-
-let moveX=0, moveZ=0;
+let moveX=0,moveZ=0;
 let camAngle=0;
 let camDistance=15;
 
@@ -135,17 +170,17 @@ joy.addEventListener("touchend",()=>{
  stick.style.top="40px";
 });
 
-// Camera touch (kanan layar)
+// Kamera geser kanan
 let lastX=null;
 window.addEventListener("touchmove",e=>{
  if(e.touches[0].clientX > window.innerWidth/2){
    if(lastX!==null){
-     camAngle += (e.touches[0].clientX-lastX)*0.01;
+     camAngle+=(e.touches[0].clientX-lastX)*0.01;
    }
    lastX=e.touches[0].clientX;
  }
 });
-window.addEventListener("touchend",()=>{ lastX=null; });
+window.addEventListener("touchend",()=>{lastX=null;});
 
 // Jump
 document.getElementById("jumpBtn").onclick=()=>{
@@ -155,34 +190,63 @@ document.getElementById("jumpBtn").onclick=()=>{
  }
 };
 
+// ===== MASUK RUMAH =====
+function checkHouseEnter(){
+ houses.forEach(h=>{
+  const dist=player.position.distanceTo(h.position);
+  if(dist<8 && !insideHouse){
+   insideHouse=true;
+   interior.position.copy(h.position);
+   interior.visible=true;
+   velocityY=0;
+   player.position.set(h.position.x,h.position.y-6,h.position.z);
+  }
+ });
+}
+
+// ===== KELUAR =====
+function exitHouse(){
+ if(insideHouse){
+  insideHouse=false;
+  interior.visible=false;
+  player.position.y=0;
+  velocityY=0;
+ }
+}
+
+// ===== ANIMATE =====
 function animate(){
  requestAnimationFrame(animate);
 
- // Movement relative to camera
- const forward = new THREE.Vector3(Math.sin(camAngle),0,Math.cos(camAngle));
- const right = new THREE.Vector3(forward.z,0,-forward.x);
+ const forward=new THREE.Vector3(Math.sin(camAngle),0,Math.cos(camAngle));
+ const right=new THREE.Vector3(forward.z,0,-forward.x);
 
  player.position.add(forward.clone().multiplyScalar(-moveZ*0.5));
  player.position.add(right.clone().multiplyScalar(moveX*0.5));
 
- // Rotate player to face movement
  if(moveX!==0 || moveZ!==0){
    const angle=Math.atan2(-moveZ,moveX);
    player.rotation.y=angle-camAngle+Math.PI/2;
  }
 
- // Gravity
- player.position.y+=velocityY;
- velocityY-=0.015;
- if(player.position.y<=0){
-  player.position.y=0;
-  velocityY=0;
-  isJump=false;
+ if(!insideHouse){
+   player.position.y+=velocityY;
+   velocityY-=0.015;
+   if(player.position.y<=0){
+    player.position.y=0;
+    velocityY=0;
+    isJump=false;
+   }
  }
 
- // Camera follow
- camera.position.x=player.position.x + Math.sin(camAngle)*camDistance;
- camera.position.z=player.position.z + Math.cos(camAngle)*camDistance;
+ checkHouseEnter();
+
+ if(isJump && insideHouse){
+   exitHouse();
+ }
+
+ camera.position.x=player.position.x+Math.sin(camAngle)*camDistance;
+ camera.position.z=player.position.z+Math.cos(camAngle)*camDistance;
  camera.position.y=8;
  camera.lookAt(player.position);
 
@@ -195,85 +259,6 @@ window.addEventListener("resize",()=>{
  camera.updateProjectionMatrix();
  renderer.setSize(innerWidth,innerHeight);
 });
- /* =======================
-   MODUL RUMAH WARNA & MASUK
-   ======================= */
-
-let houses = [];
-let insideHouse = false;
-let currentHouse = null;
-
-// Hapus bangunan lama kalau ada (opsional)
-// scene.remove(...);
-
-// Warna rumah
-const houseColors = [
-  0xff4d4d,
-  0x4da6ff,
-  0x4dff88,
-  0xffff66,
-  0xff66ff,
-  0xff944d
-];
-
-// Buat kota tanpa lahan kosong (rapat)
-for(let x=-100; x<=100; x+=15){
-  for(let z=-100; z<=100; z+=15){
-
-    const color = houseColors[Math.floor(Math.random()*houseColors.length)];
-    const height = 10 + Math.random()*5;
-
-    const house = new THREE.Mesh(
-      new THREE.BoxGeometry(12,height,12),
-      new THREE.MeshLambertMaterial({color:color})
-    );
-
-    house.position.set(x,height/2,z);
-    scene.add(house);
-
-    houses.push(house);
-  }
-}
-
-// Interior room
-const interior = new THREE.Mesh(
-  new THREE.BoxGeometry(20,12,20),
-  new THREE.MeshLambertMaterial({color:0xffffff, side:THREE.BackSide})
-);
-interior.visible = false;
-scene.add(interior);
-
-// Deteksi masuk rumah
-function checkHouseEnter(){
-  houses.forEach(house=>{
-    const dist = player.position.distanceTo(house.position);
-
-    if(dist < 8 && !insideHouse){
-      if(moveX === 0 && moveZ === 0){
-        insideHouse = true;
-        currentHouse = house;
-
-        interior.position.copy(house.position);
-        interior.visible = true;
-
-        player.position.set(
-          house.position.x,
-          0,
-          house.position.z
-        );
-      }
-    }
-  });
-}
-
-// Keluar rumah jika lompat
-function exitHouse(){
-  if(insideHouse){
-    insideHouse = false;
-    interior.visible = false;
-    player.position.y = 0;
-  }
-}
 </script>
 </body>
 </html>
