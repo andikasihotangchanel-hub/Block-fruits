@@ -1,276 +1,145 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Roblox City Event Ramadhan</title>
-<style>
-body{margin:0;overflow:hidden;touch-action:none;background:black;}
-
-#joystick{
- position:fixed;
- left:30px;
- bottom:40px;
- width:120px;
- height:120px;
- border-radius:50%;
- background:rgba(255,255,255,0.2);
-}
-#stick{
- position:absolute;
- left:40px;
- top:40px;
- width:40px;
- height:40px;
- border-radius:50%;
- background:white;
-}
-
-#jumpBtn{
- position:fixed;
- right:30px;
- bottom:40px;
- width:70px;
- height:70px;
- border-radius:50%;
- border:none;
- background:green;
- color:white;
- font-weight:bold;
-}
-</style>
-</head>
-<body>
-
-<div id="joystick"><div id="stick"></div></div>
-<button id="jumpBtn">JUMP</button>
-
-<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
-
 <script>
 
--- =========================
--- CEK EVENT RAMADHAN
--- =========================
+// =========================
+// CEK EVENT RAMADHAN
+// =========================
 
--- cek ramadhan (contoh 2026)
-local function isRamadhan()
-    local t = os.date("*t")
-    
-    -- contoh Ramadhan 2026 (perkiraan 18 Feb – 19 Mar 2026)
-    if t.year == 2026 and (
-        (t.month == 2 and t.day >= 18) or
-        (t.month == 3 and t.day <= 19)
-    ) then
-        return true
-    end
-    
-    return false
-end
+function isRamadhan() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const day = now.getDate();
+
+    // Ramadhan 2026 (18 Feb – 19 Mar 2026)
+    if (year === 2026 && (
+        (month === 2 && day >= 18) ||
+        (month === 3 && day <= 19)
+    )) {
+        return true;
+    }
+
+    return false;
+}
 
 
--- =========================
--- AKTIFKAN EVENT RAMADHAN
--- =========================
+// =========================
+// SCENE
+// =========================
 
-if isRamadhan() then
-    print("Event Ramadhan Aktif!")
-
-    -- contoh spawn dekorasi ramadhan
-    spawnRamadhanDecor()
-
-    -- contoh bonus puasa
-    giveRamadhanBonus()
-end
- 
-/* ===============================
-   SCENE
-================================= */
-
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(
- isRamadhan?0xffcc88:0x87CEEB
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(
+    isRamadhan() ? 0xffcc88 : 0x87CEEB
 );
 
-const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,2000);
-const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(innerWidth,innerHeight);
+const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+);
+
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-scene.add(new THREE.AmbientLight(0xffffff,0.6));
-const light=new THREE.DirectionalLight(0xffffff,1);
-light.position.set(50,100,50);
-scene.add(light);
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
-/* ===============================
-   GROUND
-================================= */
+camera.position.z = 20;
 
-const ground=new THREE.Mesh(
- new THREE.PlaneGeometry(400,400),
- new THREE.MeshLambertMaterial({color:0x3cb371})
-);
-ground.rotation.x=-Math.PI/2;
-scene.add(ground);
 
-/* ===============================
-   PLAYER
-================================= */
+// =========================
+// EVENT RAMADHAN DECOR
+// =========================
 
-const player=new THREE.Group();
+let moon; // supaya bisa dianimasi
 
-const body=new THREE.Mesh(
- new THREE.BoxGeometry(2,3,1.5),
- new THREE.MeshLambertMaterial({color:0x0066ff})
-);
-body.position.y=2;
-player.add(body);
+function spawnRamadhanDecor() {
 
-const head=new THREE.Mesh(
- new THREE.BoxGeometry(1.5,1.5,1.5),
- new THREE.MeshLambertMaterial({color:0xffcc99})
-);
-head.position.y=4;
-player.add(head);
+    const geometry = new THREE.SphereGeometry(2, 32, 32);
+    const material = new THREE.MeshStandardMaterial({
+        color: 0xffffaa,
+        emissive: 0xffdd88,
+        emissiveIntensity: 0.5
+    });
 
-scene.add(player);
+    moon = new THREE.Mesh(geometry, material);
+    moon.position.set(0, 10, -20);
+    scene.add(moon);
+}
 
-let moveX=0,moveZ=0;
-let velocityY=0;
-let isJump=false;
+function giveRamadhanBonus() {
+    console.log("Bonus Ramadhan Aktif!");
+}
 
-/* ===============================
-   JOYSTICK
-================================= */
 
-const joy=document.getElementById("joystick");
-const stick=document.getElementById("stick");
+// =========================
+// TANTANGAN PUASA
+// =========================
 
-joy.addEventListener("touchmove",e=>{
- const rect=joy.getBoundingClientRect();
- let x=e.touches[0].clientX-rect.left-60;
- let y=e.touches[0].clientY-rect.top-60;
+let puasaProgress = 0;
+let puasaTarget = 5;
+let challengeActive = false;
 
- const max=40;
- x=Math.max(-max,Math.min(max,x));
- y=Math.max(-max,Math.min(max,y));
+function startPuasaChallenge() {
+    puasaProgress = 0;
+    challengeActive = true;
+    console.log("Tantangan Puasa Dimulai! Target:", puasaTarget);
+}
 
- moveX=x/max;
- moveZ=y/max;
+function addPuasaProgress() {
+    if (!challengeActive) return;
 
- stick.style.left=(x+40)+"px";
- stick.style.top=(y+40)+"px";
+    puasaProgress++;
+    console.log("Progress Puasa:", puasaProgress + "/" + puasaTarget);
+
+    if (puasaProgress >= puasaTarget) {
+        completePuasaChallenge();
+    }
+}
+
+function completePuasaChallenge() {
+    challengeActive = false;
+    console.log("Tantangan Selesai! 🎉 Reward Didapat!");
+}
+
+
+// =========================
+// AKTIFKAN EVENT
+// =========================
+
+if (isRamadhan()) {
+    console.log("Event Ramadhan Aktif!");
+    spawnRamadhanDecor();
+    giveRamadhanBonus();
+    startPuasaChallenge();
+}
+
+
+// =========================
+// TEST PROGRESS (TEKAN SPASI)
+// =========================
+
+window.addEventListener("keydown", function(e){
+    if (e.code === "Space") {
+        addPuasaProgress();
+    }
 });
 
-joy.addEventListener("touchend",()=>{
- moveX=0;moveZ=0;
- stick.style.left="40px";
- stick.style.top="40px";
-});
 
-/* ===============================
-   TOMBOL LOMPAT
-================================= */
+// =========================
+// ANIMATION LOOP
+// =========================
 
-document.getElementById("jumpBtn").onclick=()=>{
+function animate() {
+    requestAnimationFrame(animate);
 
- if(isRamadhan && !ramadhanFinished){
-   alert("Kamu sedang puasa 🌙 Sabar ya!");
-   return;
- }
+    if (moon) {
+        moon.rotation.y += 0.01;
+    }
 
- if(!isJump){
-  velocityY=0.35;
-  isJump=true;
- }
-};
-
-/* ===============================
-   TANTANGAN PUASA
-================================= */
-
-let puasaBlocks=[];
-
-if(isRamadhan){
- for(let i=0;i<8;i++){
-   const block=new THREE.Mesh(
-     new THREE.BoxGeometry(6,2,6),
-     new THREE.MeshLambertMaterial({color:0x00aa55})
-   );
-   block.position.set(0,2+(i*3),-20-(i*12));
-   scene.add(block);
-   puasaBlocks.push(block);
- }
+    renderer.render(scene, camera);
 }
 
-/* ===============================
-   CEK BERHASIL
-================================= */
-
-function checkPuasa(){
-
- if(!isRamadhan || ramadhanFinished) return;
-
- const last=puasaBlocks[puasaBlocks.length-1];
- if(!last) return;
-
- if(player.position.distanceTo(last.position)<5){
-
-   ramadhanFinished=true;
-
-   const btn=document.createElement("button");
-   btn.innerText="ADMIN EVENT RAMADHAN";
-   btn.style.position="fixed";
-   btn.style.top="120px";
-   btn.style.right="20px";
-   btn.style.padding="15px";
-   btn.style.background="green";
-   btn.style.color="white";
-   btn.style.fontWeight="bold";
-   document.body.appendChild(btn);
-
-   btn.onclick=function(){
-     ramadhanAdmin=true;
-     alert("🌙 Kamu menjadi Admin Ramadhan!");
-   };
- }
-
-}
-
-/* ===============================
-   ANIMATE
-================================= */
-
-function animate(){
- requestAnimationFrame(animate);
-
- // Gerak lebih lambat saat puasa
- let speed=isRamadhan && !ramadhanFinished?0.3:0.6;
-
- player.position.x+=moveX*speed;
- player.position.z+=moveZ*speed;
-
- player.position.y+=velocityY;
- velocityY-=0.015;
-
- if(player.position.y<=0){
-  player.position.y=0;
-  velocityY=0;
-  isJump=false;
- }
-
- checkPuasa();
-
- camera.position.set(
-  player.position.x,
-  player.position.y+10,
-  player.position.z+20
- );
- camera.lookAt(player.position);
-
- renderer.render(scene,camera);
-}
 animate();
 
 </script>
-</body>
-</html>
