@@ -2,9 +2,9 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Event Imlek</title>
+<title>Roblox City Event Ramadhan</title>
 <style>
-body{margin:0;overflow:hidden;background:#87ceeb;touch-action:none}
+body{margin:0;overflow:hidden;touch-action:none;background:black;}
 
 #joystick{
  position:fixed;
@@ -13,7 +13,7 @@ body{margin:0;overflow:hidden;background:#87ceeb;touch-action:none}
  width:120px;
  height:120px;
  border-radius:50%;
- background:rgba(255,255,255,0.3);
+ background:rgba(255,255,255,0.2);
 }
 #stick{
  position:absolute;
@@ -33,20 +33,9 @@ body{margin:0;overflow:hidden;background:#87ceeb;touch-action:none}
  height:70px;
  border-radius:50%;
  border:none;
- background:red;
+ background:green;
  color:white;
  font-weight:bold;
-}
-
-#adminBtn{
- position:fixed;
- top:100px;
- right:20px;
- padding:15px;
- background:gold;
- color:black;
- font-weight:bold;
- display:none;
 }
 </style>
 </head>
@@ -54,29 +43,42 @@ body{margin:0;overflow:hidden;background:#87ceeb;touch-action:none}
 
 <div id="joystick"><div id="stick"></div></div>
 <button id="jumpBtn">JUMP</button>
-<button id="adminBtn">ADMIN EVENT IMLEK</button>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+
 <script>
 
 /* ===============================
-   CEK EVENT IMLEK (FEBRUARI)
+   CEK RAMADHAN (Contoh 2026)
 ================================= */
 
-let today = new Date();
-let isImlek = (today.getMonth() === 1); // Februari
+let isRamadhan=false;
+let ramadhanFinished=false;
+let ramadhanAdmin=false;
+
+const today=new Date();
+const ramadhanStart=new Date("2026-03-20");
+const idulFitri=new Date("2026-04-18");
+
+if(today>=ramadhanStart && today<=idulFitri){
+ isRamadhan=true;
+}
 
 /* ===============================
    SCENE
 ================================= */
 
 const scene=new THREE.Scene();
+scene.background=new THREE.Color(
+ isRamadhan?0xffcc88:0x87CEEB
+);
+
 const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,2000);
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth,innerHeight);
 document.body.appendChild(renderer.domElement);
 
-scene.add(new THREE.AmbientLight(0xffffff,0.8));
+scene.add(new THREE.AmbientLight(0xffffff,0.6));
 const light=new THREE.DirectionalLight(0xffffff,1);
 light.position.set(50,100,50);
 scene.add(light);
@@ -87,7 +89,7 @@ scene.add(light);
 
 const ground=new THREE.Mesh(
  new THREE.PlaneGeometry(400,400),
- new THREE.MeshLambertMaterial({color:0x228B22})
+ new THREE.MeshLambertMaterial({color:0x3cb371})
 );
 ground.rotation.x=-Math.PI/2;
 scene.add(ground);
@@ -96,24 +98,27 @@ scene.add(ground);
    PLAYER
 ================================= */
 
-const player=new THREE.Mesh(
- new THREE.BoxGeometry(2,4,2),
+const player=new THREE.Group();
+
+const body=new THREE.Mesh(
+ new THREE.BoxGeometry(2,3,1.5),
  new THREE.MeshLambertMaterial({color:0x0066ff})
 );
-player.position.y=2;
+body.position.y=2;
+player.add(body);
+
+const head=new THREE.Mesh(
+ new THREE.BoxGeometry(1.5,1.5,1.5),
+ new THREE.MeshLambertMaterial({color:0xffcc99})
+);
+head.position.y=4;
+player.add(head);
+
 scene.add(player);
 
 let moveX=0,moveZ=0;
 let velocityY=0;
 let isJump=false;
-
-/* ===============================
-   COLLISION SYSTEM
-================================= */
-
-const playerBox = new THREE.Box3();
-const objectBox = new THREE.Box3();
-let collisionObjects = [];
 
 /* ===============================
    JOYSTICK
@@ -145,10 +150,16 @@ joy.addEventListener("touchend",()=>{
 });
 
 /* ===============================
-   JUMP
+   TOMBOL LOMPAT
 ================================= */
 
 document.getElementById("jumpBtn").onclick=()=>{
+
+ if(isRamadhan && !ramadhanFinished){
+   alert("Kamu sedang puasa 🌙 Sabar ya!");
+   return;
+ }
+
  if(!isJump){
   velocityY=0.35;
   isJump=true;
@@ -156,73 +167,53 @@ document.getElementById("jumpBtn").onclick=()=>{
 };
 
 /* ===============================
-   EVENT IMLEK
+   TANTANGAN PUASA
 ================================= */
 
-if(isImlek){
+let puasaBlocks=[];
 
- // Hapus rumah lama (jika ada sistem rumah)
- 
- // Gerbang Imlek
- const gerbang=new THREE.Mesh(
-  new THREE.BoxGeometry(30,15,2),
-  new THREE.MeshLambertMaterial({color:0xff0000})
- );
- gerbang.position.set(0,7,-50);
- scene.add(gerbang);
- collisionObjects.push(gerbang);
-
- // Tiang kiri
- const tiang1=new THREE.Mesh(
-  new THREE.BoxGeometry(2,15,2),
-  new THREE.MeshLambertMaterial({color:0xffd700})
- );
- tiang1.position.set(-14,7,-50);
- scene.add(tiang1);
- collisionObjects.push(tiang1);
-
- // Tiang kanan
- const tiang2=tiang1.clone();
- tiang2.position.set(14,7,-50);
- scene.add(tiang2);
- collisionObjects.push(tiang2);
-
- // Angpao tantangan
- const angpao=new THREE.Mesh(
-  new THREE.BoxGeometry(3,3,1),
-  new THREE.MeshLambertMaterial({color:0xff0000})
- );
- angpao.position.set(0,2,-80);
- scene.add(angpao);
-
+if(isRamadhan){
+ for(let i=0;i<8;i++){
+   const block=new THREE.Mesh(
+     new THREE.BoxGeometry(6,2,6),
+     new THREE.MeshLambertMaterial({color:0x00aa55})
+   );
+   block.position.set(0,2+(i*3),-20-(i*12));
+   scene.add(block);
+   puasaBlocks.push(block);
+ }
 }
 
 /* ===============================
-   MOVEMENT + COLLISION
+   CEK BERHASIL
 ================================= */
 
-function movePlayer(){
+function checkPuasa(){
 
- let speed=0.6;
+ if(!isRamadhan || ramadhanFinished) return;
 
- let nextX = player.position.x + moveX * speed;
- let nextZ = player.position.z + moveZ * speed;
+ const last=puasaBlocks[puasaBlocks.length-1];
+ if(!last) return;
 
- let oldX = player.position.x;
- let oldZ = player.position.z;
+ if(player.position.distanceTo(last.position)<5){
 
- player.position.x = nextX;
- player.position.z = nextZ;
+   ramadhanFinished=true;
 
- playerBox.setFromObject(player);
+   const btn=document.createElement("button");
+   btn.innerText="ADMIN EVENT RAMADHAN";
+   btn.style.position="fixed";
+   btn.style.top="120px";
+   btn.style.right="20px";
+   btn.style.padding="15px";
+   btn.style.background="green";
+   btn.style.color="white";
+   btn.style.fontWeight="bold";
+   document.body.appendChild(btn);
 
- for(let obj of collisionObjects){
-  objectBox.setFromObject(obj);
-  if(playerBox.intersectsBox(objectBox)){
-   player.position.x = oldX;
-   player.position.z = oldZ;
-   return;
-  }
+   btn.onclick=function(){
+     ramadhanAdmin=true;
+     alert("🌙 Kamu menjadi Admin Ramadhan!");
+   };
  }
 
 }
@@ -234,25 +225,22 @@ function movePlayer(){
 function animate(){
  requestAnimationFrame(animate);
 
- movePlayer();
+ // Gerak lebih lambat saat puasa
+ let speed=isRamadhan && !ramadhanFinished?0.3:0.6;
+
+ player.position.x+=moveX*speed;
+ player.position.z+=moveZ*speed;
 
  player.position.y+=velocityY;
  velocityY-=0.015;
 
- if(player.position.y<=2){
-  player.position.y=2;
+ if(player.position.y<=0){
+  player.position.y=0;
   velocityY=0;
   isJump=false;
  }
 
- // Cek angpao
- if(isImlek){
-  const angpao = scene.children.find(o=>o.position.z===-80);
-  if(angpao && player.position.distanceTo(angpao.position)<4){
-   scene.remove(angpao);
-   document.getElementById("adminBtn").style.display="block";
-  }
- }
+ checkPuasa();
 
  camera.position.set(
   player.position.x,
