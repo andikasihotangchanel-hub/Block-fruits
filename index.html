@@ -48,22 +48,40 @@ body{margin:0;overflow:hidden;touch-action:none;background:black;}
 
 <script>
 
-/* ===============================
-   CEK RAMADHAN (Contoh 2026)
-================================= */
+-- =========================
+-- CEK EVENT RAMADHAN
+-- =========================
 
-let isRamadhan=false;
-let ramadhanFinished=false;
-let ramadhanAdmin=false;
+-- cek ramadhan (contoh 2026)
+local function isRamadhan()
+    local t = os.date("*t")
+    
+    -- contoh Ramadhan 2026 (perkiraan 18 Feb – 19 Mar 2026)
+    if t.year == 2026 and (
+        (t.month == 2 and t.day >= 18) or
+        (t.month == 3 and t.day <= 19)
+    ) then
+        return true
+    end
+    
+    return false
+end
 
-const today=new Date();
-const ramadhanStart=new Date("2026-03-20");
-const idulFitri=new Date("2026-04-18");
 
-if(today>=ramadhanStart && today<=idulFitri){
- isRamadhan=true;
-}
+-- =========================
+-- AKTIFKAN EVENT RAMADHAN
+-- =========================
 
+if isRamadhan() then
+    print("Event Ramadhan Aktif!")
+
+    -- contoh spawn dekorasi ramadhan
+    spawnRamadhanDecor()
+
+    -- contoh bonus puasa
+    giveRamadhanBonus()
+end
+ 
 /* ===============================
    SCENE
 ================================= */
