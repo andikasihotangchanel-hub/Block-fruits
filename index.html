@@ -1,205 +1,184 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<title>Game 3D Stabil GitHub</title>
-<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+<meta charset="UTF-8">
+<title>3D Game Fix Camera</title>
 <style>
 body { margin:0; overflow:hidden; }
+canvas { display:block; }
 
-#joystick{
-  position:absolute;
-  bottom:20px;
-  left:20px;
-  width:120px;
-  height:120px;
+#joystick {
+  position:fixed;
+  bottom:80px;
+  left:50px;
+  width:100px;
+  height:100px;
   background:rgba(255,255,255,0.2);
   border-radius:50%;
+  touch-action:none;
 }
-
-#stick{
+#stick {
   position:absolute;
   width:50px;
   height:50px;
   background:white;
   border-radius:50%;
-  left:35px;
-  top:35px;
+  top:25px;
+  left:25px;
 }
 
-#jumpBtn{
-  position:absolute;
-  bottom:40px;
-  right:40px;
-  padding:15px 20px;
-  background:red;
-  color:white;
-  border:none;
+#jumpBtn {
+  position:fixed;
+  bottom:80px;
+  right:50px;
+  width:80px;
+  height:80px;
   border-radius:50%;
+  background:orange;
+  color:white;
+  font-size:20px;
+  border:none;
 }
 </style>
 </head>
 <body>
 
 <div id="joystick"><div id="stick"></div></div>
-<button id="jumpBtn">JUMP</button>
+<button id="jumpBtn">Jump</button>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
 <script>
-
-// ================= SCENE =================
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
 
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth/window.innerHeight,
-  0.1,
-  1000
-);
-
-const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(window.innerWidth, window.innerHeight);
+const camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth,window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// ================= GROUND =================
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(200,200),
-  new THREE.MeshBasicMaterial({color:0x1f8f1f})
-);
+// Light
+const light = new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+// Ground
+const groundGeo = new THREE.PlaneGeometry(200,200);
+const groundMat = new THREE.MeshStandardMaterial({color:0x228B22});
+const ground = new THREE.Mesh(groundGeo,groundMat);
 ground.rotation.x = -Math.PI/2;
 scene.add(ground);
 
-// ================= ROAD =================
-const road = new THREE.Mesh(
-  new THREE.PlaneGeometry(6,200),
-  new THREE.MeshBasicMaterial({color:0x222222})
-);
-road.rotation.x = -Math.PI/2;
-road.position.y = 0.01;
-scene.add(road);
-
-// ================= PLAYER =================
-const player = new THREE.Group();
-
-const body = new THREE.Mesh(
-  new THREE.BoxGeometry(1,2,1),
-  new THREE.MeshBasicMaterial({color:0x0066ff})
-);
-body.position.y = 1;
-player.add(body);
-
-const head = new THREE.Mesh(
-  new THREE.BoxGeometry(1,1,1),
-  new THREE.MeshBasicMaterial({color:0xffcc99})
-);
-head.position.y = 2.5;
-player.add(head);
-
+// Player
+const playerGeo = new THREE.BoxGeometry(1,2,1);
+const playerMat = new THREE.MeshStandardMaterial({color:0xff0000});
+const player = new THREE.Mesh(playerGeo,playerMat);
+player.position.y = 1;
 scene.add(player);
 
-// ================= BUILDINGS =================
-for(let i=-80;i<=80;i+=8){
-
-  const left = new THREE.Mesh(
-    new THREE.BoxGeometry(3,6,3),
-    new THREE.MeshBasicMaterial({color:Math.random()*0xffffff})
-  );
-  left.position.set(-5,3,i);
-  scene.add(left);
-
-  const right = new THREE.Mesh(
-    new THREE.BoxGeometry(3,6,3),
-    new THREE.MeshBasicMaterial({color:Math.random()*0xffffff})
-  );
-  right.position.set(5,3,i);
-  scene.add(right);
-}
-
-// ================= MOVEMENT =================
+// Movement
 let moveForward = 0;
 let moveSide = 0;
 let velocityY = 0;
 let canJump = true;
+let angle = 0;
 
-// ================= JOYSTICK =================
+// ===== JOYSTICK =====
 const joystick = document.getElementById("joystick");
 const stick = document.getElementById("stick");
 
 joystick.addEventListener("touchmove", e=>{
   const rect = joystick.getBoundingClientRect();
-  const x = e.touches[0].clientX - rect.left - 60;
-  const y = e.touches[0].clientY - rect.top - 60;
+  const x = e.touches[0].clientX - rect.left - 50;
+  const y = e.touches[0].clientY - rect.top - 50;
 
-  stick.style.left = (x+35)+"px";
-  stick.style.top = (y+35)+"px";
+  const distance = Math.min(Math.sqrt(x*x+y*y),40);
+  const angleStick = Math.atan2(y,x);
 
-  moveForward = -y/60;
-  moveSide = x/60;
+  const stickX = Math.cos(angleStick)*distance;
+  const stickY = Math.sin(angleStick)*distance;
+
+  stick.style.left = 25 + stickX + "px";
+  stick.style.top = 25 + stickY + "px";
+
+  moveForward = -stickY / 40;
+  moveSide = stickX / 40;
 });
 
 joystick.addEventListener("touchend", ()=>{
+  stick.style.left="25px";
+  stick.style.top="25px";
   moveForward = 0;
   moveSide = 0;
-  stick.style.left = "35px";
-  stick.style.top = "35px";
 });
 
-// ================= CAMERA ROTATION =================
-let camAngle = 0;
-
-document.addEventListener("touchmove", e=>{
-  if(e.touches.length == 1){
-    camAngle -= e.touches[0].movementX * 0.0005;
-  }
-});
-
-// ================= JUMP =================
-document.getElementById("jumpBtn").onclick = ()=>{
+// ===== JUMP =====
+document.getElementById("jumpBtn").addEventListener("touchstart",()=>{
   if(canJump){
     velocityY = 0.25;
     canJump = false;
   }
-};
+});
 
-// ================= ANIMATE =================
+// ===== CAMERA ROTATION (DRAG LAYAR) =====
+let startX = 0;
+document.addEventListener("touchstart", e=>{
+  if(e.touches.length==1){
+    startX = e.touches[0].clientX;
+  }
+});
+
+document.addEventListener("touchmove", e=>{
+  if(e.touches.length==1){
+    let deltaX = e.touches[0].clientX - startX;
+    angle -= deltaX * 0.005;
+    startX = e.touches[0].clientX;
+  }
+});
+
+// ===== GAME LOOP =====
 function animate(){
   requestAnimationFrame(animate);
 
-  // movement sesuai arah kamera
-  player.position.z += moveForward * Math.cos(camAngle);
-  player.position.x += moveForward * Math.sin(camAngle);
+  // Movement relative camera
+  player.position.x += Math.sin(angle) * moveForward * 0.3;
+  player.position.z += Math.cos(angle) * moveForward * 0.3;
 
-  player.position.x += moveSide * Math.cos(camAngle);
-  player.position.z -= moveSide * Math.sin(camAngle);
+  player.position.x += Math.cos(angle) * moveSide * 0.3;
+  player.position.z -= Math.sin(angle) * moveSide * 0.3;
 
-  // gravity
+  // Gravity
   velocityY -= 0.01;
   player.position.y += velocityY;
 
-  if(player.position.y <= 0){
-    player.position.y = 0;
+  if(player.position.y <= 1){
+    player.position.y = 1;
     velocityY = 0;
     canJump = true;
   }
 
-  // kamera GTA style
-  camera.position.x = player.position.x - Math.sin(camAngle)*10;
-  camera.position.z = player.position.z - Math.cos(camAngle)*10;
-  camera.position.y = player.position.y + 6;
+  // Camera follow belakang
+  camera.position.x = player.position.x - Math.sin(angle)*8;
+  camera.position.z = player.position.z - Math.cos(angle)*8;
+  camera.position.y = player.position.y + 4;
 
-  camera.lookAt(player.position);
+  camera.lookAt(
+    player.position.x,
+    player.position.y + 1,
+    player.position.z
+  );
 
   renderer.render(scene,camera);
 }
 
 animate();
 
-window.addEventListener("resize", ()=>{
+window.addEventListener("resize",()=>{
   camera.aspect = window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(window.innerWidth,window.innerHeight);
 });
-
 </script>
+
 </body>
 </html>
