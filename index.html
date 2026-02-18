@@ -1,146 +1,180 @@
-<DOCTYPE html >
-    <script>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>My Platform Game</title>
 
-// =========================
-// CEK EVENT RAMADHAN
-// =========================
-
-function isRamadhan() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const day = now.getDate();
-
-    // Ramadhan 2026 (18 Feb – 19 Mar 2026)
-    if (year === 2026 && (
-        (month === 2 && day >= 18) ||
-        (month === 3 && day <= 19)
-    )) {
-        return true;
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: #87ceeb;
     }
 
-    return false;
-}
-
-
-// =========================
-// SCENE
-// =========================
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(
-    isRamadhan() ? 0xffcc88 : 0x87CEEB
-);
-
-const camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-);
-
-const renderer = new THREE.WebGLRenderer({ antialias:true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-
-camera.position.z = 20;
-
-
-// =========================
-// EVENT RAMADHAN DECOR
-// =========================
-
-let moon; // supaya bisa dianimasi
-
-function spawnRamadhanDecor() {
-
-    const geometry = new THREE.SphereGeometry(2, 32, 32);
-    const material = new THREE.MeshStandardMaterial({
-        color: 0xffffaa,
-        emissive: 0xffdd88,
-        emissiveIntensity: 0.5
-    });
-
-    moon = new THREE.Mesh(geometry, material);
-    moon.position.set(0, 10, -20);
-    scene.add(moon);
-}
-
-function giveRamadhanBonus() {
-    console.log("Bonus Ramadhan Aktif!");
-}
-
-
-// =========================
-// TANTANGAN PUASA
-// =========================
-
-let puasaProgress = 0;
-let puasaTarget = 5;
-let challengeActive = false;
-
-function startPuasaChallenge() {
-    puasaProgress = 0;
-    challengeActive = true;
-    console.log("Tantangan Puasa Dimulai! Target:", puasaTarget);
-}
-
-function addPuasaProgress() {
-    if (!challengeActive) return;
-
-    puasaProgress++;
-    console.log("Progress Puasa:", puasaProgress + "/" + puasaTarget);
-
-    if (puasaProgress >= puasaTarget) {
-        completePuasaChallenge();
+    canvas {
+        display: block;
+        margin: auto;
+        background: white;
+        border: 2px solid black;
     }
-}
+</style>
+</head>
 
-function completePuasaChallenge() {
-    challengeActive = false;
-    console.log("Tantangan Selesai! 🎉 Reward Didapat!");
-}
+<body>
 
+<canvas id="game"></canvas>
 
-// =========================
-// AKTIFKAN EVENT
-// =========================
+<script>
+"use strict";
 
-if (isRamadhan()) {
-    console.log("Event Ramadhan Aktif!");
-    spawnRamadhanDecor();
-    giveRamadhanBonus();
-    startPuasaChallenge();
-}
+// ================= SETUP =================
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
+canvas.width = 900;
+canvas.height = 500;
 
-// =========================
-// TEST PROGRESS (TEKAN SPASI)
-// =========================
+// ================= PLAYER =================
+const player = {
+    x: 100,
+    y: 100,
+    width: 40,
+    height: 40,
+    speed: 4,
+    sprint: 7,
+    velY: 0,
+    gravity: 0.6,
+    jumpPower: -12,
+    grounded: false,
+    coins: 0,
+    lives: 3
+};
 
-window.addEventListener("keydown", function(e){
-    if (e.code === "Space") {
-        addPuasaProgress();
-    }
+// ================= CONTROLS =================
+const keys = {};
+
+document.addEventListener("keydown", (e) => {
+    keys[e.key] = true;
 });
 
+document.addEventListener("keyup", (e) => {
+    keys[e.key] = false;
+});
 
-// =========================
-// ANIMATION LOOP
-// =========================
+// ================= OBSTACLES =================
+const obstacles = [
+    {x: 0, y: 470, width: 900, height: 30},
+    {x: 300, y: 400, width: 200, height: 20},
+    {x: 650, y: 350, width: 150, height: 20}
+];
 
-function animate() {
-    requestAnimationFrame(animate);
+// ================= COINS =================
+const coins = [
+    {x: 330, y: 360, width: 20, height: 20},
+    {x: 680, y: 310, width: 20, height: 20}
+];
 
-    if (moon) {
-        moon.rotation.y += 0.01;
-    }
-
-    renderer.render(scene, camera);
+// ================= COLLISION FUNCTION =================
+function isColliding(a, b) {
+    return (
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y
+    );
 }
 
-animate();
+// ================= UPDATE =================
+function update() {
 
-            </script>
+    let moveSpeed = keys["Shift"] ? player.sprint : player.speed;
+
+    // Gerak kiri kanan
+    if (keys["ArrowLeft"]) player.x -= moveSpeed;
+    if (keys["ArrowRight"]) player.x += moveSpeed;
+
+    // Lompat
+    if (keys[" "] && player.grounded) {
+        player.velY = player.jumpPower;
+        player.grounded = false;
+    }
+
+    // Gravity
+    player.velY += player.gravity;
+    player.y += player.velY;
+
+    player.grounded = false;
+
+    // Collision obstacle (ANTI NEMBUS)
+    obstacles.forEach(ob => {
+        if (isColliding(player, ob)) {
+
+            // Dari atas (landing)
+            if (player.velY > 0) {
+                player.y = ob.y - player.height;
+                player.velY = 0;
+                player.grounded = true;
+            }
+
+            // Dari bawah
+            else if (player.velY < 0) {
+                player.y = ob.y + ob.height;
+                player.velY = 0;
+            }
+        }
+    });
+
+    // Collision coin
+    coins.forEach((coin, index) => {
+        if (isColliding(player, coin)) {
+            player.coins++;
+            coins.splice(index, 1);
+        }
+    });
+
+    // Batas arena
+    if (player.x < 0) player.x = 0;
+    if (player.x + player.width > canvas.width)
+        player.x = canvas.width - player.width;
+}
+
+// ================= DRAW =================
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Player
+    ctx.fillStyle = "blue";
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+
+    // Obstacles
+    ctx.fillStyle = "brown";
+    obstacles.forEach(ob => {
+        ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
+    });
+
+    // Coins
+    ctx.fillStyle = "gold";
+    coins.forEach(coin => {
+        ctx.fillRect(coin.x, coin.y, coin.width, coin.height);
+    });
+
+    // UI
+    ctx.fillStyle = "black";
+    ctx.font = "18px Arial";
+    ctx.fillText("Coins: " + player.coins, 20, 30);
+    ctx.fillText("Lives: " + player.lives, 20, 55);
+}
+
+// ================= GAME LOOP =================
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+
+</script>
+
+</body>
+</html>
