@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>3D World Full Collision</title>
+<title>3D Game Custom Player</title>
 <style>
 body { margin:0; overflow:hidden; }
 canvas { display:block; }
@@ -69,15 +69,29 @@ const ground = new THREE.Mesh(groundGeo,groundMat);
 ground.rotation.x = -Math.PI/2;
 scene.add(ground);
 
-// ================= PLAYER =================
-const player = new THREE.Mesh(
-  new THREE.BoxGeometry(1,2,1),
-  new THREE.MeshStandardMaterial({color:0xff0000})
+// ================= PLAYER SESUAI GAMBAR =================
+const player = new THREE.Group();
+
+// BADAN (biru besar bawah)
+const body = new THREE.Mesh(
+  new THREE.BoxGeometry(2.5,2,1.5),
+  new THREE.MeshStandardMaterial({color:0x1e4fff})
 );
-player.position.y = 1;
+body.position.y = 1;
+player.add(body);
+
+// KEPALA (kuning kecil atas)
+const head = new THREE.Mesh(
+  new THREE.BoxGeometry(1.8,1,1.2),
+  new THREE.MeshStandardMaterial({color:0xffd54f})
+);
+head.position.y = 2.5;
+player.add(head);
+
+player.position.y = 0;
 scene.add(player);
 
-// ================= BUILDINGS WORLD =================
+// ================= BUILDINGS =================
 let buildings = [];
 
 function createBuilding(x,z){
@@ -91,10 +105,9 @@ function createBuilding(x,z){
   buildings.push(mesh);
 }
 
-// Generate banyak bangunan
 for(let x=-100;x<=100;x+=12){
   for(let z=-100;z<=100;z+=12){
-    if(Math.random()>0.3){ // biar ada jalan kosong
+    if(Math.random()>0.3){
       createBuilding(x,z);
     }
   }
@@ -103,9 +116,7 @@ for(let x=-100;x<=100;x+=12){
 // ================= MOVEMENT =================
 let moveForward=0, moveSide=0;
 let velocityY=0, canJump=true;
-
-let yaw=0;     // kiri kanan
-let pitch=0;   // atas bawah
+let yaw=0, pitch=0;
 
 // ================= JOYSTICK =================
 const joystick=document.getElementById("joystick");
@@ -159,7 +170,6 @@ document.addEventListener("touchmove",e=>{
     yaw-=dx*0.005;
     pitch-=dy*0.005;
 
-    // batas atas bawah biar gak jungkir balik
     pitch=Math.max(-1.2,Math.min(1.2,pitch));
 
     startX=e.touches[0].clientX;
@@ -200,14 +210,14 @@ function animate(){
   velocityY-=0.01;
   player.position.y+=velocityY;
 
-  if(player.position.y<=1){
-    player.position.y=1;
+  if(player.position.y<=0){
+    player.position.y=0;
     velocityY=0;
     canJump=true;
   }
 
   // CAMERA BEBAS
-  const distance=8;
+  const distance=10;
 
   camera.position.x=player.position.x - Math.sin(yaw)*distance*Math.cos(pitch);
   camera.position.z=player.position.z - Math.cos(yaw)*distance*Math.cos(pitch);
@@ -215,7 +225,7 @@ function animate(){
 
   camera.lookAt(
     player.position.x,
-    player.position.y+1,
+    player.position.y+2,
     player.position.z
   );
 
