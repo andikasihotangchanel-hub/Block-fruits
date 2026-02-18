@@ -1,180 +1,259 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>My Platform Game</title>
-
+<title>Roblox Mobile City</title>
 <style>
-    body {
-        margin: 0;
-        overflow: hidden;
-        background: #87ceeb;
-    }
+body { margin:0; overflow:hidden; touch-action:none; }
 
-    canvas {
-        display: block;
-        margin: auto;
-        background: white;
-        border: 2px solid black;
-    }
+#jumpBtn{
+ position:fixed;
+ right:20px;
+ bottom:40px;
+ width:70px;
+ height:70px;
+ border-radius:50%;
+ background:red;
+ color:white;
+ font-size:18px;
+ border:none;
+}
+
+#joystick{
+ position:fixed;
+ left:30px;
+ bottom:40px;
+ width:120px;
+ height:120px;
+ border-radius:50%;
+ background:rgba(255,255,255,0.2);
+}
+
+#stick{
+ position:absolute;
+ left:40px;
+ top:40px;
+ width:40px;
+ height:40px;
+ border-radius:50%;
+ background:white;
+}
 </style>
 </head>
-
 <body>
 
-<canvas id="game"></canvas>
+<div id="joystick"><div id="stick"></div></div>
+<button id="jumpBtn">JUMP</button>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 
 <script>
-"use strict";
+// ===== SCENE =====
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87CEEB);
 
-// ================= SETUP =================
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight,0.1,2000);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
 
-canvas.width = 900;
-canvas.height = 500;
+scene.add(new THREE.AmbientLight(0xffffff,0.6));
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(50,100,50);
+scene.add(light);
 
-// ================= PLAYER =================
-const player = {
-    x: 100,
-    y: 100,
-    width: 40,
-    height: 40,
-    speed: 4,
-    sprint: 7,
-    velY: 0,
-    gravity: 0.6,
-    jumpPower: -12,
-    grounded: false,
-    coins: 0,
-    lives: 3
+// ===== GROUND =====
+const ground=new THREE.Mesh(
+ new THREE.PlaneGeometry(600,600),
+ new THREE.MeshLambertMaterial({color:0x2e8b57})
+);
+ground.rotation.x=-Math.PI/2;
+scene.add(ground);
+
+// ===== JALAN =====
+const roadMat=new THREE.MeshLambertMaterial({color:0x333333});
+for(let i=-150;i<=150;i+=90){
+ const road=new THREE.Mesh(
+  new THREE.PlaneGeometry(300,25),
+  roadMat
+ );
+ road.rotation.x=-Math.PI/2;
+ road.position.set(0,0.01,i);
+ scene.add(road);
+}
+
+// ===== PLAYER =====
+const player=new THREE.Group();
+
+const body=new THREE.Mesh(
+ new THREE.BoxGeometry(2,3,1.5),
+ new THREE.MeshLambertMaterial({color:0x0066ff})
+);
+body.position.y=2;
+player.add(body);
+
+const head=new THREE.Mesh(
+ new THREE.BoxGeometry(1.5,1.5,1.5),
+ new THREE.MeshLambertMaterial({color:0xffcc99})
+);
+head.position.y=4;
+player.add(head);
+
+scene.add(player);
+
+// ===== BANGUNAN BLOK WARNA =====
+let houses=[];
+let spacing=19; // 14 ukuran + 5 jarak
+let startX=-100;
+let startZ=-150;
+
+const blockColors=[
+ 0xff4d4d,
+ 0x4da6ff,
+ 0x4dff88,
+ 0xffff66
+];
+
+blockColors.forEach((color,index)=>{
+ for(let x=0;x<4;x++){
+  for(let z=0;z<4;z++){
+
+   if(z===2) continue; // bikin jalur kosong
+
+   const house=new THREE.Mesh(
+    new THREE.BoxGeometry(14,12,14),
+    new THREE.MeshLambertMaterial({color:color})
+   );
+
+   house.position.set(
+    startX + x*spacing,
+    6,
+    startZ + z*spacing + index*90
+   );
+
+   scene.add(house);
+   houses.push(house);
+  }
+ }
+});
+
+// ===== COLLISION =====
+const playerBox=new THREE.Box3();
+const houseBox=new THREE.Box3();
+
+function checkCollision(nextMove){
+ playerBox.setFromObject(player);
+ playerBox.min.add(nextMove);
+ playerBox.max.add(nextMove);
+
+ for(let h of houses){
+  houseBox.setFromObject(h);
+  if(playerBox.intersectsBox(houseBox)){
+   return true;
+  }
+ }
+ return false;
+}
+
+// ===== CONTROL =====
+let velocityY=0;
+let isJump=false;
+let moveX=0,moveZ=0;
+let camAngle=0;
+let camDistance=15;
+let camHeight=8;
+
+// Joystick
+const joy=document.getElementById("joystick");
+const stick=document.getElementById("stick");
+
+joy.addEventListener("touchmove",e=>{
+ const rect=joy.getBoundingClientRect();
+ let x=e.touches[0].clientX-rect.left-60;
+ let y=e.touches[0].clientY-rect.top-60;
+
+ const max=40;
+ x=Math.max(-max,Math.min(max,x));
+ y=Math.max(-max,Math.min(max,y));
+
+ moveX=x/max;
+ moveZ=y/max;
+
+ stick.style.left=(x+40)+"px";
+ stick.style.top=(y+40)+"px";
+});
+
+joy.addEventListener("touchend",()=>{
+ moveX=0; moveZ=0;
+ stick.style.left="40px";
+ stick.style.top="40px";
+});
+
+// Kamera geser kanan layar
+let lastX=null;
+window.addEventListener("touchmove",e=>{
+ if(e.touches[0].clientX>window.innerWidth/2){
+  if(lastX!==null){
+   camAngle+=(e.touches[0].clientX-lastX)*0.01;
+  }
+  lastX=e.touches[0].clientX;
+ }
+});
+window.addEventListener("touchend",()=>{lastX=null;});
+
+// Jump
+document.getElementById("jumpBtn").onclick=()=>{
+ if(!isJump){
+  velocityY=0.35;
+  isJump=true;
+ }
 };
 
-// ================= CONTROLS =================
-const keys = {};
+// ===== ANIMATE =====
+function animate(){
+ requestAnimationFrame(animate);
 
-document.addEventListener("keydown", (e) => {
-    keys[e.key] = true;
+ const forward=new THREE.Vector3(Math.sin(camAngle),0,Math.cos(camAngle));
+ const right=new THREE.Vector3(forward.z,0,-forward.x);
+
+ let moveForward=forward.clone().multiplyScalar(-moveZ*0.6);
+ let moveRight=right.clone().multiplyScalar(moveX*0.6);
+ let nextMove=moveForward.clone().add(moveRight);
+
+ if(!checkCollision(nextMove)){
+  player.position.add(nextMove);
+ }
+
+ if(moveX!==0 || moveZ!==0){
+  const angle=Math.atan2(-moveZ,moveX);
+  player.rotation.y=angle-camAngle+Math.PI/2;
+ }
+
+ // Gravity
+ player.position.y+=velocityY;
+ velocityY-=0.015;
+
+ if(player.position.y<=0){
+  player.position.y=0;
+  velocityY=0;
+  isJump=false;
+ }
+
+ // Kamera follow 360°
+ camera.position.x=player.position.x+Math.sin(camAngle)*camDistance;
+ camera.position.z=player.position.z+Math.cos(camAngle)*camDistance;
+ camera.position.y=camHeight;
+ camera.lookAt(player.position.x,player.position.y+2,player.position.z);
+
+ renderer.render(scene,camera);
+}
+animate();
+
+window.addEventListener("resize",()=>{
+ camera.aspect=innerWidth/innerHeight;
+ camera.updateProjectionMatrix();
+ renderer.setSize(innerWidth,innerHeight);
 });
-
-document.addEventListener("keyup", (e) => {
-    keys[e.key] = false;
-});
-
-// ================= OBSTACLES =================
-const obstacles = [
-    {x: 0, y: 470, width: 900, height: 30},
-    {x: 300, y: 400, width: 200, height: 20},
-    {x: 650, y: 350, width: 150, height: 20}
-];
-
-// ================= COINS =================
-const coins = [
-    {x: 330, y: 360, width: 20, height: 20},
-    {x: 680, y: 310, width: 20, height: 20}
-];
-
-// ================= COLLISION FUNCTION =================
-function isColliding(a, b) {
-    return (
-        a.x < b.x + b.width &&
-        a.x + a.width > b.x &&
-        a.y < b.y + b.height &&
-        a.y + a.height > b.y
-    );
-}
-
-// ================= UPDATE =================
-function update() {
-
-    let moveSpeed = keys["Shift"] ? player.sprint : player.speed;
-
-    // Gerak kiri kanan
-    if (keys["ArrowLeft"]) player.x -= moveSpeed;
-    if (keys["ArrowRight"]) player.x += moveSpeed;
-
-    // Lompat
-    if (keys[" "] && player.grounded) {
-        player.velY = player.jumpPower;
-        player.grounded = false;
-    }
-
-    // Gravity
-    player.velY += player.gravity;
-    player.y += player.velY;
-
-    player.grounded = false;
-
-    // Collision obstacle (ANTI NEMBUS)
-    obstacles.forEach(ob => {
-        if (isColliding(player, ob)) {
-
-            // Dari atas (landing)
-            if (player.velY > 0) {
-                player.y = ob.y - player.height;
-                player.velY = 0;
-                player.grounded = true;
-            }
-
-            // Dari bawah
-            else if (player.velY < 0) {
-                player.y = ob.y + ob.height;
-                player.velY = 0;
-            }
-        }
-    });
-
-    // Collision coin
-    coins.forEach((coin, index) => {
-        if (isColliding(player, coin)) {
-            player.coins++;
-            coins.splice(index, 1);
-        }
-    });
-
-    // Batas arena
-    if (player.x < 0) player.x = 0;
-    if (player.x + player.width > canvas.width)
-        player.x = canvas.width - player.width;
-}
-
-// ================= DRAW =================
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Player
-    ctx.fillStyle = "blue";
-    ctx.fillRect(player.x, player.y, player.width, player.height);
-
-    // Obstacles
-    ctx.fillStyle = "brown";
-    obstacles.forEach(ob => {
-        ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
-    });
-
-    // Coins
-    ctx.fillStyle = "gold";
-    coins.forEach(coin => {
-        ctx.fillRect(coin.x, coin.y, coin.width, coin.height);
-    });
-
-    // UI
-    ctx.fillStyle = "black";
-    ctx.font = "18px Arial";
-    ctx.fillText("Coins: " + player.coins, 20, 30);
-    ctx.fillText("Lives: " + player.lives, 20, 55);
-}
-
-// ================= GAME LOOP =================
-function gameLoop() {
-    update();
-    draw();
-    requestAnimationFrame(gameLoop);
-}
-
-gameLoop();
-
 </script>
-
 </body>
 </html>
