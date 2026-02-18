@@ -2,41 +2,41 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>3D Game Fix Camera</title>
+<title>3D Game Minecraft Style</title>
 <style>
 body { margin:0; overflow:hidden; }
 canvas { display:block; }
 
+/* ===== JOYSTICK KOTAK ===== */
 #joystick {
   position:fixed;
-  bottom:80px;
-  left:50px;
-  width:100px;
-  height:100px;
-  background:rgba(255,255,255,0.2);
-  border-radius:50%;
+  bottom:60px;
+  left:40px;
+  width:140px;
+  height:140px;
+  background:rgba(255,255,255,0.15);
+  border:3px solid white;
   touch-action:none;
 }
 #stick {
   position:absolute;
-  width:50px;
-  height:50px;
+  width:70px;
+  height:70px;
   background:white;
-  border-radius:50%;
-  top:25px;
-  left:25px;
+  left:35px;
+  top:35px;
 }
 
+/* ===== JUMP BUTTON ===== */
 #jumpBtn {
   position:fixed;
-  bottom:80px;
-  right:50px;
-  width:80px;
-  height:80px;
-  border-radius:50%;
+  bottom:60px;
+  right:40px;
+  width:120px;
+  height:120px;
+  font-size:26px;
   background:orange;
   color:white;
-  font-size:20px;
   border:none;
 }
 </style>
@@ -44,7 +44,7 @@ canvas { display:block; }
 <body>
 
 <div id="joystick"><div id="stick"></div></div>
-<button id="jumpBtn">Jump</button>
+<button id="jumpBtn">JUMP</button>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
@@ -53,120 +53,155 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
 
 const camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000);
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(window.innerWidth,window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Light
+// LIGHT
 const light = new THREE.DirectionalLight(0xffffff,1);
-light.position.set(5,10,5);
+light.position.set(10,20,10);
 scene.add(light);
 
-// Ground
+// GROUND
 const groundGeo = new THREE.PlaneGeometry(200,200);
 const groundMat = new THREE.MeshStandardMaterial({color:0x228B22});
 const ground = new THREE.Mesh(groundGeo,groundMat);
 ground.rotation.x = -Math.PI/2;
 scene.add(ground);
 
-// Player
+// ROAD (tikungan)
+function createRoad(x,z,w,d){
+  const geo = new THREE.BoxGeometry(w,0.1,d);
+  const mat = new THREE.MeshStandardMaterial({color:0x444444});
+  const mesh = new THREE.Mesh(geo,mat);
+  mesh.position.set(x,0.05,z);
+  scene.add(mesh);
+}
+createRoad(0,0,10,40);
+createRoad(20,20,40,10);
+
+// PLAYER
 const playerGeo = new THREE.BoxGeometry(1,2,1);
 const playerMat = new THREE.MeshStandardMaterial({color:0xff0000});
 const player = new THREE.Mesh(playerGeo,playerMat);
 player.position.y = 1;
 scene.add(player);
 
-// Movement
+// BUILDINGS + COLLISION
+let buildings = [];
+
+function createBuilding(x,z){
+  const geo = new THREE.BoxGeometry(4,6,4);
+  const mat = new THREE.MeshStandardMaterial({color:0x888888});
+  const mesh = new THREE.Mesh(geo,mat);
+  mesh.position.set(x,3,z);
+  scene.add(mesh);
+  buildings.push(mesh);
+}
+
+createBuilding(5,10);
+createBuilding(-5,15);
+createBuilding(20,25);
+
+// MOVEMENT
 let moveForward = 0;
 let moveSide = 0;
 let velocityY = 0;
 let canJump = true;
 let angle = 0;
 
-// ===== JOYSTICK =====
+// JOYSTICK
 const joystick = document.getElementById("joystick");
 const stick = document.getElementById("stick");
 
 joystick.addEventListener("touchmove", e=>{
   const rect = joystick.getBoundingClientRect();
-  const x = e.touches[0].clientX - rect.left - 50;
-  const y = e.touches[0].clientY - rect.top - 50;
+  let x = e.touches[0].clientX - rect.left - 70;
+  let y = e.touches[0].clientY - rect.top - 70;
 
-  const distance = Math.min(Math.sqrt(x*x+y*y),40);
-  const angleStick = Math.atan2(y,x);
+  x = Math.max(-60,Math.min(60,x));
+  y = Math.max(-60,Math.min(60,y));
 
-  const stickX = Math.cos(angleStick)*distance;
-  const stickY = Math.sin(angleStick)*distance;
+  stick.style.left = 35 + x + "px";
+  stick.style.top = 35 + y + "px";
 
-  stick.style.left = 25 + stickX + "px";
-  stick.style.top = 25 + stickY + "px";
-
-  moveForward = -stickY / 40;
-  moveSide = stickX / 40;
+  moveForward = -y / 60;
+  moveSide = x / 60;
 });
 
 joystick.addEventListener("touchend", ()=>{
-  stick.style.left="25px";
-  stick.style.top="25px";
-  moveForward = 0;
-  moveSide = 0;
+  stick.style.left="35px";
+  stick.style.top="35px";
+  moveForward=0;
+  moveSide=0;
 });
 
-// ===== JUMP =====
+// JUMP
 document.getElementById("jumpBtn").addEventListener("touchstart",()=>{
   if(canJump){
-    velocityY = 0.25;
+    velocityY = 0.28;
     canJump = false;
   }
 });
 
-// ===== CAMERA ROTATION (DRAG LAYAR) =====
-let startX = 0;
-document.addEventListener("touchstart", e=>{
+// ROTATE CAMERA
+let startX=0;
+document.addEventListener("touchstart",e=>{
+  if(e.touches.length==1) startX=e.touches[0].clientX;
+});
+
+document.addEventListener("touchmove",e=>{
   if(e.touches.length==1){
+    let deltaX = e.touches[0].clientX-startX;
+    angle -= deltaX*0.005;
     startX = e.touches[0].clientX;
   }
 });
 
-document.addEventListener("touchmove", e=>{
-  if(e.touches.length==1){
-    let deltaX = e.touches[0].clientX - startX;
-    angle -= deltaX * 0.005;
-    startX = e.touches[0].clientX;
+// COLLISION CHECK
+function checkCollision(nextX,nextZ){
+  for(let b of buildings){
+    if(Math.abs(nextX-b.position.x)<3 &&
+       Math.abs(nextZ-b.position.z)<3){
+         return true;
+    }
   }
-});
+  return false;
+}
 
-// ===== GAME LOOP =====
+// LOOP
 function animate(){
   requestAnimationFrame(animate);
 
-  // Movement relative camera
-  player.position.x += Math.sin(angle) * moveForward * 0.3;
-  player.position.z += Math.cos(angle) * moveForward * 0.3;
+  let nextX = player.position.x;
+  let nextZ = player.position.z;
 
-  player.position.x += Math.cos(angle) * moveSide * 0.3;
-  player.position.z -= Math.sin(angle) * moveSide * 0.3;
+  nextX += Math.sin(angle)*moveForward*0.3;
+  nextZ += Math.cos(angle)*moveForward*0.3;
 
-  // Gravity
+  nextX += Math.cos(angle)*moveSide*0.3;
+  nextZ -= Math.sin(angle)*moveSide*0.3;
+
+  if(!checkCollision(nextX,nextZ)){
+    player.position.x = nextX;
+    player.position.z = nextZ;
+  }
+
   velocityY -= 0.01;
   player.position.y += velocityY;
 
-  if(player.position.y <= 1){
-    player.position.y = 1;
-    velocityY = 0;
-    canJump = true;
+  if(player.position.y<=1){
+    player.position.y=1;
+    velocityY=0;
+    canJump=true;
   }
 
-  // Camera follow belakang
+  // CAMERA FIX BELAKANG
   camera.position.x = player.position.x - Math.sin(angle)*8;
   camera.position.z = player.position.z - Math.cos(angle)*8;
   camera.position.y = player.position.y + 4;
 
-  camera.lookAt(
-    player.position.x,
-    player.position.y + 1,
-    player.position.z
-  );
+  camera.lookAt(player.position.x,player.position.y+1,player.position.z);
 
   renderer.render(scene,camera);
 }
@@ -174,7 +209,7 @@ function animate(){
 animate();
 
 window.addEventListener("resize",()=>{
-  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.aspect=window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth,window.innerHeight);
 });
