@@ -1,157 +1,146 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Game Ramadhan Andika</title>
+<DOCTYPE html >
+    <script>
 
-<style>
-    body{
-        margin:0;
-        overflow:hidden;
-        font-family:Arial, sans-serif;
-    }
+// =========================
+// CEK EVENT RAMADHAN
+// =========================
 
-    #info{
-        position:absolute;
-        top:10px;
-        left:10px;
-        background:rgba(0,0,0,0.5);
-        color:white;
-        padding:10px;
-        border-radius:10px;
-        font-size:14px;
-    }
-</style>
-</head>
-<body>
-
-<div id="info">
-Game Ramadhan 🌙<br>
-Tekan SPASI untuk tambah progress
-</div>
-
-<!-- THREE JS CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-<script>
-
-// ======================
-// CEK RAMADHAN
-// ======================
-
-function isRamadhan(){
+function isRamadhan() {
     const now = new Date();
     const year = now.getFullYear();
-    const month = now.getMonth()+1;
+    const month = now.getMonth() + 1;
     const day = now.getDate();
 
-    if(year===2026 && (
-        (month===2 && day>=18) ||
-        (month===3 && day<=19)
-    )){
+    // Ramadhan 2026 (18 Feb – 19 Mar 2026)
+    if (year === 2026 && (
+        (month === 2 && day >= 18) ||
+        (month === 3 && day <= 19)
+    )) {
         return true;
     }
 
     return false;
 }
 
-// ======================
-// SETUP SCENE
-// ======================
+
+// =========================
+// SCENE
+// =========================
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(
-    isRamadhan()?0xffcc88:0x87CEEB
+    isRamadhan() ? 0xffcc88 : 0x87CEEB
 );
 
 const camera = new THREE.PerspectiveCamera(
     75,
-    window.innerWidth/window.innerHeight,
+    window.innerWidth / window.innerHeight,
     0.1,
     1000
 );
 
-camera.position.z = 15;
-
-const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(window.innerWidth,window.innerHeight);
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// LIGHT
-const light = new THREE.AmbientLight(0xffffff,1);
-scene.add(light);
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
-// ======================
-// BULAN RAMADHAN
-// ======================
+camera.position.z = 20;
 
-let moon=null;
 
-function spawnMoon(){
-    const geo = new THREE.SphereGeometry(2,32,32);
-    const mat = new THREE.MeshStandardMaterial({
-        color:0xffffaa,
-        emissive:0xffcc66,
-        emissiveIntensity:0.6
+// =========================
+// EVENT RAMADHAN DECOR
+// =========================
+
+let moon; // supaya bisa dianimasi
+
+function spawnRamadhanDecor() {
+
+    const geometry = new THREE.SphereGeometry(2, 32, 32);
+    const material = new THREE.MeshStandardMaterial({
+        color: 0xffffaa,
+        emissive: 0xffdd88,
+        emissiveIntensity: 0.5
     });
 
-    moon = new THREE.Mesh(geo,mat);
-    moon.position.set(0,5,0);
+    moon = new THREE.Mesh(geometry, material);
+    moon.position.set(0, 10, -20);
     scene.add(moon);
 }
 
-if(isRamadhan()){
-    spawnMoon();
+function giveRamadhanBonus() {
+    console.log("Bonus Ramadhan Aktif!");
 }
 
-// ======================
+
+// =========================
 // TANTANGAN PUASA
-// ======================
+// =========================
 
-let progress=0;
-let target=5;
-let challengeActive=isRamadhan();
+let puasaProgress = 0;
+let puasaTarget = 5;
+let challengeActive = false;
 
-window.addEventListener("keydown",function(e){
-    if(e.code==="Space" && challengeActive){
-        progress++;
-        document.getElementById("info").innerHTML=
-        "Game Ramadhan 🌙<br>Progress: "+progress+"/"+target;
+function startPuasaChallenge() {
+    puasaProgress = 0;
+    challengeActive = true;
+    console.log("Tantangan Puasa Dimulai! Target:", puasaTarget);
+}
 
-        if(progress>=target){
-            document.getElementById("info").innerHTML=
-            "🎉 Tantangan Selesai! 🎉";
-            challengeActive=false;
-        }
+function addPuasaProgress() {
+    if (!challengeActive) return;
+
+    puasaProgress++;
+    console.log("Progress Puasa:", puasaProgress + "/" + puasaTarget);
+
+    if (puasaProgress >= puasaTarget) {
+        completePuasaChallenge();
+    }
+}
+
+function completePuasaChallenge() {
+    challengeActive = false;
+    console.log("Tantangan Selesai! 🎉 Reward Didapat!");
+}
+
+
+// =========================
+// AKTIFKAN EVENT
+// =========================
+
+if (isRamadhan()) {
+    console.log("Event Ramadhan Aktif!");
+    spawnRamadhanDecor();
+    giveRamadhanBonus();
+    startPuasaChallenge();
+}
+
+
+// =========================
+// TEST PROGRESS (TEKAN SPASI)
+// =========================
+
+window.addEventListener("keydown", function(e){
+    if (e.code === "Space") {
+        addPuasaProgress();
     }
 });
 
-// ======================
-// RESPONSIVE
-// ======================
 
-window.addEventListener("resize",function(){
-    camera.aspect=window.innerWidth/window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth,window.innerHeight);
-});
+// =========================
+// ANIMATION LOOP
+// =========================
 
-// ======================
-// ANIMATE LOOP
-// ======================
-
-function animate(){
+function animate() {
     requestAnimationFrame(animate);
 
-    if(moon){
-        moon.rotation.y+=0.01;
+    if (moon) {
+        moon.rotation.y += 0.01;
     }
 
-    renderer.render(scene,camera);
+    renderer.render(scene, camera);
 }
 
 animate();
 
-</script>
-</body>
-</html>
+            </script>
