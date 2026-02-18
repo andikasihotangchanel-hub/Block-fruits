@@ -2,10 +2,10 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Game 3D Stabil</title>
+<title>Game 3D Stabil GitHub</title>
 <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 <style>
-body { margin:0; overflow:hidden; background:black; }
+body { margin:0; overflow:hidden; }
 
 #joystick{
   position:absolute;
@@ -46,83 +46,82 @@ body { margin:0; overflow:hidden; background:black; }
 
 <script>
 
-// ===== SCENE =====
+// ================= SCENE =================
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-camera.position.set(0,5,12);
+const camera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth/window.innerHeight,
+  0.1,
+  1000
+);
 
 const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// ===== LIGHT =====
-const light = new THREE.DirectionalLight(0xffffff,1);
-light.position.set(10,20,10);
-scene.add(light);
-
-// ===== GROUND =====
+// ================= GROUND =================
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(200,200),
-  new THREE.MeshPhongMaterial({color:0x228B22})
+  new THREE.MeshBasicMaterial({color:0x1f8f1f})
 );
 ground.rotation.x = -Math.PI/2;
 scene.add(ground);
 
-// ===== ROAD =====
+// ================= ROAD =================
 const road = new THREE.Mesh(
   new THREE.PlaneGeometry(6,200),
-  new THREE.MeshPhongMaterial({color:0x222222})
+  new THREE.MeshBasicMaterial({color:0x222222})
 );
 road.rotation.x = -Math.PI/2;
 road.position.y = 0.01;
 scene.add(road);
 
-// ===== PLAYER =====
+// ================= PLAYER =================
 const player = new THREE.Group();
 
 const body = new THREE.Mesh(
   new THREE.BoxGeometry(1,2,1),
-  new THREE.MeshPhongMaterial({color:0x0044ff})
+  new THREE.MeshBasicMaterial({color:0x0066ff})
 );
 body.position.y = 1;
 player.add(body);
 
 const head = new THREE.Mesh(
   new THREE.BoxGeometry(1,1,1),
-  new THREE.MeshPhongMaterial({color:0xffcc99})
+  new THREE.MeshBasicMaterial({color:0xffcc99})
 );
 head.position.y = 2.5;
 player.add(head);
 
 scene.add(player);
 
-// ===== BUILDINGS =====
+// ================= BUILDINGS =================
 for(let i=-80;i<=80;i+=8){
 
   const left = new THREE.Mesh(
     new THREE.BoxGeometry(3,6,3),
-    new THREE.MeshPhongMaterial({color:Math.random()*0xffffff})
+    new THREE.MeshBasicMaterial({color:Math.random()*0xffffff})
   );
   left.position.set(-5,3,i);
   scene.add(left);
 
   const right = new THREE.Mesh(
     new THREE.BoxGeometry(3,6,3),
-    new THREE.MeshPhongMaterial({color:Math.random()*0xffffff})
+    new THREE.MeshBasicMaterial({color:Math.random()*0xffffff})
   );
   right.position.set(5,3,i);
   scene.add(right);
 }
 
-// ===== MOVEMENT =====
+// ================= MOVEMENT =================
 let moveForward = 0;
 let moveSide = 0;
 let velocityY = 0;
 let canJump = true;
 
-// ===== JOYSTICK =====
+// ================= JOYSTICK =================
 const joystick = document.getElementById("joystick");
 const stick = document.getElementById("stick");
 
@@ -145,30 +144,16 @@ joystick.addEventListener("touchend", ()=>{
   stick.style.top = "35px";
 });
 
-// ===== PUTAR KAMERA PAKAI SENTUH LAYAR =====
-let isDragging = false;
-let previousX = 0;
-
-document.addEventListener("touchstart", e=>{
-  if(e.touches.length==1){
-    isDragging = true;
-    previousX = e.touches[0].clientX;
-  }
-});
+// ================= CAMERA ROTATION =================
+let camAngle = 0;
 
 document.addEventListener("touchmove", e=>{
-  if(isDragging){
-    const delta = e.touches[0].clientX - previousX;
-    previousX = e.touches[0].clientX;
-    camera.rotation.y -= delta * 0.005;
+  if(e.touches.length == 1){
+    camAngle -= e.touches[0].movementX * 0.0005;
   }
 });
 
-document.addEventListener("touchend", ()=>{
-  isDragging = false;
-});
-
-// ===== JUMP =====
+// ================= JUMP =================
 document.getElementById("jumpBtn").onclick = ()=>{
   if(canJump){
     velocityY = 0.25;
@@ -176,18 +161,18 @@ document.getElementById("jumpBtn").onclick = ()=>{
   }
 };
 
-// ===== ANIMATE =====
+// ================= ANIMATE =================
 function animate(){
   requestAnimationFrame(animate);
 
-  const angle = camera.rotation.y;
+  // movement sesuai arah kamera
+  player.position.z += moveForward * Math.cos(camAngle);
+  player.position.x += moveForward * Math.sin(camAngle);
 
-  player.position.z += moveForward * Math.cos(angle);
-  player.position.x += moveForward * Math.sin(angle);
+  player.position.x += moveSide * Math.cos(camAngle);
+  player.position.z -= moveSide * Math.sin(camAngle);
 
-  player.position.x += moveSide * Math.cos(angle);
-  player.position.z -= moveSide * Math.sin(angle);
-
+  // gravity
   velocityY -= 0.01;
   player.position.y += velocityY;
 
@@ -197,9 +182,11 @@ function animate(){
     canJump = true;
   }
 
-  // Kamera follow belakang player
-  camera.position.x = player.position.x - Math.sin(angle)*10;
-  camera.position.z = player.position.z - Math.cos(angle)*10;
+  // kamera GTA style
+  camera.position.x = player.position.x - Math.sin(camAngle)*10;
+  camera.position.z = player.position.z - Math.cos(camAngle)*10;
+  camera.position.y = player.position.y + 6;
+
   camera.lookAt(player.position);
 
   renderer.render(scene,camera);
@@ -207,7 +194,6 @@ function animate(){
 
 animate();
 
-// resize
 window.addEventListener("resize", ()=>{
   camera.aspect = window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
