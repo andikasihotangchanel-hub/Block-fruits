@@ -1,41 +1,36 @@
 <!DOCTYPE html><html>
 <head>
 <meta charset="UTF-8">
-<title>Roblox Mobile City Final</title>
+<title>City Game Fixed</title>
 <style>
-body { margin:0; overflow:hidden; font-family:sans-serif; }#startScreen{ position:absolute; width:100%; height:100%; background:#000000cc; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; z-index:10; }
-
-#joystick{ position:absolute; bottom:40px; left:40px; width:120px; height:120px; background:rgba(0,0,0,0.3); touch-action:none; } #stick{ position:absolute; left:40px; top:40px; width:40px; height:40px; background:white; border-radius:8px; }
-
-#jumpBtn{ position:absolute; right:30px; bottom:40px; width:70px; height:70px; background:red; color:white; font-size:18px; border:none; border-radius:10px; } </style>
-
+body { margin:0; overflow:hidden; font-family:sans-serif; }
+#joystick{position:absolute;bottom:40px;left:40px;width:140px;height:140px;background:rgba(0,0,0,0.3);}
+#stick{position:absolute;left:50px;top:50px;width:40px;height:40px;background:white;}
+#jumpBtn{position:absolute;right:20px;bottom:50px;width:70px;height:70px;background:red;color:white;border:none;border-radius:10px;font-size:18px;}
+#nameScreen{position:absolute;width:100%;height:100%;background:#000000cc;display:flex;flex-direction:column;justify-content:center;align-items:center;color:white;z-index:10;}
+#nameScreen input{padding:10px;font-size:18px;margin-top:10px;}
+#nameScreen button{padding:10px;font-size:18px;margin-top:10px;}
+</style>
 </head>
-<body><div id="startScreen">
-  <h1>City Game</h1>
-  <input id="nameInput" placeholder="Masukkan Nama..." style="padding:10px;font-size:18px;">
-  <button onclick="startGame()" style="margin-top:10px;padding:10px;">Mulai</button>
+<body><div id="nameScreen">
+<h1>City Game</h1>
+<input id="nameInput" placeholder="Masukkan Nama...">
+<button onclick="startGame()">Mulai</button>
 </div><div id="joystick"><div id="stick"></div></div>
-<button id="jumpBtn">JUMP</button><script src="https://cdn.jsdelivr.net/npm/three@0.158/build/three.min.js"></script><script>
-
+<button id="jumpBtn">JUMP</button><script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script><script>
 // ===== SCENE =====
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb);
+scene.background = new THREE.Color(0x87CEEB);
 
-const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 2000);
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight,0.1,2000);
 const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
 
 scene.add(new THREE.HemisphereLight(0xffffff,0x444444,1.2));
-const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-dirLight.position.set(50,100,50);
-scene.add(dirLight);
 
 // ===== GROUND =====
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(1000,1000),
-  new THREE.MeshStandardMaterial({color:0x2e8b57})
-);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000,1000), new THREE.MeshStandardMaterial({color:0x2e8b57}));
 ground.rotation.x=-Math.PI/2;
 scene.add(ground);
 
@@ -47,163 +42,119 @@ player.position.set(0,0,0);
 const body = new THREE.Mesh(new THREE.BoxGeometry(0.7,1.6,0.4), new THREE.MeshStandardMaterial({color:0x0099ff}));
 body.position.y=0.8;
 player.add(body);
-
 const head = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.6), new THREE.MeshStandardMaterial({color:0xffcc99}));
 head.position.y=1.8;
 player.add(head);
 
 function limb(x,y){
-  const l = new THREE.Mesh(new THREE.BoxGeometry(0.25,1,0.25), new THREE.MeshStandardMaterial({color:0x222222}));
+  const l=new THREE.Mesh(new THREE.BoxGeometry(0.25,1,0.25), new THREE.MeshStandardMaterial({color:0x222222}));
   l.position.set(x,y,0);
   player.add(l);
   return l;
 }
-const armL=limb(-0.6,1.4);
-const armR=limb(0.6,1.4);
-const legL=limb(-0.25,0.0);
-const legR=limb(0.25,0.0);
+const armL=limb(-0.5,1.5);
+const armR=limb(0.5,1.5);
+const legL=limb(-0.2,0.3);
+const legR=limb(0.2,0.3);
 
 // ===== NAME =====
 let nameLabel=null;
 function createNameLabel(text){
   const canvas=document.createElement("canvas");
-  canvas.width=256; canvas.height=64;
   const ctx=canvas.getContext("2d");
+  canvas.width=256; canvas.height=64;
   ctx.fillStyle="white";
   ctx.font="28px Arial";
   ctx.textAlign="center";
   ctx.fillText(text,128,40);
   const texture=new THREE.CanvasTexture(canvas);
-  const material=new THREE.SpriteMaterial({map:texture});
-  const sprite=new THREE.Sprite(material);
-  sprite.scale.set(3,0.8,1);
-  sprite.position.y=2.6;
+  const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture}));
+  sprite.scale.set(2,0.5,1);
+  sprite.position.y=2.3;
   player.add(sprite);
   return sprite;
 }
-
 function startGame(){
   const name=document.getElementById("nameInput").value.trim();
-  if(name==""){alert("Nama harus diisi!"); return;}
+  if(name===""){alert("Nama harus diisi!"); return;}
   nameLabel=createNameLabel(name);
-  document.getElementById("startScreen").style.display="none";
+  document.getElementById("nameScreen").style.display="none";
 }
 
-// ===== WORLD (RAPI DENGAN PINTU) =====
-const houses=[];
-const houseWidth = 12;
-const houseHeight = 10;
-const houseSpacing = 15;
-for(let x=-120;x<=120;x+=houseSpacing){
-  for(let z=-120;z<=120;z+=houseSpacing){
-    if(Math.abs(x)<20 && Math.abs(z)<20) continue;
-    const color = new THREE.Color().setHSL(Math.random(),0.5,0.5);
-    const house = new THREE.Mesh(new THREE.BoxGeometry(houseWidth,houseHeight,houseWidth), new THREE.MeshStandardMaterial({color: color}));
-    house.position.set(x, houseHeight/2, z);
-    scene.add(house);
-    // Pintu
-    const door = new THREE.Box3(new THREE.Vector3(-1,0,-houseWidth/2-0.1).add(house.position), new THREE.Vector3(1,2, -houseWidth/2+0.1).add(house.position));
-    house.userData.door = door;
-    houses.push(house);
+// ===== WORLD BUILDINGS =====
+const obstacles=[];
+for(let i=-200;i<=200;i+=15){
+  for(let j=-200;j<=200;j+=15){
+    if(Math.abs(i)<20 && Math.abs(j)<20) continue;
+    const h = 8 + Math.random()*15;
+    const b = new THREE.Mesh(new THREE.BoxGeometry(12,h,12), new THREE.MeshStandardMaterial({color:new THREE.Color().setHSL(Math.random(),0.5,0.5)}));
+    b.position.set(i,h/2,j);
+    scene.add(b);
+    obstacles.push(new THREE.Box3().setFromObject(b));
   }
 }
 
 // ===== INPUT =====
-let move={f:0,r:0};
-let sprint=false;
-let velocityY=0;
-let onGround=true;
+let move={f:0,r:0}, sprint=false, velocityY=0, onGround=true;
+function jump(){ if(onGround){ velocityY=0.3; onGround=false; } }
+document.getElementById("jumpBtn").addEventListener("touchstart",jump);
+document.getElementById("jumpBtn").addEventListener("mousedown",jump);
 
-const jumpBtn = document.getElementById("jumpBtn");
-jumpBtn.onclick=()=>{if(onGround){velocityY=0.3; onGround=false;}}
+document.addEventListener("keydown",e=>{if(e.key=="w") move.f=1;if(e.key=="s") move.f=-1;if(e.key=="a") move.r=-1;if(e.key=="d") move.r=1;if(e.key==" ") jump();if(e.key=="Shift") sprint=true;});
+document.addEventListener("keyup",e=>{if(e.key=="w"||e.key=="s") move.f=0;if(e.key=="a"||e.key=="d") move.r=0;if(e.key=="Shift") sprint=false;});
 
-// Joystick
-const joy=document.getElementById("joystick");
-const stick=document.getElementById("stick");
-let moveX=0, moveZ=0;
-joy.addEventListener("touchmove",e=>{
-  const rect=joy.getBoundingClientRect();
-  let x=e.touches[0].clientX-rect.left-60;
-  let y=e.touches[0].clientY-rect.top-60;
-  const max=40;
-  x=Math.max(-max,Math.min(max,x));
-  y=Math.max(-max,Math.min(max,y));
-  moveX=x/max; moveZ=-y/max; // perbaiki arah
-  stick.style.left=(x+40)+"px"; stick.style.top=(y+40)+"px";
-});
-joy.addEventListener("touchend",()=>{moveX=0; moveZ=0; stick.style.left="40px"; stick.style.top="40px";});
-
-// Keyboard
-document.addEventListener("keydown",e=>{
-  if(e.key=="w") move.f=1;
-  if(e.key=="s") move.f=-1;
-  if(e.key=="a") move.r=-1;
-  if(e.key=="d") move.r=1;
-  if(e.key=="Shift") sprint=true;
-});
-document.addEventListener("keyup",e=>{
-  if(e.key=="w"||e.key=="s") move.f=0;
-  if(e.key=="a"||e.key=="d") move.r=0;
-  if(e.key=="Shift") sprint=false;
-});
-
-// Kamera pointer lock
-let yaw=0, pitch=0;
+// ===== CAMERA =====
+let yaw=0,pitch=0;
 renderer.domElement.addEventListener("click",()=>{renderer.domElement.requestPointerLock();});
-document.addEventListener("mousemove",e=>{
-  if(document.pointerLockElement===renderer.domElement){
-    yaw -= e.movementX*0.002; pitch -= e.movementY*0.002;
-    pitch=Math.max(-0.8, Math.min(0.8, pitch));
-  }
-});
+document.addEventListener("mousemove",e=>{if(document.pointerLockElement===renderer.domElement){yaw-=e.movementX*0.002; pitch-=e.movementY*0.002; pitch=Math.max(-1,Math.min(1,pitch));}});
 
 // ===== COLLISION =====
 function isColliding(pos){
-  const box = new THREE.Box3(new THREE.Vector3(pos.x-0.35,0,pos.z-0.35), new THREE.Vector3(pos.x+0.35,1.6,pos.z+0.35));
-  return houses.some(h=>{
-    const houseBox = new THREE.Box3().setFromObject(h);
-    return box.intersectsBox(houseBox);
-  });
+  const box=new THREE.Box3(new THREE.Vector3(pos.x-0.5,pos.y,pos.z-0.5), new THREE.Vector3(pos.x+0.5,pos.y+1.6,pos.z+0.5));
+  return obstacles.some(o=>box.intersectsBox(o));
 }
 
-// ===== LOOP =====
+// ===== JOYSTICK =====
+const joy=document.getElementById("joystick"), stick=document.getElementById("stick"), max=40;
+let moveX=0, moveZ=0;
+joy.addEventListener("touchmove",e=>{
+  const rect=joy.getBoundingClientRect();
+  let x=e.touches[0].clientX-rect.left-70;
+  let y=e.touches[0].clientY-rect.top-70;
+  x=Math.max(-max,Math.min(max,x)); y=Math.max(-max,Math.min(max,y));
+  moveX=x/max; moveZ=y/max;
+  stick.style.left=(x+50)+"px"; stick.style.top=(y+50)+"px";
+});
+joy.addEventListener("touchend",()=>{moveX=0; moveZ=0; stick.style.left="50px"; stick.style.top="50px";});
+
+// ===== ANIMATE =====
 let walk=0;
 function animate(){
-  requestAnimationFrame(animate);
-  const speed = sprint?0.4:0.2;
-  const dir = new THREE.Vector3(Math.sin(yaw)*move.f + Math.cos(yaw)*move.r,0,Math.cos(yaw)*move.f - Math.sin(yaw)*move.r);
-  let newPos = player.position.clone().addScaledVector(dir,speed).addScaledVector(new THREE.Vector3(moveX,0,moveZ), speed);
-  if(!isColliding(newPos)) player.position.copy(newPos);
+ requestAnimationFrame(animate);
+ const speed=sprint?0.4:0.2;
+ let dir=new THREE.Vector3();
+ dir.x=Math.sin(yaw)*move.f + Math.cos(yaw)*moveX;
+ dir.z=Math.cos(yaw)*move.f - Math.sin(yaw)*moveX;
+ if(move.f!==0||moveX!==0){
+   let newPos=player.position.clone().addScaledVector(dir,speed);
+   if(!isColliding(newPos)){player.position.x=newPos.x;player.position.z=newPos.z;}
+   walk+=0.25;
+   armL.rotation.x=Math.sin(walk)*0.8; armR.rotation.x=-Math.sin(walk)*0.8;
+   legL.rotation.x=-Math.sin(walk)*0.8; legR.rotation.x=Math.sin(walk)*0.8;
+ }else{armL.rotation.x=armR.rotation.x=legL.rotation.x=legR.rotation.x=0;}
 
-  // Animasi lengan-kaki
-  if(move.f!==0||move.r!==0||moveX!==0||moveZ!==0){
-    walk+=0.25;
-    armL.rotation.x=Math.sin(walk)*0.8;
-    armR.rotation.x=-Math.sin(walk)*0.8;
-    legL.rotation.x=-Math.sin(walk)*0.8;
-    legR.rotation.x=Math.sin(walk)*0.8;
-  } else { armL.rotation.x=armR.rotation.x=legL.rotation.x=legR.rotation.x=0;}
+ velocityY-=0.015; player.position.y+=velocityY;
+ if(player.position.y<=0){player.position.y=0; velocityY=0; onGround=true;}
+ player.rotation.y=yaw;
 
-  // Gravity
-  velocityY -= 0.015; player.position.y += velocityY;
-  if(player.position.y<0){player.position.y=0; velocityY=0; onGround=true;}
-
-  player.rotation.y=yaw;
-
-  // Kamera bebas
-  const camDist=6;
-  camera.position.set(
-    player.position.x - Math.sin(yaw)*camDist,
-    player.position.y+3 + pitch*4,
-    player.position.z - Math.cos(yaw)*camDist
-  );
-  camera.lookAt(player.position.x, player.position.y+1.6, player.position.z);
-
-  if(nameLabel) nameLabel.lookAt(camera.position);
-  renderer.render(scene,camera);
+ const camDist=6;
+ camera.position.set(player.position.x - Math.sin(yaw)*camDist, player.position.y+3+pitch*4, player.position.z - Math.cos(yaw)*camDist);
+ camera.lookAt(player.position.x, player.position.y+1.5, player.position.z);
+ if(nameLabel) nameLabel.lookAt(camera.position);
+ renderer.render(scene,camera);
 }
 animate();
 
-onresize=()=>{camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight);};
+window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight);});
 </script></body>
 </html>
