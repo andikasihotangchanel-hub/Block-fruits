@@ -2,41 +2,64 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>City Engine V2</title>
+<title>City Engine Complete</title>
 <style>
-body { margin:0; overflow:hidden; background:#87ceeb; }
+body { margin:0; overflow:hidden; background:#87ceeb; font-family:sans-serif; }
 
-/* Joystick */
-#joystick {
-    position:absolute;
-    bottom:40px;
-    left:40px;
-    width:120px;
-    height:120px;
-    background:rgba(0,0,0,0.25);
-    border-radius:50%;
-    touch-action:none;
+/* START SCREEN */
+#startScreen{
+position:absolute;
+width:100%;
+height:100%;
+background:#000000cc;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+color:white;
+z-index:10;
 }
-#stick {
-    position:absolute;
-    left:40px;
-    top:40px;
-    width:40px;
-    height:40px;
-    background:white;
-    border-radius:50%;
+
+/* JOYSTICK */
+#joystick{
+position:absolute;
+bottom:40px;
+left:40px;
+width:120px;
+height:120px;
+background:rgba(0,0,0,0.3);
+border-radius:50%;
+touch-action:none;
+}
+#stick{
+position:absolute;
+left:40px;
+top:40px;
+width:40px;
+height:40px;
+background:white;
+border-radius:50%;
 }
 </style>
 </head>
 <body>
 
+<div id="startScreen">
+<h1>City Game</h1>
+<input id="nameInput" placeholder="Masukkan Nama..." 
+style="padding:10px;font-size:18px;border-radius:5px;border:none;">
+<button onclick="startGame()" 
+style="margin-top:15px;padding:10px 20px;font-size:18px;border:none;border-radius:5px;cursor:pointer;">
+Mulai
+</button>
+</div>
+
 <div id="joystick"><div id="stick"></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.158/build/three.min.js"></script>
-
 <script>
 
-/* ================= BASIC SETUP ================= */
+/* ================= BASIC ================= */
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
 
@@ -45,13 +68,12 @@ const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth,innerHeight);
 document.body.appendChild(renderer.domElement);
 
-/* ================= LIGHT ================= */
 scene.add(new THREE.HemisphereLight(0xffffff,0x444444,1.2));
 
 /* ================= GROUND ================= */
 const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(1000,1000),
-    new THREE.MeshStandardMaterial({color:0x2e8b57})
+new THREE.PlaneGeometry(1000,1000),
+new THREE.MeshStandardMaterial({color:0x2e8b57})
 );
 ground.rotation.x = -Math.PI/2;
 scene.add(ground);
@@ -61,73 +83,111 @@ const player = new THREE.Group();
 scene.add(player);
 
 const body = new THREE.Mesh(
-    new THREE.BoxGeometry(0.7,1.6,0.4),
-    new THREE.MeshStandardMaterial({color:0x0099ff})
+new THREE.BoxGeometry(0.7,1.6,0.4),
+new THREE.MeshStandardMaterial({color:0x0099ff})
 );
 body.position.y = 1.6;
 player.add(body);
 
 const head = new THREE.Mesh(
-    new THREE.BoxGeometry(0.6,0.6,0.6),
-    new THREE.MeshStandardMaterial({color:0xffcc99})
+new THREE.BoxGeometry(0.6,0.6,0.6),
+new THREE.MeshStandardMaterial({color:0xffcc99})
 );
 head.position.y = 2.6;
 player.add(head);
 
 function limb(x,y){
-    const l = new THREE.Mesh(
-        new THREE.BoxGeometry(0.25,1,0.25),
-        new THREE.MeshStandardMaterial({color:0x222222})
-    );
-    l.position.set(x,y,0);
-    player.add(l);
-    return l;
+const l = new THREE.Mesh(
+new THREE.BoxGeometry(0.25,1,0.25),
+new THREE.MeshStandardMaterial({color:0x222222})
+);
+l.position.set(x,y,0);
+player.add(l);
+return l;
 }
 const armL = limb(-0.6,1.8);
 const armR = limb(0.6,1.8);
 const legL = limb(-0.25,0.5);
 const legR = limb(0.25,0.5);
 
-/* ================= PHYSICS ================= */
-let velocityY = 0;
-const gravity = -0.01;
-let onGround = true;
+/* ================= NAME LABEL ================= */
+let nameLabel;
+function createNameLabel(text){
+const canvas=document.createElement("canvas");
+const ctx=canvas.getContext("2d");
+canvas.width=256; canvas.height=64;
+ctx.fillStyle="white";
+ctx.font="28px Arial";
+ctx.textAlign="center";
+ctx.fillText(text,128,40);
 
-/* ================= WORLD BUILD ================= */
-const obstacles = [];
-
-for(let x=-200;x<=200;x+=20){
-    for(let z=-200;z<=200;z+=20){
-        if(Math.random()>0.3){
-            const h = 10 + Math.random()*30;
-            const building = new THREE.Mesh(
-                new THREE.BoxGeometry(12,h,12),
-                new THREE.MeshStandardMaterial({color:0x888888})
-            );
-            building.position.set(x,h/2,z);
-            scene.add(building);
-
-            obstacles.push(new THREE.Box3().setFromObject(building));
-        }
-    }
+const texture=new THREE.CanvasTexture(canvas);
+const material=new THREE.SpriteMaterial({map:texture});
+const sprite=new THREE.Sprite(material);
+sprite.scale.set(3,0.8,1);
+sprite.position.y=3.5;
+player.add(sprite);
+return sprite;
 }
 
+function startGame(){
+const name=document.getElementById("nameInput").value.trim();
+if(name==="") return alert("Nama harus diisi!");
+nameLabel=createNameLabel(name);
+document.getElementById("startScreen").style.display="none";
+}
+
+/* ================= WORLD ================= */
+const obstacles=[];
+for(let x=-200;x<=200;x+=20){
+for(let z=-200;z<=200;z+=20){
+if(Math.random()>0.3){
+const isHouse=Math.random()>0.7;
+const h=isHouse?8:10+Math.random()*30;
+const color=new THREE.Color().setHSL(Math.random(),0.5,0.5);
+
+const building=new THREE.Mesh(
+new THREE.BoxGeometry(12,h,12),
+new THREE.MeshStandardMaterial({color:color})
+);
+building.position.set(x,h/2,z);
+scene.add(building);
+obstacles.push(new THREE.Box3().setFromObject(building));
+
+if(isHouse){
+const roof=new THREE.Mesh(
+new THREE.ConeGeometry(9,4,4),
+new THREE.MeshStandardMaterial({color:0xaa0000})
+);
+roof.position.set(x,h+2,z);
+roof.rotation.y=Math.PI/4;
+scene.add(roof);
+}
+}
+}
+}
+
+/* ================= PHYSICS ================= */
+let velocityY=0;
+const gravity=-0.015;
+let onGround=true;
+
 /* ================= INPUT ================= */
-let move = {f:0,r:0};
-let sprint = false;
+let move={f:0,r:0};
+let sprint=false;
 
 document.addEventListener("keydown",e=>{
-    if(e.key==="w") move.f=1;
-    if(e.key==="s") move.f=-1;
-    if(e.key==="a") move.r=-1;
-    if(e.key==="d") move.r=1;
-    if(e.key==="Shift") sprint=true;
-    if(e.key===" ") jump();
+if(e.key==="w") move.f=1;
+if(e.key==="s") move.f=-1;
+if(e.key==="a") move.r=-1;
+if(e.key==="d") move.r=1;
+if(e.key==="Shift") sprint=true;
+if(e.key===" ") jump();
 });
 document.addEventListener("keyup",e=>{
-    if(e.key==="w"||e.key==="s") move.f=0;
-    if(e.key==="a"||e.key==="d") move.r=0;
-    if(e.key==="Shift") sprint=false;
+if(e.key==="w"||e.key==="s") move.f=0;
+if(e.key==="a"||e.key==="d") move.r=0;
+if(e.key==="Shift") sprint=false;
 });
 
 /* ================= JOYSTICK ================= */
@@ -137,121 +197,117 @@ let drag=false;
 
 joy.addEventListener("touchstart",()=>drag=true);
 joy.addEventListener("touchend",()=>{
-    drag=false;
-    move.f=0; move.r=0;
-    stick.style.left="40px";
-    stick.style.top="40px";
+drag=false; move.f=0; move.r=0;
+stick.style.left="40px"; stick.style.top="40px";
 });
 joy.addEventListener("touchmove",e=>{
-    if(!drag) return;
-    const rect=joy.getBoundingClientRect();
-    let x=e.touches[0].clientX-rect.left-60;
-    let y=e.touches[0].clientY-rect.top-60;
-
-    const max=40;
-    x=Math.max(-max,Math.min(max,x));
-    y=Math.max(-max,Math.min(max,y));
-
-    stick.style.left=(60+x-20)+"px";
-    stick.style.top=(60+y-20)+"px";
-
-    move.r = x/max;
-    move.f = -y/max;
+if(!drag) return;
+const rect=joy.getBoundingClientRect();
+let x=e.touches[0].clientX-rect.left-60;
+let y=e.touches[0].clientY-rect.top-60;
+const max=40;
+x=Math.max(-max,Math.min(max,x));
+y=Math.max(-max,Math.min(max,y));
+stick.style.left=(60+x-20)+"px";
+stick.style.top=(60+y-20)+"px";
+move.r=x/max;
+move.f=-y/max;
 });
 
 /* ================= CAMERA CONTROL ================= */
 let yaw=0;
 let pitch=0;
+let mouseDown=false;
 
-renderer.domElement.onclick=()=>{
-    renderer.domElement.requestPointerLock();
-};
-
-document.addEventListener("mousemove",e=>{
-    if(document.pointerLockElement===renderer.domElement){
-        yaw -= e.movementX*0.002;
-        pitch -= e.movementY*0.002;
-        pitch = Math.max(-Math.PI/3,Math.min(Math.PI/3,pitch));
-    }
+renderer.domElement.addEventListener("mousedown",()=>mouseDown=true);
+renderer.domElement.addEventListener("mouseup",()=>mouseDown=false);
+renderer.domElement.addEventListener("mousemove",e=>{
+if(mouseDown){
+yaw-=e.movementX*0.003;
+pitch-=e.movementY*0.003;
+pitch=Math.max(-1,Math.min(1,pitch));
+}
 });
 
 /* ================= COLLISION ================= */
 function isColliding(pos){
-    const playerBox = new THREE.Box3(
-        new THREE.Vector3(pos.x-0.5,pos.y,pos.z-0.5),
-        new THREE.Vector3(pos.x+0.5,pos.y+3,pos.z+0.5)
-    );
-    return obstacles.some(o=>playerBox.intersectsBox(o));
+const playerBox=new THREE.Box3(
+new THREE.Vector3(pos.x-0.5,pos.y,pos.z-0.5),
+new THREE.Vector3(pos.x+0.5,pos.y+3,pos.z+0.5)
+);
+return obstacles.some(o=>playerBox.intersectsBox(o));
 }
 
 /* ================= JUMP ================= */
 function jump(){
-    if(onGround){
-        velocityY = 0.25;
-        onGround = false;
-    }
+if(onGround){
+velocityY=0.3;
+onGround=false;
+}
 }
 
-/* ================= ANIMATION LOOP ================= */
+/* ================= LOOP ================= */
 let walk=0;
 
 function animate(){
-    requestAnimationFrame(animate);
+requestAnimationFrame(animate);
 
-    const speed = sprint ? 0.4 : 0.2;
+const speed=sprint?0.4:0.2;
 
-    let dir=new THREE.Vector3();
-    dir.x=Math.sin(yaw)*move.f + Math.cos(yaw)*move.r;
-    dir.z=Math.cos(yaw)*move.f - Math.sin(yaw)*move.r;
+let dir=new THREE.Vector3();
+dir.x=Math.sin(yaw)*move.f + Math.cos(yaw)*move.r;
+dir.z=Math.cos(yaw)*move.f - Math.sin(yaw)*move.r;
 
-    if(move.f!==0||move.r!==0){
-        let newPos=player.position.clone().addScaledVector(dir,speed);
-        if(!isColliding(newPos)){
-            player.position.x=newPos.x;
-            player.position.z=newPos.z;
-        }
+if(move.f!==0||move.r!==0){
+let newPos=player.position.clone().addScaledVector(dir,speed);
+if(!isColliding(newPos)){
+player.position.x=newPos.x;
+player.position.z=newPos.z;
+}
+walk+=0.25;
+armL.rotation.x=Math.sin(walk)*0.8;
+armR.rotation.x=-Math.sin(walk)*0.8;
+legL.rotation.x=-Math.sin(walk)*0.8;
+legR.rotation.x=Math.sin(walk)*0.8;
+}else{
+armL.rotation.x=armR.rotation.x=legL.rotation.x=legR.rotation.x=0;
+}
 
-        walk+=0.25;
-        armL.rotation.x=Math.sin(walk)*0.8;
-        armR.rotation.x=-Math.sin(walk)*0.8;
-        legL.rotation.x=-Math.sin(walk)*0.8;
-        legR.rotation.x=Math.sin(walk)*0.8;
-    } else {
-        armL.rotation.x=armR.rotation.x=legL.rotation.x=legR.rotation.x=0;
-    }
+/* Gravity */
+velocityY+=gravity;
+player.position.y+=velocityY;
+if(player.position.y<=0){
+player.position.y=0;
+velocityY=0;
+onGround=true;
+}
 
-    /* Gravity */
-    velocityY += gravity;
-    player.position.y += velocityY;
+player.rotation.y=yaw;
 
-    if(player.position.y <= 0){
-        player.position.y = 0;
-        velocityY = 0;
-        onGround = true;
-    }
+/* Camera Third Person */
+const camDist=6;
+const camHeight=3;
 
-    player.rotation.y = yaw;
+const camX=player.position.x - Math.sin(yaw)*camDist;
+const camZ=player.position.z - Math.cos(yaw)*camDist;
+const camY=player.position.y + camHeight + pitch*4;
 
-    /* Third Person Camera */
-    const camDistance = 6;
-    const camHeight = 3;
+camera.position.set(camX,camY,camZ);
+camera.lookAt(player.position.x,player.position.y+2,player.position.z);
 
-    const camX = player.position.x - Math.sin(yaw)*camDistance;
-    const camZ = player.position.z - Math.cos(yaw)*camDistance;
-    const camY = player.position.y + camHeight + pitch*5;
+/* Name always face camera */
+if(nameLabel){
+nameLabel.lookAt(camera.position);
+}
 
-    camera.position.set(camX,camY,camZ);
-    camera.lookAt(player.position.x,player.position.y+2,player.position.z);
-
-    renderer.render(scene,camera);
+renderer.render(scene,camera);
 }
 animate();
 
-/* ================= RESIZE ================= */
 onresize=()=>{
-    camera.aspect=innerWidth/innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth,innerHeight);
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+renderer.setSize(innerWidth,innerHeight);
 };
 
 </script>
