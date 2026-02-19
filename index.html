@@ -1,191 +1,193 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html>
 <head>
 <meta charset="UTF-8">
-<title>City Game Full</title>
+<title>City Engine Stable - Final</title>
 <style>
-body { margin:0; overflow:hidden; font-family:sans-serif; }
-#startScreen{
-  position:absolute;width:100%;height:100%;
-  background:#000000cc;display:flex;
-  flex-direction:column;justify-content:center;
-  align-items:center;color:white;z-index:10;
-}
-#joystick{
-  position:absolute;bottom:40px;left:40px;
-  width:140px;height:140px;
-  background:rgba(0,0,0,0.3);
-  touch-action:none;
-}
-#stick{
-  position:absolute;left:50px;top:50px;
-  width:40px;height:40px;
-  background:white;
-}
-#jumpBtn{
-  position:absolute;right:20px;bottom:40px;
-  width:70px;height:70px;
-  background:red;color:white;font-size:18px;border:none;border-radius:10px;
-}
-</style>
+body { margin:0; overflow:hidden; font-family:sans-serif; }#joystick{ position:absolute; bottom:40px; left:40px; width:140px; height:140px; background:rgba(0,0,0,0.3); border-radius:10%; touch-action:none; z-index:10; } #stick{ position:absolute; left:50px; top:50px; width:40px; height:40px; background:white; border-radius:10%; }
+
+#jumpBtn{ position:absolute; bottom:50px; right:40px; width:80px; height:80px; background:red; border:none; border-radius:10%; color:white; font-size:20px; z-index:10; }
+
+#nameScreen{ position:absolute; width:100%; height:100%; background:#000000cc; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; z-index:20; } </style>
+
 </head>
-<body>
+<body><div id="nameScreen">
+<h1>City Game</h1>
+<input id="nameInput" placeholder="Masukkan Nama..." style="padding:10px;font-size:18px;">
+<button onclick="startGame()" style="margin-top:10px;padding:10px;">Mulai</button>
+</div><div id="joystick"><div id="stick"></div></div>
+<button id="jumpBtn">JUMP</button><script src="https://cdn.jsdelivr.net/npm/three@0.158/build/three.min.js"></script><script>
 
-<div id="startScreen">
-  <h1>City Game</h1>
-  <input id="nameInput" placeholder="Masukkan Nama..." style="padding:10px;font-size:18px;">
-  <button onclick="startGame()" style="margin-top:10px;padding:10px;">Mulai</button>
-</div>
-
-<div id="joystick"><div id="stick"></div></div>
-<button id="jumpBtn">JUMP</button>
-
-<script src="https://cdn.jsdelivr.net/npm/three@0.158/build/three.min.js"></script>
-<script>
 // ===== SCENE =====
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xd0d0d0); // abu-abu terang
-const camera = new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,2000);
-const renderer = new THREE.WebGLRenderer({antialias:true});
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,2000);
+const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth,innerHeight);
 document.body.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xffffff,0x444444,1.2));
-const light=new THREE.DirectionalLight(0xffffff,1);
-light.position.set(50,100,50); scene.add(light);
 
 // ===== GROUND =====
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(1000,1000),
-  new THREE.MeshStandardMaterial({color:0x2e8b57})
+const ground=new THREE.Mesh(
+new THREE.PlaneGeometry(1000,1000),
+new THREE.MeshStandardMaterial({color:0x2e8b57})
 );
 ground.rotation.x=-Math.PI/2;
 scene.add(ground);
 
 // ===== PLAYER =====
-const player = new THREE.Group(); scene.add(player);
-player.position.set(0,1,0);
-const body = new THREE.Mesh(new THREE.BoxGeometry(0.7,1.6,0.4),
-  new THREE.MeshStandardMaterial({color:0x0099ff}));
-body.position.y=1.6; player.add(body);
-const head = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.6),
-  new THREE.MeshStandardMaterial({color:0xffcc99}));
-head.position.y=2.6; player.add(head);
-function limb(x,y){
-  const l=new THREE.Mesh(new THREE.BoxGeometry(0.25,1,0.25),
-    new THREE.MeshStandardMaterial({color:0x222222}));
-  l.position.set(x,y,0); player.add(l); return l;
-}
-const armL=limb(-0.6,1.8), armR=limb(0.6,1.8);
-const legL=limb(-0.25,0.5), legR=limb(0.25,0.5);
+const player=new THREE.Group();
+scene.add(player);
+player.position.set(0,0,0);
 
-// ===== NAME =====
+const body=new THREE.Mesh(
+new THREE.BoxGeometry(0.7,1.6,0.4),
+new THREE.MeshStandardMaterial({color:0x0099ff})
+);
+body.position.y=1.6;
+player.add(body);
+
+const head=new THREE.Mesh(
+new THREE.BoxGeometry(0.6,0.6,0.6),
+new THREE.MeshStandardMaterial({color:0xffcc99})
+);
+head.position.y=2.6;
+player.add(head);
+
+function limb(x,y){
+const l=new THREE.Mesh(
+new THREE.BoxGeometry(0.25,1,0.25),
+new THREE.MeshStandardMaterial({color:0x222222})
+);
+l.position.set(x,y,0);
+player.add(l);
+return l;
+}
+const armL=limb(-0.6,1.8);
+const armR=limb(0.6,1.8);
+const legL=limb(-0.25,0.5);
+const legR=limb(0.25,0.5);
+
+// ===== NAME LABEL =====
 let nameLabel=null;
 function createNameLabel(text){
-  const canvas=document.createElement("canvas");
-  canvas.width=256; canvas.height=64;
-  const ctx=canvas.getContext("2d");
-  ctx.fillStyle="white"; ctx.font="28px Arial"; ctx.textAlign="center";
-  ctx.fillText(text,128,40);
-  const texture=new THREE.CanvasTexture(canvas);
-  const material=new THREE.SpriteMaterial({map:texture});
-  const sprite=new THREE.Sprite(material);
-  sprite.scale.set(3,0.8,1); sprite.position.y=3.5;
-  player.add(sprite); return sprite;
+const canvas=document.createElement('canvas');
+const ctx=canvas.getContext('2d');
+canvas.width=256; canvas.height=64;
+ctx.fillStyle='white'; ctx.font='28px Arial'; ctx.textAlign='center';
+ctx.fillText(text,128,40);
+const texture=new THREE.CanvasTexture(canvas);
+const material=new THREE.SpriteMaterial({map:texture});
+const sprite=new THREE.Sprite(material);
+sprite.scale.set(3,0.8,1);
+sprite.position.y=3.5;
+player.add(sprite);
+return sprite;
 }
 function startGame(){
-  const name=document.getElementById("nameInput").value.trim();
-  if(name===""){ alert("Nama harus diisi!"); return; }
-  nameLabel=createNameLabel(name);
-  document.getElementById("startScreen").style.display="none";
+const name=document.getElementById('nameInput').value.trim();
+if(name===''){alert('Nama harus diisi!'); return;}
+nameLabel=createNameLabel(name);
+document.getElementById('nameScreen').style.display='none';
 }
 
 // ===== WORLD =====
-const obstacles=[]; 
-const colors=[0xff4d4d,0x4da6ff,0x4dff88,0xffff66,0xff66ff,0xff944d];
-for(let x=-120;x<=120;x+=15){
-  for(let z=-120;z<=120;z+=15){
-    if(Math.abs(x)<20 && Math.abs(z)<20) continue; // spawn kosong
-    const h=10+Math.random()*20;
-    const building=new THREE.Mesh(
-      new THREE.BoxGeometry(12,h,12),
-      new THREE.MeshStandardMaterial({color:colors[Math.floor(Math.random()*colors.length)]})
-    );
-    building.position.set(x,h/2,z); scene.add(building);
-    obstacles.push(new THREE.Box3().setFromObject(building));
-  }
+const obstacles=[];
+for(let i=0;i<150;i++){
+let x=(Math.random()-0.5)*400;
+let z=(Math.random()-0.5)*400;
+if(Math.abs(x)<20 && Math.abs(z)<20) continue;
+let h=10+Math.random()*30;
+const building=new THREE.Mesh(
+new THREE.BoxGeometry(12,h,12),
+new THREE.MeshStandardMaterial({color:new THREE.Color().setHSL(Math.random(),0.5,0.5)})
+);
+building.position.set(x,h/2,z);
+scene.add(building);
+obstacles.push(new THREE.Box3().setFromObject(building));
 }
 
 // ===== INPUT =====
-let moveX=0, moveZ=0, velocityY=0, onGround=true;
-const joy=document.getElementById("joystick");
-const stick=document.getElementById("stick");
-joy.addEventListener("touchmove",e=>{
-  const rect=joy.getBoundingClientRect();
-  let x=e.touches[0].clientX-rect.left-70;
-  let y=e.touches[0].clientY-rect.top-70;
-  const max=50;
-  x=Math.max(-max,Math.min(max,x)); y=Math.max(-max,Math.min(max,y));
-  moveX=x/max; moveZ=y/max;
-  stick.style.left=(x+50)+"px"; stick.style.top=(y+50)+"px";
+let move={f:0,r:0}; let sprint=false; let jumpActive=false;
+const jumpBtn=document.getElementById('jumpBtn');
+jumpBtn.addEventListener('click',()=>{jumpActive=true;});
+
+document.addEventListener('keydown',e=>{
+if(e.key==='w') move.f=1;if(e.key==='s') move.f=-1;
+if(e.key==='a') move.r=-1;if(e.key==='d') move.r=1;
+if(e.key==='Shift') sprint=true;
+if(e.key===' ') jumpActive=true;
 });
-joy.addEventListener("touchend",()=>{moveX=0; moveZ=0; stick.style.left="50px"; stick.style.top="50px";});
-document.getElementById("jumpBtn").addEventListener("click",()=>{if(onGround){velocityY=0.3; onGround=false;}});
+document.addEventListener('keyup',e=>{
+if(e.key==='w'||e.key==='s') move.f=0;
+if(e.key==='a'||e.key==='d') move.r=0;
+if(e.key==='Shift') sprint=false;
+});
 
 // ===== CAMERA =====
-let yaw=0,pitch=0;
-renderer.domElement.addEventListener("click",()=>{renderer.domElement.requestPointerLock();});
-document.addEventListener("mousemove",e=>{
-  if(document.pointerLockElement===renderer.domElement){
-    yaw-=e.movementX*0.002;
-    pitch-=e.movementY*0.002;
-    pitch=Math.max(-1,Math.min(1,pitch));
-  }
+let yaw=0; let pitch=0;
+renderer.domElement.addEventListener('click',()=>{renderer.domElement.requestPointerLock();});
+document.addEventListener('mousemove',e=>{
+if(document.pointerLockElement===renderer.domElement){
+yaw-=e.movementX*0.002; pitch-=e.movementY*0.002;
+pitch=Math.max(-1,Math.min(1,pitch));
+}
 });
+
+// ===== PHYSICS =====
+let velocityY=0; let onGround=true;
+function jump(){if(onGround){velocityY=0.3; onGround=false;}}
 
 // ===== COLLISION =====
 function isColliding(pos){
-  const box=new THREE.Box3(
-    new THREE.Vector3(pos.x-0.5,pos.y,pos.z-0.5),
-    new THREE.Vector3(pos.x+0.5,pos.y+3,pos.z+0.5)
-  );
-  return obstacles.some(o=>box.intersectsBox(o));
+const box=new THREE.Box3(new THREE.Vector3(pos.x-0.5,pos.y,pos.z-0.5), new THREE.Vector3(pos.x+0.5,pos.y+3,pos.z+0.5));
+return obstacles.some(o=>box.intersectsBox(o));
 }
+
+// ===== JOYSTICK =====
+const joy=document.getElementById('joystick'); const stick=document.getElementById('stick');
+let moveX=0,moveZ=0;
+joy.addEventListener('touchmove',e=>{
+const rect=joy.getBoundingClientRect();
+let x=e.touches[0].clientX-rect.left-60;
+let y=e.touches[0].clientY-rect.top-60;
+const max=50; x=Math.max(-max,Math.min(max,x)); y=Math.max(-max,Math.min(max,y));
+moveX=x/max; moveZ=y/max;
+stick.style.left=(x+60)+'px'; stick.style.top=(y+60)+'px';
+});
+joy.addEventListener('touchend',()=>{moveX=0; moveZ=0; stick.style.left='60px'; stick.style.top='60px';});
 
 // ===== ANIMATE =====
 let walk=0;
 function animate(){
-  requestAnimationFrame(animate);
-  const speed=0.2;
-  // arah joystick
-  let dir=new THREE.Vector3(
-    Math.sin(yaw)*(-moveZ)+Math.cos(yaw)*moveX,
-    0,
-    Math.cos(yaw)*(-moveZ)-Math.sin(yaw)*moveX
-  );
-  if(moveX!==0 || moveZ!==0){
-    let newPos=player.position.clone().addScaledVector(dir,speed);
-    if(!isColliding(newPos)){player.position.x=newPos.x; player.position.z=newPos.z;}
-    walk+=0.25;
-    armL.rotation.x=Math.sin(walk)*0.8; armR.rotation.x=-Math.sin(walk)*0.8;
-    legL.rotation.x=-Math.sin(walk)*0.8; legR.rotation.x=Math.sin(walk)*0.8;
-  }else{armL.rotation.x=armR.rotation.x=legL.rotation.x=legR.rotation.x=0;}
-  // gravity
-  velocityY-=0.015; player.position.y+=velocityY;
-  if(player.position.y<=0){player.position.y=0; velocityY=0; onGround=true;}
-  player.rotation.y=yaw;
-  // kamera bebas
-  const camDist=8;
-  camera.position.set(
-    player.position.x - Math.sin(yaw)*camDist,
-    player.position.y + 4 + pitch*3,
-    player.position.z - Math.cos(yaw)*camDist
-  );
-  camera.lookAt(player.position.x,player.position.y+2,player.position.z);
-  if(nameLabel) nameLabel.lookAt(camera.position);
-  renderer.render(scene,camera);
+requestAnimationFrame(animate);
+const speed=sprint?0.4:0.2;
+let dir=new THREE.Vector3(Math.sin(yaw)*move.f+Math.cos(yaw)*move.r,0,Math.cos(yaw)*move.f-Math.sin(yaw)*move.r);
+if(move.f!==0||move.r!==0||moveX!==0||moveZ!==0){
+let mx=moveX!==0?moveX:dir.x;
+let mz=moveZ!==0?moveZ:dir.z;
+let newPos=player.position.clone().addScaledVector(new THREE.Vector3(mx,0,mz),speed);
+if(!isColliding(newPos)) player.position.set(newPos.x,newPos.y,newPos.z);
+walk+=0.25;
+armL.rotation.x=Math.sin(walk)*0.8; armR.rotation.x=-Math.sin(walk)*0.8;
+legL.rotation.x=-Math.sin(walk)*0.8; legR.rotation.x=Math.sin(walk)*0.8;
+}else{armL.rotation.x=armR.rotation.x=legL.rotation.x=legR.rotation.x=0;}
+
+// gravity
+velocityY-=0.015; player.position.y+=velocityY;
+if(player.position.y<=0){player.position.y=0; velocityY=0; onGround=true;}
+if(jumpActive){jump(); jumpActive=false;}
+
+player.rotation.y=yaw;
+const camDist=6;
+camera.position.set(player.position.x-Math.sin(yaw)*camDist,player.position.y+3+pitch*4,player.position.z-Math.cos(yaw)*camDist);
+camera.lookAt(player.position.x,player.position.y+2,player.position.z);
+if(nameLabel) nameLabel.lookAt(camera.position);
+
+renderer.render(scene,camera);
 }
 animate();
-window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight);});
-</script>
-</body>
+
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight);});
+
+</script></body>
 </html>
