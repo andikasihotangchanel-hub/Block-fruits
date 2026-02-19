@@ -2,32 +2,52 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Roblox Mobile City</title>
+<title>City Engine Stable</title>
 <style>
 body { margin:0; overflow:hidden; font-family:sans-serif; }
+
 #startScreen{
-  position:absolute;
-  width:100%; height:100%;
-  background:#000000cc;
-  display:flex; flex-direction:column; justify-content:center; align-items:center;
-  color:white; z-index:10;
+position:absolute;
+width:100%;
+height:100%;
+background:#000000cc;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+color:white;
+z-index:10;
 }
+
 #joystick{
-  position:absolute; bottom:40px; left:40px;
-  width:140px; height:140px;
-  background:rgba(0,0,0,0.3);
-  touch-action:none;
+position:absolute;
+bottom:40px;
+left:40px;
+width:140px;
+height:140px;
+background:rgba(0,0,0,0.3);
+touch-action:none;
+display:flex;
+justify-content:center;
+align-items:center;
 }
+
 #stick{
-  position:absolute; left:50px; top:50px;
-  width:40px; height:40px;
-  background:white;
+width:50px;
+height:50px;
+background:white;
 }
 #jumpBtn{
-  position:fixed; right:20px; bottom:50px;
-  width:70px; height:70px;
-  background:red; color:white; font-size:18px;
-  border:none; border-radius:10px;
+position:absolute;
+right:40px;
+bottom:50px;
+width:70px;
+height:70px;
+background:red;
+color:white;
+font-size:18px;
+border:none;
+border-radius:10px;
 }
 </style>
 </head>
@@ -42,214 +62,241 @@ body { margin:0; overflow:hidden; font-family:sans-serif; }
 <div id="joystick"><div id="stick"></div></div>
 <button id="jumpBtn">JUMP</button>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/three@0.158/build/three.min.js"></script>
 <script>
-/* ================= SCENE ================= */
+
+/* ===== SCENE ===== */
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
-const camera = new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,2000);
+
+const camera = new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,3000);
 const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth,innerHeight);
 document.body.appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xffffff,0x444444,1.2));
 
-/* ================= GROUND ================= */
-const ground=new THREE.Mesh(
-  new THREE.PlaneGeometry(1000,1000),
-  new THREE.MeshStandardMaterial({color:0x2e8b57})
+/* ===== LIGHT ===== */
+const hemiLight = new THREE.HemisphereLight(0xffffff,0x444444,1.2);
+scene.add(hemiLight);
+const dirLight = new THREE.DirectionalLight(0xffffff,1);
+dirLight.position.set(50,100,50);
+scene.add(dirLight);
+
+/* ===== GROUND ===== */
+const ground = new THREE.Mesh(
+new THREE.PlaneGeometry(1000,1000),
+new THREE.MeshStandardMaterial({color:0x2e8b57})
 );
 ground.rotation.x=-Math.PI/2;
 scene.add(ground);
 
-/* ================= PLAYER ================= */
+/* ===== PLAYER ===== */
 const player=new THREE.Group();
 scene.add(player);
-player.position.set(0,0,0);
+player.position.set(0,1,0); // spawn aman
 
-const body=new THREE.Mesh(new THREE.BoxGeometry(0.7,1.6,0.4), new THREE.MeshStandardMaterial({color:0x0099ff}));
-body.position.y=1.6; player.add(body);
+// Tubuh
+const body=new THREE.Mesh(
+new THREE.BoxGeometry(0.7,1.6,0.4),
+new THREE.MeshStandardMaterial({color:0x0099ff})
+);
+body.position.y=1.6;
+player.add(body);
 
-const head=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.6), new THREE.MeshStandardMaterial({color:0xffcc99}));
-head.position.y=2.6; player.add(head);
+// Kepala
+const head=new THREE.Mesh(
+new THREE.BoxGeometry(0.6,0.6,0.6),
+new THREE.MeshStandardMaterial({color:0xffcc99})
+);
+head.position.y=2.6;
+player.add(head);
 
-/* ===== TANGAN KAKI ===== */
-function limb(x,y){ const l=new THREE.Mesh(new THREE.BoxGeometry(0.25,1,0.25), new THREE.MeshStandardMaterial({color:0x222222}));
-l.position.set(x,y,0); player.add(l); return l; }
-const armL=limb(-0.6,1.8); const armR=limb(0.6,1.8);
-const legL=limb(-0.25,0.5); const legR=limb(0.25,0.5);
+// Tangan dan kaki
+function limb(x,y){ 
+  const l=new THREE.Mesh(new THREE.BoxGeometry(0.25,1,0.25),new THREE.MeshStandardMaterial({color:0x222222}));
+  l.position.set(x,y,0);
+  player.add(l);
+  return l;
+}
+const armL=limb(-0.6,1.8);
+const armR=limb(0.6,1.8);
+const legL=limb(-0.25,0.5);
+const legR=limb(0.25,0.5);
 
-/* ================= NAME LABEL ================= */
+/* ===== NAME LABEL ===== */
 let nameLabel=null;
 function createNameLabel(text){
-const canvas=document.createElement("canvas");
-const ctx=canvas.getContext("2d"); canvas.width=256; canvas.height=64;
-ctx.fillStyle="white"; ctx.font="28px Arial"; ctx.textAlign="center";
-ctx.fillText(text,128,40);
-const texture=new THREE.CanvasTexture(canvas);
-const material=new THREE.SpriteMaterial({map:texture});
-const sprite=new THREE.Sprite(material);
-sprite.scale.set(3,0.8,1); sprite.position.y=3.5; player.add(sprite);
-return sprite;
+  const canvas=document.createElement("canvas");
+  const ctx=canvas.getContext("2d");
+  canvas.width=256; canvas.height=64;
+  ctx.fillStyle="white"; ctx.font="28px Arial"; ctx.textAlign="center";
+  ctx.fillText(text,128,40);
+  const texture=new THREE.CanvasTexture(canvas);
+  const material=new THREE.SpriteMaterial({map:texture});
+  const sprite=new THREE.Sprite(material);
+  sprite.scale.set(3,0.8,1);
+  sprite.position.y=3.5;
+  player.add(sprite);
+  return sprite;
 }
+
 function startGame(){
-const name=document.getElementById("nameInput").value.trim();
-if(name===""){ alert("Nama harus diisi!"); return; }
-nameLabel=createNameLabel(name);
-document.getElementById("startScreen").style.display="none";
+  const name=document.getElementById("nameInput").value.trim();
+  if(!name){ alert("Nama harus diisi!"); return; }
+  nameLabel=createNameLabel(name);
+  document.getElementById("startScreen").style.display="none";
 }
 
-/* ================= WORLD & HOUSES ================= */
-const obstacles=[]; // semua bangunan
-const houses=[];   // rumah untuk masuk
+/* ===== WORLD BUILDINGS ===== */
+const obstacles=[];
+const buildingColors=[0xff4d4d,0x4da6ff,0x4dff88,0xffff66,0xff66ff,0xff944d];
 
-for(let i=-120;i<=120;i+=18){ // grid rumah
-for(let j=-120;j<=120;j+=18){
-  if(Math.abs(i)<20 && Math.abs(j)<20) continue; // area spawn kosong
-  const color=new THREE.Color().setHSL(Math.random(),0.5,0.5);
-  const house=new THREE.Mesh(new THREE.BoxGeometry(14,12,14), new THREE.MeshStandardMaterial({color}));
-  house.position.set(i,6,j); scene.add(house); houses.push(house);
-  obstacles.push(new THREE.Box3().setFromObject(house));
+// Bangunan rapi, ada jalan 5cm
+for(let x=-120;x<=120;x+=17){
+  for(let z=-120;z<=120;z+=17){
+    const h=10+Math.random()*15;
+    const building=new THREE.Mesh(
+      new THREE.BoxGeometry(14,h,14),
+      new THREE.MeshStandardMaterial({color:buildingColors[Math.floor(Math.random()*buildingColors.length)]})
+    );
+    building.position.set(x,h/2,z);
+    scene.add(building);
+    obstacles.push(new THREE.Box3().setFromObject(building));
+  }
 }
+
+/* ===== INTERIOR RUMAH ===== */
+const interiors=[];
+function createHouse(x,z){
+  const house=new THREE.Group();
+  const walls=new THREE.Mesh(new THREE.BoxGeometry(20,12,20),new THREE.MeshStandardMaterial({color:0xffffff,side:THREE.BackSide}));
+  walls.position.y=6;
+  house.add(walls);
+  house.position.set(x,0,z);
+  scene.add(house);
+  interiors.push(house);
 }
+createHouse(30,30);
+createHouse(-30,30);
 
-/* ================= INTERIOR ================= */
-const interior=new THREE.Group();
-interior.visible=false; scene.add(interior);
+/* ===== INPUT ===== */
+let move={f:0,r:0};
+let sprint=false;
 
-const walls=new THREE.Mesh(new THREE.BoxGeometry(20,12,20), new THREE.MeshStandardMaterial({color:0xffffff, side:THREE.BackSide}));
-interior.add(walls);
-
-const floor=new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.MeshStandardMaterial({color:0xdddddd}));
-floor.rotation.x=-Math.PI/2; floor.position.y=-6;
-interior.add(floor);
-
-/* ================= INPUT ================= */
-let move={f:0,r:0}; let sprint=false;
 document.addEventListener("keydown",e=>{
-if(e.key==="w") move.f=1;if(e.key==="s") move.f=-1;
-if(e.key==="a") move.r=-1;if(e.key==="d") move.r=1;
-if(e.key==="Shift") sprint=true; if(e.key===" ") jump();
+if(e.key==="w") move.f=1;
+if(e.key==="s") move.f=-1;
+if(e.key==="a") move.r=-1;
+if(e.key==="d") move.r=1;
+if(e.key==="Shift") sprint=true;
+if(e.key===" ") jump();
 });
 document.addEventListener("keyup",e=>{
-if(e.key==="w"||e.key==="s") move.f=0;
-if(e.key==="a"||e.key==="d") move.r=0;
+if(["w","s"].includes(e.key)) move.f=0;
+if(["a","d"].includes(e.key)) move.r=0;
 if(e.key==="Shift") sprint=false;
 });
 
-/* ================= CAMERA ================= */
-let yaw=0,pitch=0;
-
-// PC mouse
-renderer.domElement.addEventListener("click",()=>{renderer.domElement.requestPointerLock();});
+/* ===== CAMERA CONTROL ===== */
+let yaw=0, pitch=0;
+renderer.domElement.addEventListener("click",()=>renderer.domElement.requestPointerLock());
 document.addEventListener("mousemove",e=>{
 if(document.pointerLockElement===renderer.domElement){
-yaw-=e.movementX*0.002;
-pitch-=e.movementY*0.002;
-pitch=Math.max(-1.2,Math.min(1.2,pitch));
+  yaw-=e.movementX*0.002;
+  pitch-=e.movementY*0.002;
+  pitch=Math.max(-1,Math.min(1,pitch));
 }
 });
 
-// HP touch
-let lastTouchX=0,lastTouchY=0;
-document.addEventListener("touchstart",e=>{
-if(e.touches.length===1){ lastTouchX=e.touches[0].clientX; lastTouchY=e.touches[0].clientY; }
-});
-document.addEventListener("touchmove",e=>{
-if(e.touches.length===1){
-let dx=e.touches[0].clientX-lastTouchX;
-let dy=e.touches[0].clientY-lastTouchY;
-yaw-=dx*0.005; pitch-=dy*0.005; pitch=Math.max(-1.2,Math.min(1.2,pitch));
-lastTouchX=e.touches[0].clientX; lastTouchY=e.touches[0].clientY;
-}
-});
+/* ===== PHYSICS ===== */
+let velocityY=0, onGround=true;
+function jump(){ if(onGround){ velocityY=0.3; onGround=false; } }
 
-/* ================= JOYSTICK ================= */
-const joy=document.getElementById("joystick"); const stick=document.getElementById("stick");
-let moveX=0,moveZ=0;
+/* ===== COLLISION ===== */
+function isColliding(pos){
+  const box=new THREE.Box3(new THREE.Vector3(pos.x-0.5,pos.y,pos.z-0.5),new THREE.Vector3(pos.x+0.5,pos.y+3,pos.z+0.5));
+  return obstacles.some(o=>box.intersectsBox(o));
+}
+
+/* ===== JOYSTICK ===== */
+const joy=document.getElementById("joystick");
+const stick=document.getElementById("stick");
+let moveX=0, moveZ=0;
 
 joy.addEventListener("touchmove",e=>{
-const rect=joy.getBoundingClientRect();
-let x=e.touches[0].clientX-rect.left-70;
-let y=e.touches[0].clientY-rect.top-70;
-const max=50; x=Math.max(-max,Math.min(max,x)); y=Math.max(-max,Math.min(max,y));
-moveX=x/max; moveZ=y/max;
-stick.style.left=(x+70)+"px"; stick.style.top=(y+70)+"px";
+  const rect=joy.getBoundingClientRect();
+  let x=e.touches[0].clientX-rect.left-70;
+  let y=e.touches[0].clientY-rect.top-70;
+  const max=45;
+  x=Math.max(-max,Math.min(max,x));
+  y=Math.max(-max,Math.min(max,y));
+  moveX=x/max;
+  moveZ=y/max;
+  stick.style.left=(x+70)+"px";
+  stick.style.top=(y+70)+"px";
 });
-joy.addEventListener("touchend",()=>{moveX=0; moveZ=0; stick.style.left="70px"; stick.style.top="70px";});
+joy.addEventListener("touchend",()=>{ moveX=0; moveZ=0; stick.style.left="70px"; stick.style.top="70px"; });
 
-/* ================= JUMP ================= */
-let velocityY=0; const gravity=-0.015; let onGround=true;
-document.getElementById("jumpBtn").onclick=()=>{jump();};
-function jump(){if(onGround){velocityY=0.35; onGround=false;}}
+document.getElementById("jumpBtn").onclick=jump;
 
-/* ================= MASUK RUMAH ================= */
-let insideHouse=false;
-function checkHouseEnter(){
-houses.forEach(h=>{
-const dist=player.position.distanceTo(h.position);
-if(dist<8 && !insideHouse){
-insideHouse=true;
-interior.position.copy(h.position);
-interior.visible=true;
-velocityY=0;
-player.position.set(h.position.x,h.position.y-6,h.position.z);
-}
-});
-}
-function exitHouse(){ if(insideHouse){ insideHouse=false; interior.visible=false; player.position.y=0; velocityY=0; } }
-
-/* ================= LOOP ================= */
+/* ===== LOOP ===== */
 let walk=0;
 function animate(){
-requestAnimationFrame(animate);
+  requestAnimationFrame(animate);
 
-const speed=sprint?0.4:0.2;
+  const speed=sprint?0.4:0.2;
 
-// joystick movement
-let dir=new THREE.Vector3();
-dir.x=Math.sin(yaw)*(-moveZ) + Math.cos(yaw)*moveX;
-dir.z=Math.cos(yaw)*(-moveZ) - Math.sin(yaw)*moveX;
+  // Gerak player sesuai kamera dan joystick
+  let dir=new THREE.Vector3();
+  dir.x = Math.sin(yaw)*(-move.f) + Math.cos(yaw)*moveX;
+  dir.z = Math.cos(yaw)*(-move.f) - Math.sin(yaw)*moveX;
 
-if(move.f!==0||move.r!==0||moveX!==0||moveZ!==0){
-let newPos=player.position.clone().addScaledVector(dir,speed);
-if(!obstacles.some(o=>new THREE.Box3().setFromObject(player).intersectsBox(o))){
-player.position.x=newPos.x; player.position.z=newPos.z;
-walk+=0.25;
-armL.rotation.x=Math.sin(walk)*0.8; armR.rotation.x=-Math.sin(walk)*0.8;
-legL.rotation.x=-Math.sin(walk)*0.8; legR.rotation.x=Math.sin(walk)*0.8;
-}else{ armL.rotation.x=armR.rotation.x=legL.rotation.x=legR.rotation.x=0; }
-}else{ armL.rotation.x=armR.rotation.x=legL.rotation.x=legR.rotation.x=0; }
+  if(move.f!==0||move.r!==0||moveX!==0||moveZ!==0){
+    let newPos=player.position.clone().addScaledVector(dir,speed);
+    if(!isColliding(newPos)){
+      player.position.x=newPos.x;
+      player.position.z=newPos.z;
+    }
+    walk+=0.25;
+    armL.rotation.x=Math.sin(walk)*0.8;
+    armR.rotation.x=-Math.sin(walk)*0.8;
+    legL.rotation.x=-Math.sin(walk)*0.8;
+    legR.rotation.x=Math.sin(walk)*0.8;
+  } else {
+    armL.rotation.x=armR.rotation.x=legL.rotation.x=legR.rotation.x=0;
+  }
 
-/* gravity */
-velocityY+=gravity; player.position.y+=velocityY;
-if(player.position.y<=0){ player.position.y=0; velocityY=0; onGround=true; }
+  // Gravity
+  velocityY+=-0.015;
+  player.position.y+=velocityY;
+  if(player.position.y<=1){
+    player.position.y=1;
+    velocityY=0;
+    onGround=true;
+  }
 
-player.rotation.y=yaw;
+  player.rotation.y=yaw;
 
-/* camera */
-const camDist=6;
-camera.position.set(
-player.position.x - Math.sin(yaw)*camDist,
-player.position.y + 3 + pitch*4,
-player.position.z - Math.cos(yaw)*camDist
-);
-camera.lookAt(player.position.x,player.position.y+2,player.position.z);
-if(nameLabel) nameLabel.lookAt(camera.position);
+  // Kamera bebas
+  const camDist=10;
+  camera.position.set(
+    player.position.x - Math.sin(yaw)*camDist,
+    player.position.y + 3 + pitch*4,
+    player.position.z - Math.cos(yaw)*camDist
+  );
+  camera.lookAt(player.position.x,player.position.y+2,player.position.z);
 
-checkHouseEnter();
+  if(nameLabel) nameLabel.lookAt(camera.position);
 
-if(isJump && insideHouse) exitHouse();
-
-renderer.render(scene,camera);
+  renderer.render(scene,camera);
 }
 animate();
 
-onresize=()=>{
-camera.aspect=innerWidth/innerHeight;
-camera.updateProjectionMatrix();
-renderer.setSize(innerWidth,innerHeight);
-};
+window.addEventListener("resize",()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+
 </script>
 </body>
 </html>
