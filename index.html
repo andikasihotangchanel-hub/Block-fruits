@@ -2,54 +2,32 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>City Engine Stable</title>
+<title>Roblox Mobile City</title>
 <style>
 body { margin:0; overflow:hidden; font-family:sans-serif; }
-
 #startScreen{
-position:absolute;
-width:100%;
-height:100%;
-background:#000000cc;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-color:white;
-z-index:10;
+  position:absolute;
+  width:100%; height:100%;
+  background:#000000cc;
+  display:flex; flex-direction:column; justify-content:center; align-items:center;
+  color:white; z-index:10;
 }
-
 #joystick{
-position:absolute;
-bottom:40px;
-left:40px;
-width:120px;
-height:120px;
-background:rgba(0,0,0,0.3);
-border-radius:50%;
-touch-action:none;
+  position:absolute; bottom:40px; left:40px;
+  width:140px; height:140px;
+  background:rgba(0,0,0,0.3);
+  touch-action:none;
 }
-
 #stick{
-position:absolute;
-left:40px;
-top:40px;
-width:40px;
-height:40px;
-background:white;
-border-radius:50%;
+  position:absolute; left:50px; top:50px;
+  width:40px; height:40px;
+  background:white;
 }
-
 #jumpBtn{
-position:absolute;
-bottom:60px;
-right:60px;
-width:80px;
-height:80px;
-border-radius:50%;
-border:none;
-background:rgba(255,255,255,0.7);
-font-size:18px;
+  position:fixed; right:20px; bottom:50px;
+  width:70px; height:70px;
+  background:red; color:white; font-size:18px;
+  border:none; border-radius:10px;
 }
 </style>
 </head>
@@ -64,236 +42,192 @@ font-size:18px;
 <div id="joystick"><div id="stick"></div></div>
 <button id="jumpBtn">JUMP</button>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.158/build/three.min.js"></script>
-<script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 
-/* ===== BASIC ===== */
+<script>
+/* ================= SCENE ================= */
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
-
 const camera = new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,2000);
 const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth,innerHeight);
 document.body.appendChild(renderer.domElement);
-
 scene.add(new THREE.HemisphereLight(0xffffff,0x444444,1.2));
 
-/* ===== GROUND ===== */
-const ground = new THREE.Mesh(
-new THREE.PlaneGeometry(1000,1000),
-new THREE.MeshStandardMaterial({color:0x2e8b57})
+/* ================= GROUND ================= */
+const ground=new THREE.Mesh(
+  new THREE.PlaneGeometry(1000,1000),
+  new THREE.MeshStandardMaterial({color:0x2e8b57})
 );
 ground.rotation.x=-Math.PI/2;
 scene.add(ground);
 
-/* ===== PLAYER ===== */
+/* ================= PLAYER ================= */
 const player=new THREE.Group();
 scene.add(player);
+player.position.set(0,0,0);
 
-const body=new THREE.Mesh(
-new THREE.BoxGeometry(0.7,1.6,0.4),
-new THREE.MeshStandardMaterial({color:0x0099ff})
-);
-body.position.y=1.6;
-player.add(body);
+const body=new THREE.Mesh(new THREE.BoxGeometry(0.7,1.6,0.4), new THREE.MeshStandardMaterial({color:0x0099ff}));
+body.position.y=1.6; player.add(body);
 
-const head=new THREE.Mesh(
-new THREE.BoxGeometry(0.6,0.6,0.6),
-new THREE.MeshStandardMaterial({color:0xffcc99})
-);
-head.position.y=2.6;
-player.add(head);
+const head=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.6), new THREE.MeshStandardMaterial({color:0xffcc99}));
+head.position.y=2.6; player.add(head);
 
-function limb(x,y){
-const l=new THREE.Mesh(
-new THREE.BoxGeometry(0.25,1,0.25),
-new THREE.MeshStandardMaterial({color:0x222222})
-);
-l.position.set(x,y,0);
-player.add(l);
-return l;
-}
+/* ===== TANGAN KAKI ===== */
+function limb(x,y){ const l=new THREE.Mesh(new THREE.BoxGeometry(0.25,1,0.25), new THREE.MeshStandardMaterial({color:0x222222}));
+l.position.set(x,y,0); player.add(l); return l; }
+const armL=limb(-0.6,1.8); const armR=limb(0.6,1.8);
+const legL=limb(-0.25,0.5); const legR=limb(0.25,0.5);
 
-const armL=limb(-0.6,1.8);
-const armR=limb(0.6,1.8);
-const legL=limb(-0.25,0.5);
-const legR=limb(0.25,0.5);
-
-/* ===== NAME ===== */
+/* ================= NAME LABEL ================= */
 let nameLabel=null;
-let gameStarted=false;
-
 function createNameLabel(text){
 const canvas=document.createElement("canvas");
-const ctx=canvas.getContext("2d");
-canvas.width=256;
-canvas.height=64;
-ctx.fillStyle="white";
-ctx.font="28px Arial";
-ctx.textAlign="center";
+const ctx=canvas.getContext("2d"); canvas.width=256; canvas.height=64;
+ctx.fillStyle="white"; ctx.font="28px Arial"; ctx.textAlign="center";
 ctx.fillText(text,128,40);
 const texture=new THREE.CanvasTexture(canvas);
 const material=new THREE.SpriteMaterial({map:texture});
 const sprite=new THREE.Sprite(material);
-sprite.scale.set(3,0.8,1);
-sprite.position.y=3.5;
-player.add(sprite);
+sprite.scale.set(3,0.8,1); sprite.position.y=3.5; player.add(sprite);
 return sprite;
 }
-
 function startGame(){
 const name=document.getElementById("nameInput").value.trim();
 if(name===""){ alert("Nama harus diisi!"); return; }
 nameLabel=createNameLabel(name);
 document.getElementById("startScreen").style.display="none";
-gameStarted=true;
-renderer.domElement.requestPointerLock();
 }
 
-/* ===== WORLD ===== */
-const obstacles=[];
-for(let i=0;i<150;i++){
-const x=(Math.random()-0.5)*400;
-const z=(Math.random()-0.5)*400;
-if(Math.abs(x)<20 && Math.abs(z)<20) continue;
+/* ================= WORLD & HOUSES ================= */
+const obstacles=[]; // semua bangunan
+const houses=[];   // rumah untuk masuk
 
-const h=10+Math.random()*30;
-const building=new THREE.Mesh(
-new THREE.BoxGeometry(12,h,12),
-new THREE.MeshStandardMaterial({
-color:new THREE.Color().setHSL(Math.random(),0.6,0.5),
-roughness:0.6,
-metalness:0.2
-})
-);
-building.position.set(x,h/2,z);
-scene.add(building);
-obstacles.push(new THREE.Box3().setFromObject(building));
+for(let i=-120;i<=120;i+=18){ // grid rumah
+for(let j=-120;j<=120;j+=18){
+  if(Math.abs(i)<20 && Math.abs(j)<20) continue; // area spawn kosong
+  const color=new THREE.Color().setHSL(Math.random(),0.5,0.5);
+  const house=new THREE.Mesh(new THREE.BoxGeometry(14,12,14), new THREE.MeshStandardMaterial({color}));
+  house.position.set(i,6,j); scene.add(house); houses.push(house);
+  obstacles.push(new THREE.Box3().setFromObject(house));
+}
 }
 
-/* ===== INPUT ===== */
-let move={f:0,r:0};
-let sprint=false;
+/* ================= INTERIOR ================= */
+const interior=new THREE.Group();
+interior.visible=false; scene.add(interior);
 
+const walls=new THREE.Mesh(new THREE.BoxGeometry(20,12,20), new THREE.MeshStandardMaterial({color:0xffffff, side:THREE.BackSide}));
+interior.add(walls);
+
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(20,20), new THREE.MeshStandardMaterial({color:0xdddddd}));
+floor.rotation.x=-Math.PI/2; floor.position.y=-6;
+interior.add(floor);
+
+/* ================= INPUT ================= */
+let move={f:0,r:0}; let sprint=false;
 document.addEventListener("keydown",e=>{
-if(!gameStarted) return;
-const key=e.key.toLowerCase();
-if(key==="w") move.f=1;
-if(key==="s") move.f=-1;
-if(key==="a") move.r=-1;
-if(key==="d") move.r=1;
-if(e.key==="Shift") sprint=true;
-if(e.code==="Space") jump();
+if(e.key==="w") move.f=1;if(e.key==="s") move.f=-1;
+if(e.key==="a") move.r=-1;if(e.key==="d") move.r=1;
+if(e.key==="Shift") sprint=true; if(e.key===" ") jump();
 });
-
 document.addEventListener("keyup",e=>{
-const key=e.key.toLowerCase();
-if(key==="w"||key==="s") move.f=0;
-if(key==="a"||key==="d") move.r=0;
+if(e.key==="w"||e.key==="s") move.f=0;
+if(e.key==="a"||e.key==="d") move.r=0;
 if(e.key==="Shift") sprint=false;
 });
 
-/* ===== JOYSTICK MOBILE ===== */
-const joystick=document.getElementById("joystick");
-const stick=document.getElementById("stick");
+/* ================= CAMERA ================= */
+let yaw=0,pitch=0;
 
-joystick.addEventListener("touchmove",e=>{
-const rect=joystick.getBoundingClientRect();
-const touch=e.touches[0];
-let x=touch.clientX-rect.left-60;
-let y=touch.clientY-rect.top-60;
-
-const max=40;
-x=Math.max(-max,Math.min(max,x));
-y=Math.max(-max,Math.min(max,y));
-
-stick.style.left=(60+x-20)+"px";
-stick.style.top=(60+y-20)+"px";
-
-move.f= -y/40;
-move.r= x/40;
-});
-
-joystick.addEventListener("touchend",()=>{
-stick.style.left="40px";
-stick.style.top="40px";
-move.f=0;
-move.r=0;
-});
-
-/* ===== JUMP BUTTON ===== */
-document.getElementById("jumpBtn").addEventListener("click",jump);
-
-/* ===== CAMERA ===== */
-let yaw=0;
-let pitch=0;
-
+// PC mouse
+renderer.domElement.addEventListener("click",()=>{renderer.domElement.requestPointerLock();});
 document.addEventListener("mousemove",e=>{
 if(document.pointerLockElement===renderer.domElement){
 yaw-=e.movementX*0.002;
 pitch-=e.movementY*0.002;
-pitch=Math.max(-1,Math.min(1,pitch));
+pitch=Math.max(-1.2,Math.min(1.2,pitch));
 }
 });
 
-/* ===== PHYSICS ===== */
-let velocityY=0;
-const gravity=-0.015;
-let onGround=true;
-
-function jump(){
-if(onGround){
-velocityY=0.3;
-onGround=false;
+// HP touch
+let lastTouchX=0,lastTouchY=0;
+document.addEventListener("touchstart",e=>{
+if(e.touches.length===1){ lastTouchX=e.touches[0].clientX; lastTouchY=e.touches[0].clientY; }
+});
+document.addEventListener("touchmove",e=>{
+if(e.touches.length===1){
+let dx=e.touches[0].clientX-lastTouchX;
+let dy=e.touches[0].clientY-lastTouchY;
+yaw-=dx*0.005; pitch-=dy*0.005; pitch=Math.max(-1.2,Math.min(1.2,pitch));
+lastTouchX=e.touches[0].clientX; lastTouchY=e.touches[0].clientY;
 }
-}
+});
 
-/* ===== COLLISION ===== */
-function isColliding(pos){
-const box=new THREE.Box3(
-new THREE.Vector3(pos.x-0.5,pos.y,pos.z-0.5),
-new THREE.Vector3(pos.x+0.5,pos.y+3,pos.z+0.5)
-);
-return obstacles.some(o=>box.intersectsBox(o));
-}
+/* ================= JOYSTICK ================= */
+const joy=document.getElementById("joystick"); const stick=document.getElementById("stick");
+let moveX=0,moveZ=0;
 
-/* ===== LOOP ===== */
+joy.addEventListener("touchmove",e=>{
+const rect=joy.getBoundingClientRect();
+let x=e.touches[0].clientX-rect.left-70;
+let y=e.touches[0].clientY-rect.top-70;
+const max=50; x=Math.max(-max,Math.min(max,x)); y=Math.max(-max,Math.min(max,y));
+moveX=x/max; moveZ=y/max;
+stick.style.left=(x+70)+"px"; stick.style.top=(y+70)+"px";
+});
+joy.addEventListener("touchend",()=>{moveX=0; moveZ=0; stick.style.left="70px"; stick.style.top="70px";});
+
+/* ================= JUMP ================= */
+let velocityY=0; const gravity=-0.015; let onGround=true;
+document.getElementById("jumpBtn").onclick=()=>{jump();};
+function jump(){if(onGround){velocityY=0.35; onGround=false;}}
+
+/* ================= MASUK RUMAH ================= */
+let insideHouse=false;
+function checkHouseEnter(){
+houses.forEach(h=>{
+const dist=player.position.distanceTo(h.position);
+if(dist<8 && !insideHouse){
+insideHouse=true;
+interior.position.copy(h.position);
+interior.visible=true;
+velocityY=0;
+player.position.set(h.position.x,h.position.y-6,h.position.z);
+}
+});
+}
+function exitHouse(){ if(insideHouse){ insideHouse=false; interior.visible=false; player.position.y=0; velocityY=0; } }
+
+/* ================= LOOP ================= */
 let walk=0;
-
 function animate(){
 requestAnimationFrame(animate);
 
 const speed=sprint?0.4:0.2;
+
+// joystick movement
 let dir=new THREE.Vector3();
-dir.x=Math.sin(yaw)*move.f + Math.cos(yaw)*move.r;
-dir.z=Math.cos(yaw)*move.f - Math.sin(yaw)*move.r;
+dir.x=Math.sin(yaw)*(-moveZ) + Math.cos(yaw)*moveX;
+dir.z=Math.cos(yaw)*(-moveZ) - Math.sin(yaw)*moveX;
 
-if(move.f!==0||move.r!==0){
+if(move.f!==0||move.r!==0||moveX!==0||moveZ!==0){
 let newPos=player.position.clone().addScaledVector(dir,speed);
-if(!isColliding(newPos)){
-player.position.x=newPos.x;
-player.position.z=newPos.z;
-}
-
+if(!obstacles.some(o=>new THREE.Box3().setFromObject(player).intersectsBox(o))){
+player.position.x=newPos.x; player.position.z=newPos.z;
 walk+=0.25;
-armL.rotation.x=Math.sin(walk)*0.8;
-armR.rotation.x=-Math.sin(walk)*0.8;
-legL.rotation.x=-Math.sin(walk)*0.8;
-legR.rotation.x=Math.sin(walk)*0.8;
-}else{
-armL.rotation.x=armR.rotation.x=legL.rotation.x=legR.rotation.x=0;
-}
+armL.rotation.x=Math.sin(walk)*0.8; armR.rotation.x=-Math.sin(walk)*0.8;
+legL.rotation.x=-Math.sin(walk)*0.8; legR.rotation.x=Math.sin(walk)*0.8;
+}else{ armL.rotation.x=armR.rotation.x=legL.rotation.x=legR.rotation.x=0; }
+}else{ armL.rotation.x=armR.rotation.x=legL.rotation.x=legR.rotation.x=0; }
 
-velocityY+=gravity;
-player.position.y+=velocityY;
-if(player.position.y<=0){
-player.position.y=0;
-velocityY=0;
-onGround=true;
-}
+/* gravity */
+velocityY+=gravity; player.position.y+=velocityY;
+if(player.position.y<=0){ player.position.y=0; velocityY=0; onGround=true; }
 
 player.rotation.y=yaw;
 
+/* camera */
 const camDist=6;
 camera.position.set(
 player.position.x - Math.sin(yaw)*camDist,
@@ -301,8 +235,11 @@ player.position.y + 3 + pitch*4,
 player.position.z - Math.cos(yaw)*camDist
 );
 camera.lookAt(player.position.x,player.position.y+2,player.position.z);
-
 if(nameLabel) nameLabel.lookAt(camera.position);
+
+checkHouseEnter();
+
+if(isJump && insideHouse) exitHouse();
 
 renderer.render(scene,camera);
 }
@@ -313,7 +250,6 @@ camera.aspect=innerWidth/innerHeight;
 camera.updateProjectionMatrix();
 renderer.setSize(innerWidth,innerHeight);
 };
-
 </script>
 </body>
 </html>
