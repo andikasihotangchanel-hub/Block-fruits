@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Game Kota Final Stabil</title>
+<title>Game Kota Final 100%</title>
 <style>
 body{margin:0;overflow:hidden;background:#87CEEB;font-family:Arial}
 canvas{display:block}
@@ -67,10 +67,10 @@ speed:0.05,
 turnSpeed:0.02
 };
 
-/* CAMERA */
+/* CAMERA (lebih lembut & natural) */
 let camera={
 angle:0,
-followSpeed:0.08
+smooth:0.04
 };
 
 /* JOYSTICK */
@@ -98,25 +98,29 @@ stick.style.left=(30+x)+"px";
 stick.style.top=(30+y)+"px";
 });
 
+/* WARNA RUMAH */
+let colors=["#FF5733","#33C1FF","#8D33FF","#33FF57","#FFC300","#FF33A8"];
+
 /* BANGUNAN */
 let houses=[];
-for(let i=0;i<50;i++){
+for(let i=0;i<60;i++){
 houses.push({
-x:(Math.random()-0.5)*150,
-y:Math.random()*250+30
+x:(Math.random()-0.5)*180,
+y:Math.random()*300+30,
+color:colors[Math.floor(Math.random()*colors.length)]
 });
 }
 
 /* UPDATE */
 function update(){
 
-// belok badan halus
+// belok badan
 player.angle += joyX * player.turnSpeed;
 
-// kamera ikut natural
-camera.angle += (player.angle - camera.angle) * camera.followSpeed;
+// kamera lebih lembut
+camera.angle += (player.angle - camera.angle) * camera.smooth;
 
-// maju mundur pelan
+// maju mundur
 let move = -joyY * player.speed;
 
 player.x += Math.sin(player.angle) * move;
@@ -129,14 +133,12 @@ function draw(){
 ctx.fillStyle="#87CEEB";
 ctx.fillRect(0,0,canvas.width,canvas.height);
 
-// jalan hijau
 ctx.fillStyle="#228B22";
 ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2);
 
 ctx.save();
 ctx.translate(canvas.width/2,canvas.height/2);
 
-/* render bangunan (SUDAH DIPERKECIL) */
 houses.forEach(h=>{
 let dx=h.x-player.x;
 let dy=h.y-player.y;
@@ -145,10 +147,10 @@ let rx=dx*Math.cos(-camera.angle)-dy*Math.sin(-camera.angle);
 let ry=dx*Math.sin(-camera.angle)+dy*Math.cos(-camera.angle);
 
 if(ry>1){
-let scale=140/ry;   // lebih kecil dari sebelumnya
-let size=50*scale;  // bangunan diperkecil
+let scale=140/ry;
+let size=50*scale;
 
-ctx.fillStyle="#8B0000";
+ctx.fillStyle=h.color;
 ctx.fillRect(rx*scale-size/2,-size,size,size);
 }
 });
