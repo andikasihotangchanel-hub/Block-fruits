@@ -2,9 +2,9 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Game Kamera Bebas</title>
+<title>Game Kota Smooth</title>
 <style>
-body{margin:0;overflow:hidden;background:skyblue;font-family:Arial}
+body{margin:0;overflow:hidden;background:#87CEEB;font-family:Arial}
 canvas{display:block}
 
 #nameScreen{
@@ -63,15 +63,9 @@ let player={
 x:0,
 y:0,
 angle:0,
-speed:0.15
+speed:0.08,      // lebih pelan
+turnSpeed:0.03   // belok halus
 };
-
-/* CAMERA */
-let camera={
-angle:0
-};
-
-let world="outside";
 
 /* JOYSTICK */
 let joyX=0,joyY=0,active=false;
@@ -92,37 +86,32 @@ let x=t.clientX-r.left-55;
 let y=t.clientY-r.top-55;
 let d=Math.sqrt(x*x+y*y);
 if(d>45){x*=45/d;y*=45/d;}
-joyX=x/45;joyY=y/45;
+joyX=x/45;
+joyY=y/45;
 stick.style.left=(30+x)+"px";
 stick.style.top=(30+y)+"px";
 });
 
-/* BANGUNAN BANYAK */
+/* BANGUNAN */
 let houses=[];
-for(let i=0;i<30;i++){
+for(let i=0;i<40;i++){
 houses.push({
-x:(Math.random()-0.5)*100,
-y:Math.random()*150+20
+x:(Math.random()-0.5)*120,
+y:Math.random()*200+20
 });
 }
 
 /* UPDATE */
 function update(){
 
-/* kamera geser kiri kanan */
-camera.angle += joyX*0.05;
+/* belok smooth */
+player.angle += joyX * player.turnSpeed;
 
 /* maju mundur */
-let move = -joyY*player.speed*20;
+let move = -joyY * player.speed;
 
-/* arah gerak sesuai badan */
-player.x += Math.sin(player.angle)*move;
-player.y += Math.cos(player.angle)*move;
-
-/* badan mengikuti arah kamera saat jalan */
-if(move!=0){
-player.angle = camera.angle;
-}
+player.x += Math.sin(player.angle) * move;
+player.y += Math.cos(player.angle) * move;
 }
 
 /* DRAW */
@@ -137,19 +126,20 @@ ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2);
 ctx.save();
 ctx.translate(canvas.width/2,canvas.height/2);
 
+/* render bangunan */
 houses.forEach(h=>{
 let dx=h.x-player.x;
 let dy=h.y-player.y;
 
-/* pakai camera.angle */
-let rx=dx*Math.cos(-camera.angle)-dy*Math.sin(-camera.angle);
-let ry=dx*Math.sin(-camera.angle)+dy*Math.cos(-camera.angle);
+/* kamera ikut angle player */
+let rx=dx*Math.cos(-player.angle)-dy*Math.sin(-player.angle);
+let ry=dx*Math.sin(-player.angle)+dy*Math.cos(-player.angle);
 
 if(ry>1){
-let scale=250/ry;
-let size=100*scale;
+let scale=180/ry;  // zoom lebih dekat
+let size=80*scale;
 
-ctx.fillStyle="brown";
+ctx.fillStyle="#8B0000";
 ctx.fillRect(rx*scale-size/2,-size,size,size);
 }
 });
@@ -160,6 +150,7 @@ ctx.restore();
 ctx.fillStyle="red";
 ctx.fillRect(canvas.width/2-20,canvas.height/2-40,40,60);
 
+/* nama */
 ctx.fillStyle="black";
 ctx.textAlign="center";
 ctx.fillText(playerName,canvas.width/2,canvas.height/2-50);
