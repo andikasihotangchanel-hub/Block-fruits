@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Game Kota Final</title>
+<title>Game Kota Belakang Camera</title>
 <style>
 body{margin:0;overflow:hidden;background:skyblue;font-family:Arial}
 canvas{display:block}
@@ -60,21 +60,13 @@ document.getElementById("nameScreen").style.display="none";
 
 /* PLAYER */
 let player={
-x:1000,
-y:800,
-w:40,
-h:60,
-speed:3,
-angle:0   // arah hadap (radian)
+x:0,
+y:0,
+speed:0.15,
+angle:0
 };
 
-let camera={x:0,y:0};
 let world="outside";
-
-/* KEYBOARD */
-let keys={};
-window.addEventListener("keydown",e=>keys[e.key]=true);
-window.addEventListener("keyup",e=>keys[e.key]=false);
 
 /* JOYSTICK */
 let joyX=0,joyY=0,active=false;
@@ -102,129 +94,87 @@ stick.style.top=(30+y)+"px";
 
 /* MAP */
 let houses=[
-{x:900,y:700,w:200,h:180}
+{x:5,y:20},
+{x:-10,y:40}
 ];
-
-let buildings=[];
-for(let i=0;i<40;i++){
-buildings.push({
-x:Math.random()*3000,
-y:Math.random()*2000,
-w:120+Math.random()*80,
-h:120+Math.random()*80
-});
-}
-
-/* COLLISION */
-function collide(a,b){
-return a.x < b.x+b.w &&
-a.x+a.w > b.x &&
-a.y < b.y+b.h &&
-a.y+a.h > b.y;
-}
 
 /* UPDATE */
 function update(){
 
-/* PUTAR KIRI KANAN */
-if(keys["ArrowLeft"]||keys["a"]) player.angle -= 0.05;
-if(keys["ArrowRight"]||keys["d"]) player.angle += 0.05;
+let turn=0;
+let move=0;
 
-/* MAJU MUNDUR */
-let moveForward=0;
+turn += joyX*0.05;
+move = -joyY*player.speed*20;
 
-if(keys["ArrowUp"]||keys["w"]) moveForward=1;
-if(keys["ArrowDown"]||keys["s"]) moveForward=-1;
+player.angle += turn;
 
-/* joystick */
-if(active){
-player.angle += joyX*0.05;
-moveForward = -joyY;
-}
+player.x += Math.sin(player.angle)*move;
+player.y += Math.cos(player.angle)*move;
 
-/* gerak berdasarkan arah hadap */
-player.x += Math.sin(player.angle)*player.speed*moveForward;
-player.y -= Math.cos(player.angle)*player.speed*moveForward;
-
-/* MASUK RUMAH */
+/* cek masuk rumah */
 if(world=="outside"){
 houses.forEach(h=>{
-if(collide(player,h)){
+let dx=player.x-h.x;
+let dy=player.y-h.y;
+if(Math.sqrt(dx*dx+dy*dy)<2){
 world="inside";
-player.x=400;
-player.y=400;
+player.x=0;
+player.y=0;
 }
 });
 }
 
-/* KELUAR RUMAH */
+/* keluar rumah */
 if(world=="inside"){
-if(player.x<0){
+if(player.y<-5){
 world="outside";
-player.x=850;
-player.y=650;
+player.x=0;
+player.y=15;
 }
 }
-
-camera.x=player.x-canvas.width/2;
-camera.y=player.y-canvas.height/2;
 }
 
-/* DRAW PLAYER */
-function drawPlayer(){
+/* DRAW 3D SIMPLE */
+function draw(){
+
+ctx.fillStyle="#87CEEB";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ctx.fillStyle="#228B22";
+ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2);
+
+/* render dunia */
 ctx.save();
-ctx.translate(player.x+player.w/2,player.y+player.h/2);
-ctx.rotate(player.angle);
+ctx.translate(canvas.width/2,canvas.height/2);
 
-ctx.fillStyle="red";
-ctx.fillRect(-player.w/2,-player.h/2,player.w,player.h);
+houses.forEach(h=>{
+let dx=h.x-player.x;
+let dy=h.y-player.y;
 
-/* tanda depan */
-ctx.fillStyle="black";
-ctx.fillRect(-5,-player.h/2-10,10,10);
+/* rotasi sesuai kamera */
+let rx=dx*Math.cos(-player.angle)-dy*Math.sin(-player.angle);
+let ry=dx*Math.sin(-player.angle)+dy*Math.cos(-player.angle);
+
+if(ry>0){
+let scale=300/ry;
+let size=80*scale;
+
+ctx.fillStyle="brown";
+ctx.fillRect(rx*scale-size/2,-size,size,size);
+}
+});
 
 ctx.restore();
+
+/* PLAYER selalu di tengah */
+ctx.fillStyle="red";
+ctx.fillRect(canvas.width/2-20,canvas.height/2-40,40,60);
 
 /* nama */
 ctx.fillStyle="black";
 ctx.textAlign="center";
-ctx.fillText(playerName,player.x+player.w/2,player.y-15);
-}
-
-/* DRAW */
-function draw(){
-ctx.clearRect(0,0,canvas.width,canvas.height);
-
-ctx.save();
-ctx.translate(-camera.x,-camera.y);
-
-if(world=="outside"){
-
-ctx.fillStyle="#777";
-ctx.fillRect(-2000,600,6000,200);
-
-buildings.forEach(b=>{
-ctx.fillStyle="#555";
-ctx.fillRect(b.x,b.y,b.w,b.h);
-});
-
-houses.forEach(h=>{
-ctx.fillStyle="brown";
-ctx.fillRect(h.x,h.y,h.w,h.h);
-});
-
-}
-
-if(world=="inside"){
-ctx.fillStyle="#ddd";
-ctx.fillRect(0,0,2000,2000);
-ctx.fillStyle="#aaa";
-ctx.fillRect(200,200,500,300);
-}
-
-drawPlayer();
-
-ctx.restore();
+ctx.fillText(playerName,canvas.width/2,canvas.height/2-50);
 }
 
 function loop(){
