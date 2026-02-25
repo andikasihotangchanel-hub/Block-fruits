@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Game Kota Final Smooth</title>
+<title>Game Kota Final Stabil</title>
 <style>
 body{margin:0;overflow:hidden;background:#87CEEB;font-family:Arial}
 canvas{display:block}
@@ -63,14 +63,14 @@ let player={
 x:0,
 y:0,
 angle:0,
-speed:0.05,        // lebih pelan
-turnSpeed:0.02     // belok halus
+speed:0.05,
+turnSpeed:0.02
 };
 
 /* CAMERA */
 let camera={
 angle:0,
-followSpeed:0.08   // kamera tidak kaku
+followSpeed:0.08
 };
 
 /* JOYSTICK */
@@ -103,20 +103,20 @@ let houses=[];
 for(let i=0;i<50;i++){
 houses.push({
 x:(Math.random()-0.5)*150,
-y:Math.random()*250+20
+y:Math.random()*250+30
 });
 }
 
 /* UPDATE */
 function update(){
 
-// belok badan
+// belok badan halus
 player.angle += joyX * player.turnSpeed;
 
-// kamera mengikuti badan (semi bebas)
+// kamera ikut natural
 camera.angle += (player.angle - camera.angle) * camera.followSpeed;
 
-// maju mundur
+// maju mundur pelan
 let move = -joyY * player.speed;
 
 player.x += Math.sin(player.angle) * move;
@@ -129,13 +129,14 @@ function draw(){
 ctx.fillStyle="#87CEEB";
 ctx.fillRect(0,0,canvas.width,canvas.height);
 
+// jalan hijau
 ctx.fillStyle="#228B22";
 ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2);
 
 ctx.save();
 ctx.translate(canvas.width/2,canvas.height/2);
 
-/* render bangunan */
+/* render bangunan (SUDAH DIPERKECIL) */
 houses.forEach(h=>{
 let dx=h.x-player.x;
 let dy=h.y-player.y;
@@ -144,8 +145,8 @@ let rx=dx*Math.cos(-camera.angle)-dy*Math.sin(-camera.angle);
 let ry=dx*Math.sin(-camera.angle)+dy*Math.cos(-camera.angle);
 
 if(ry>1){
-let scale=180/ry;  // zoom tetap pas
-let size=80*scale;
+let scale=140/ry;   // lebih kecil dari sebelumnya
+let size=50*scale;  // bangunan diperkecil
 
 ctx.fillStyle="#8B0000";
 ctx.fillRect(rx*scale-size/2,-size,size,size);
@@ -154,7 +155,7 @@ ctx.fillRect(rx*scale-size/2,-size,size,size);
 
 ctx.restore();
 
-/* PLAYER tetap tengah */
+/* PLAYER */
 ctx.fillStyle="red";
 ctx.fillRect(canvas.width/2-20,canvas.height/2-40,40,60);
 
