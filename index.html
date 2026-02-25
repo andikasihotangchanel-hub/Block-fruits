@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Game Kota Belakang Camera</title>
+<title>Game Kamera Bebas</title>
 <style>
 body{margin:0;overflow:hidden;background:skyblue;font-family:Arial}
 canvas{display:block}
@@ -62,7 +62,12 @@ document.getElementById("nameScreen").style.display="none";
 let player={
 x:0,
 y:0,
-speed:0.15,
+angle:0,
+speed:0.15
+};
+
+/* CAMERA */
+let camera={
 angle:0
 };
 
@@ -92,50 +97,35 @@ stick.style.left=(30+x)+"px";
 stick.style.top=(30+y)+"px";
 });
 
-/* MAP */
-let houses=[
-{x:5,y:20},
-{x:-10,y:40}
-];
+/* BANGUNAN BANYAK */
+let houses=[];
+for(let i=0;i<30;i++){
+houses.push({
+x:(Math.random()-0.5)*100,
+y:Math.random()*150+20
+});
+}
 
 /* UPDATE */
 function update(){
 
-let turn=0;
-let move=0;
+/* kamera geser kiri kanan */
+camera.angle += joyX*0.05;
 
-turn += joyX*0.05;
-move = -joyY*player.speed*20;
+/* maju mundur */
+let move = -joyY*player.speed*20;
 
-player.angle += turn;
-
+/* arah gerak sesuai badan */
 player.x += Math.sin(player.angle)*move;
 player.y += Math.cos(player.angle)*move;
 
-/* cek masuk rumah */
-if(world=="outside"){
-houses.forEach(h=>{
-let dx=player.x-h.x;
-let dy=player.y-h.y;
-if(Math.sqrt(dx*dx+dy*dy)<2){
-world="inside";
-player.x=0;
-player.y=0;
-}
-});
-}
-
-/* keluar rumah */
-if(world=="inside"){
-if(player.y<-5){
-world="outside";
-player.x=0;
-player.y=15;
-}
+/* badan mengikuti arah kamera saat jalan */
+if(move!=0){
+player.angle = camera.angle;
 }
 }
 
-/* DRAW 3D SIMPLE */
+/* DRAW */
 function draw(){
 
 ctx.fillStyle="#87CEEB";
@@ -144,7 +134,6 @@ ctx.fillRect(0,0,canvas.width,canvas.height);
 ctx.fillStyle="#228B22";
 ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2);
 
-/* render dunia */
 ctx.save();
 ctx.translate(canvas.width/2,canvas.height/2);
 
@@ -152,13 +141,13 @@ houses.forEach(h=>{
 let dx=h.x-player.x;
 let dy=h.y-player.y;
 
-/* rotasi sesuai kamera */
-let rx=dx*Math.cos(-player.angle)-dy*Math.sin(-player.angle);
-let ry=dx*Math.sin(-player.angle)+dy*Math.cos(-player.angle);
+/* pakai camera.angle */
+let rx=dx*Math.cos(-camera.angle)-dy*Math.sin(-camera.angle);
+let ry=dx*Math.sin(-camera.angle)+dy*Math.cos(-camera.angle);
 
-if(ry>0){
-let scale=300/ry;
-let size=80*scale;
+if(ry>1){
+let scale=250/ry;
+let size=100*scale;
 
 ctx.fillStyle="brown";
 ctx.fillRect(rx*scale-size/2,-size,size,size);
@@ -167,11 +156,10 @@ ctx.fillRect(rx*scale-size/2,-size,size,size);
 
 ctx.restore();
 
-/* PLAYER selalu di tengah */
+/* PLAYER tetap tengah */
 ctx.fillStyle="red";
 ctx.fillRect(canvas.width/2-20,canvas.height/2-40,40,60);
 
-/* nama */
 ctx.fillStyle="black";
 ctx.textAlign="center";
 ctx.fillText(playerName,canvas.width/2,canvas.height/2-50);
