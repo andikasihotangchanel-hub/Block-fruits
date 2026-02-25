@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Game Kota Upgrade</title>
+<title>Game Kota Final</title>
 <style>
 body{margin:0;overflow:hidden;background:skyblue;font-family:Arial}
 canvas{display:block}
@@ -60,10 +60,12 @@ document.getElementById("nameScreen").style.display="none";
 
 /* PLAYER */
 let player={
-x:500,y:500,
-w:50,h:70,
-speed:4,
-dir:"down"
+x:1000,
+y:800,
+w:40,
+h:60,
+speed:3,
+angle:0   // arah hadap (radian)
 };
 
 let camera={x:0,y:0};
@@ -98,14 +100,13 @@ stick.style.left=(30+x)+"px";
 stick.style.top=(30+y)+"px";
 });
 
-/* MAP LUAR */
+/* MAP */
 let houses=[
-{x:800,y:500,w:180,h:160},
-{x:1300,y:900,w:180,h:160}
+{x:900,y:700,w:200,h:180}
 ];
 
 let buildings=[];
-for(let i=0;i<30;i++){
+for(let i=0;i<40;i++){
 buildings.push({
 x:Math.random()*3000,
 y:Math.random()*2000,
@@ -116,44 +117,42 @@ h:120+Math.random()*80
 
 /* COLLISION */
 function collide(a,b){
-return a.x<a.x+a.w &&
-a.x<b.x+b.w &&
-a.x+a.w>b.x &&
-a.y+a.h>b.y &&
-a.y<b.y+b.h;
+return a.x < b.x+b.w &&
+a.x+a.w > b.x &&
+a.y < b.y+b.h &&
+a.y+a.h > b.y;
 }
 
 /* UPDATE */
 function update(){
 
-let moveX=0,moveY=0;
+/* PUTAR KIRI KANAN */
+if(keys["ArrowLeft"]||keys["a"]) player.angle -= 0.05;
+if(keys["ArrowRight"]||keys["d"]) player.angle += 0.05;
 
-if(keys["w"]||keys["ArrowUp"]) moveY-=1;
-if(keys["s"]||keys["ArrowDown"]) moveY+=1;
-if(keys["a"]||keys["ArrowLeft"]) moveX-=1;
-if(keys["d"]||keys["ArrowRight"]) moveX+=1;
+/* MAJU MUNDUR */
+let moveForward=0;
 
-moveX+=joyX;
-moveY+=joyY;
+if(keys["ArrowUp"]||keys["w"]) moveForward=1;
+if(keys["ArrowDown"]||keys["s"]) moveForward=-1;
 
-if(moveX>0) player.dir="right";
-if(moveX<0) player.dir="left";
-if(moveY>0) player.dir="down";
-if(moveY<0) player.dir="up";
+/* joystick */
+if(active){
+player.angle += joyX*0.05;
+moveForward = -joyY;
+}
 
-player.x+=moveX*player.speed;
-player.y+=moveY*player.speed;
+/* gerak berdasarkan arah hadap */
+player.x += Math.sin(player.angle)*player.speed*moveForward;
+player.y -= Math.cos(player.angle)*player.speed*moveForward;
 
 /* MASUK RUMAH */
 if(world=="outside"){
 houses.forEach(h=>{
-if(player.x+player.w>h.x &&
-player.x<h.x+h.w &&
-player.y+player.h>h.y &&
-player.y<h.y+h.h){
+if(collide(player,h)){
 world="inside";
-player.x=300;
-player.y=300;
+player.x=400;
+player.y=400;
 }
 });
 }
@@ -162,38 +161,34 @@ player.y=300;
 if(world=="inside"){
 if(player.x<0){
 world="outside";
-player.x=780;
-player.y=520;
+player.x=850;
+player.y=650;
 }
 }
 
-camera.x=player.x-canvas.width/2+player.w/2;
-camera.y=player.y-canvas.height/2+player.h/2;
+camera.x=player.x-canvas.width/2;
+camera.y=player.y-canvas.height/2;
 }
 
-/* DRAW PLAYER STYLE LAMA */
+/* DRAW PLAYER */
 function drawPlayer(){
+ctx.save();
+ctx.translate(player.x+player.w/2,player.y+player.h/2);
+ctx.rotate(player.angle);
+
 ctx.fillStyle="red";
-ctx.fillRect(player.x,player.y,player.w,player.h);
+ctx.fillRect(-player.w/2,-player.h/2,player.w,player.h);
 
+/* tanda depan */
 ctx.fillStyle="black";
+ctx.fillRect(-5,-player.h/2-10,10,10);
 
-/* tanda arah hadap */
-if(player.dir=="up")
-ctx.fillRect(player.x+15,player.y-8,20,8);
+ctx.restore();
 
-if(player.dir=="down")
-ctx.fillRect(player.x+15,player.y+player.h,20,8);
-
-if(player.dir=="left")
-ctx.fillRect(player.x-8,player.y+20,8,20);
-
-if(player.dir=="right")
-ctx.fillRect(player.x+player.w,player.y+20,8,20);
-
-ctx.font="16px Arial";
+/* nama */
+ctx.fillStyle="black";
 ctx.textAlign="center";
-ctx.fillText(playerName,player.x+player.w/2,player.y-12);
+ctx.fillText(playerName,player.x+player.w/2,player.y-15);
 }
 
 /* DRAW */
@@ -205,24 +200,17 @@ ctx.translate(-camera.x,-camera.y);
 
 if(world=="outside"){
 
-/* jalan */
 ctx.fillStyle="#777";
 ctx.fillRect(-2000,600,6000,200);
 
-/* bangunan kota */
 buildings.forEach(b=>{
 ctx.fillStyle="#555";
 ctx.fillRect(b.x,b.y,b.w,b.h);
-ctx.fillStyle="#999";
-ctx.fillRect(b.x+10,b.y+10,b.w-20,20);
 });
 
-/* rumah */
 houses.forEach(h=>{
 ctx.fillStyle="brown";
 ctx.fillRect(h.x,h.y,h.w,h.h);
-ctx.fillStyle="darkred";
-ctx.fillRect(h.x+60,h.y+80,50,70);
 });
 
 }
@@ -231,7 +219,7 @@ if(world=="inside"){
 ctx.fillStyle="#ddd";
 ctx.fillRect(0,0,2000,2000);
 ctx.fillStyle="#aaa";
-ctx.fillRect(200,200,400,200);
+ctx.fillRect(200,200,500,300);
 }
 
 drawPlayer();
