@@ -173,17 +173,40 @@ if(ry>5){
 let scale = 300/ry;
 
 let width = 40 * scale;
-let height = 60 * scale;   // tinggi beda supaya lebih balok
+let height = 70 * scale;
 
+let xPos = rx*scale - width/2;
+let yPos = -height;
+
+/* BADAN GEDUNG */
 ctx.fillStyle = h.color;
+ctx.fillRect(xPos, yPos, width, height);
 
-// posisi dasar bangunan tetap di tanah
+/* ATAP */
+ctx.fillStyle = "#444";
+ctx.fillRect(xPos - 4*scale, yPos - 8*scale, width + 8*scale, 8*scale);
+
+/* PINTU */
+ctx.fillStyle = "#222";
 ctx.fillRect(
-    rx*scale - width/2,
-    -height,
-    width,
-    height
+    xPos + width*0.4,
+    yPos + height*0.6,
+    width*0.2,
+    height*0.4
 );
+
+/* JENDELA */
+ctx.fillStyle = "#ffffffaa";
+for(let i=1;i<=2;i++){
+for(let j=1;j<=2;j++){
+ctx.fillRect(
+    xPos + (width/3)*i - width/10,
+    yPos + (height/4)*j,
+    width/8,
+    height/8
+);
+}
+}
 }
 });
 
