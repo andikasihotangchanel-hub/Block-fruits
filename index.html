@@ -170,11 +170,20 @@ let rx=dx*Math.cos(-camera.angle)-dy*Math.sin(-camera.angle);
 let ry=dx*Math.sin(-camera.angle)+dy*Math.cos(-camera.angle);
 
 if(ry>5){
-let scale=300/ry;
-let size=40*scale;
+let scale = 300/ry;
 
-ctx.fillStyle=h.color;
-ctx.fillRect(rx*scale-size/2,-size,size,size);
+let width = 40 * scale;
+let height = 60 * scale;   // tinggi beda supaya lebih balok
+
+ctx.fillStyle = h.color;
+
+// posisi dasar bangunan tetap di tanah
+ctx.fillRect(
+    rx*scale - width/2,
+    -height,
+    width,
+    height
+);
 }
 });
 
