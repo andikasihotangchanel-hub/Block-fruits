@@ -1,92 +1,135 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>City Game Final</title>
+<title>Game Kota Final 100%</title>
 <style>
 body {
   margin:0;
   overflow:hidden;
   font-family:Arial, sans-serif;
-  background: #87CEEB;
+  background:#87CEEB;
 }
-canvas { display:block; }/* Layar Nama */ #nameScreen{ position: fixed; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; z-index: 10; } #nameScreen input{padding:10px;font-size:18px;margin:10px;} #nameScreen button{padding:10px 20px;font-size:18px;}
+canvas{ display:block; }
 
-/* Joystick */ #joystick{ position: fixed; bottom: 30px; left: 30px; width: 110px; height: 110px; background: rgba(0,0,0,0.3); border-radius:50%; touch-action:none; } #stick{ position:absolute; width:50px; height:50px; background:white; border-radius:50%; left:30px;top:30px; }
+/* Layar Nama */
+#nameScreen{
+  position: fixed;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.8);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  color:white;
+  z-index:10;
+}
+#nameScreen input{padding:10px; font-size:18px; margin:10px;}
+#nameScreen button{padding:10px 20px; font-size:18px;}
 
-/* Tombol Lompat */ #jumpBtn{ position:absolute; right:30px; bottom:80px; width:80px; height:80px; border-radius:50%; background:#ff4444; color:white; font-weight:bold; border:none; font-size:18px; box-shadow:0 4px 8px rgba(0,0,0,0.3); } </style>
+/* Joystick */
+#joystick{
+  position: fixed;
+  bottom:30px; left:30px;
+  width:110px; height:110px;
+  background: rgba(0,0,0,0.3);
+  border-radius:50%;
+  touch-action:none;
+}
+#stick{
+  position:absolute;
+  width:50px; height:50px;
+  background:white;
+  border-radius:50%;
+  left:30px; top:30px;
+}
 
+/* Tombol Lompat */
+#jumpBtn{
+  position:absolute;
+  right:30px;
+  bottom:80px;
+  width:80px;
+  height:80px;
+  border-radius:50%;
+  background:#ff4444;
+  color:white;
+  font-weight:bold;
+  border:none;
+  font-size:18px;
+  box-shadow:0 4px 8px rgba(0,0,0,0.3);
+}
+</style>
 </head>
-<body><div id="nameScreen">
+<body>
+
+<div id="nameScreen">
 <h2>Masukkan Nama</h2>
 <input type="text" id="nameInput" placeholder="Nama...">
 <button onclick="startGame()">Mulai</button>
-</div><div id="joystick"><div id="stick"></div></div>
+</div>
+
+<div id="joystick"><div id="stick"></div></div>
 <button id="jumpBtn">JUMP</button>
-<canvas id="game"></canvas><script>
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight;
-window.addEventListener("resize",()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;});
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+window.addEventListener("resize", ()=>{canvas.width=window.innerWidth; canvas.height=window.innerHeight;});
 
 // ===== NAMA PLAYER =====
-let playerName="Player";
+let playerName = "Player";
 function startGame(){
-  let n=document.getElementById("nameInput").value;
-  if(n.trim()!="") playerName=n;
-  document.getElementById("nameScreen").style.display="none";
+  let n = document.getElementById("nameInput").value;
+  if(n.trim() != "") playerName = n;
+  document.getElementById("nameScreen").style.display = "none";
 }
 
 // ===== PLAYER =====
-let player={
-  x:0,
-  y:0,
-  angle:0,
-  speed:3,
-  vx:0,
-  vy:0,
-  width:1,
-  height:1
-};
+let player = {x:0, y:0, angle:0, speed:3, width:1, height:1, vy:0};
+let groundY = 0;
+let isJumping = false;
+let gravity = 0.6;
 
 // ===== CAMERA =====
-let camera={angle:0};
+let camera = {angle:0};
 
 // ===== JOYSTICK =====
-let joyX=0,joyY=0,active=false;
-let joy=document.getElementById("joystick");
-let stick=document.getElementById("stick");
+let joyX=0, joyY=0, active=false;
+let joy = document.getElementById("joystick");
+let stick = document.getElementById("stick");
 
-joy.addEventListener("touchstart",()=>active=true);
-joy.addEventListener("touchend",()=>{
+joy.addEventListener("touchstart", ()=>active=true);
+joy.addEventListener("touchend", ()=>{
   active=false; joyX=0; joyY=0;
   stick.style.left="30px"; stick.style.top="30px";
 });
-joy.addEventListener("touchmove",e=>{
-  if(!active)return;
+joy.addEventListener("touchmove", e=>{
+  if(!active) return;
   let r=joy.getBoundingClientRect();
   let t=e.touches[0];
   let x=t.clientX-r.left-55;
   let y=t.clientY-r.top-55;
   let d=Math.sqrt(x*x+y*y);
   if(d>45){x*=45/d;y*=45/d;}
-  joyX=x/45; joyY=y/45;
+  joyX = x/45;
+  joyY = y/45;
   stick.style.left=(30+x)+"px";
   stick.style.top=(30+y)+"px";
 });
 
 // ===== TOMBOL LOMPAT =====
-let jumpBtn=document.getElementById("jumpBtn");
-let isJumping=false;
-let jumpVelocity=0;
-let gravity=0.6;
-jumpBtn.addEventListener("touchstart",jumpBtnHandler);
-jumpBtn.addEventListener("mousedown",jumpBtnHandler);
-function jumpBtnHandler(){
-  if(!isJumping){ jumpVelocity=-12; isJumping=true; }
+let jumpBtn = document.getElementById("jumpBtn");
+jumpBtn.addEventListener("touchstart", jump);
+jumpBtn.addEventListener("mousedown", jump);
+
+function jump(){
+  if(!isJumping){ player.vy=-12; isJumping=true; }
 }
-const groundY=0;
 
 // ===== BANGUNAN =====
 let colors=["#555","#777","#999","#bbb"];
@@ -107,67 +150,73 @@ function update(){
   camera.angle += joyX*0.04;
 
   // Maju mundur
-  let move=-joyY*player.speed;
+  let move = -joyY*player.speed;
   player.x += Math.sin(camera.angle)*move;
   player.y += Math.cos(camera.angle)*move;
   player.angle = camera.angle;
 
   // Lompat
   if(isJumping){
-    player.vy+=gravity;
-    player.y+=jumpVelocity;
-    jumpVelocity+=gravity;
-    if(player.y>=groundY){player.y=groundY;isJumping=false;jumpVelocity=0;}
+    player.y += player.vy;
+    player.vy += gravity;
+    if(player.y >= groundY){player.y=groundY; isJumping=false; player.vy=0;}
   }
 }
 
 // ===== DRAW =====
 function draw(){
-  ctx.fillStyle="#87CEEB"; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle="#87CEEB";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
   ctx.save();
   ctx.translate(canvas.width/2,canvas.height/2);
 
   // render bangunan
   buildings.forEach(b=>{
-    let dx=b.x-player.x;
-    let dy=b.y-player.y;
-    let rx=dx*Math.cos(-camera.angle)-dy*Math.sin(-camera.angle);
-    let ry=dx*Math.sin(-camera.angle)+dy*Math.cos(-camera.angle);
+    let dx = b.x - player.x;
+    let dy = b.y - player.y;
+    let rx = dx*Math.cos(-camera.angle) - dy*Math.sin(-camera.angle);
+    let ry = dx*Math.sin(-camera.angle) + dy*Math.cos(-camera.angle);
 
     if(ry>0){
-      let scale=300/(ry+200);
-      let w=b.width*scale;
-      let h=b.height*scale;
-      ctx.fillStyle=b.color;
-      ctx.fillRect(rx*scale-w/2,-h,w,h);
+      let scale = 300/(ry+200);
+      let w = b.width*scale;
+      let h = b.height*scale;
+      ctx.fillStyle = b.color;
+      ctx.fillRect(rx*scale-w/2, -h, w, h);
     }
   });
-
   ctx.restore();
 
   // ===== PLAYER =====
   let px=canvas.width/2, py=canvas.height/2;
   // kaki
   ctx.fillStyle="black";
-  ctx.fillRect(px-10,py+10,8,20);
-  ctx.fillRect(px+2,py+10,8,20);
+  ctx.fillRect(px-10, py+10, 8, 20);
+  ctx.fillRect(px+2, py+10, 8, 20);
   // badan
   ctx.fillStyle="blue";
-  ctx.fillRect(px-15,py-10,30,25);
+  ctx.fillRect(px-15, py-10, 30, 25);
   // tangan
   ctx.fillStyle="blue";
-  ctx.fillRect(px-25,py-10,10,20);
-  ctx.fillRect(px+15,py-10,10,20);
+  ctx.fillRect(px-25, py-10, 10, 20);
+  ctx.fillRect(px+15, py-10, 10, 20);
   // kepala
   ctx.fillStyle="yellow";
-  ctx.fillRect(px-12,py-30,24,20);
+  ctx.fillRect(px-12, py-30, 24, 20);
   // nama
   ctx.fillStyle="black";
   ctx.textAlign="center";
-  ctx.fillText(playerName,px,py-40);
+  ctx.fillText(playerName, px, py-40);
 }
 
-function loop(){ update(); draw(); requestAnimationFrame(loop); }
+function loop(){
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
 loop();
-</script></body>
+</script>
+
+</body>
 </html>
