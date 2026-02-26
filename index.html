@@ -25,10 +25,24 @@ position:absolute;width:50px;height:50px;
 background:white;border-radius:50%;
 left:30px;top:30px;
 }
+#jumpBtn{
+position:absolute;
+right:30px;
+bottom:80px;
+width:80px;
+height:80px;
+border-radius:50%;
+background:#ff4444;
+color:white;
+font-weight:bold;
+border:none;
+font-size:18px;
+box-shadow:0 4px 8px rgba(0,0,0,0.3);
+}
 </style>
 </head>
 <body>
-
+ 
 <div id="nameScreen">
 <h2>Masukkan Nama</h2>
 <input type="text" id="nameInput">
@@ -93,6 +107,19 @@ joyY=y/45;
 stick.style.left=(30+x)+"px";
 stick.style.top=(30+y)+"px";
 });
+    
+<!-- === UPDATE FITUR: TOMBOL LOMPAT === -->
+<button id="jumpBtn">JUMP</button>
+    function loop(){
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+loop();
+
+/* === UPDATE FITUR JUMP === */
+let jumpVelocity = 0;
+...
 
 /* SWIPE KAMERA (LAYAR KANAN) */
 let lastTouchX=null;
