@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Game Kota Full</title>
+<title>Game Kota Full Update</title>
 <style>
 body{
     margin:0;
@@ -86,10 +86,11 @@ function startGame(){
 
 // Player
 let player = {
-    x:0, y:0,
+    x:0, y:0, z:0,
     angle:0,
     speed:0.05,
-    width:30, height:25, head:20
+    width:30, height:25, head:20,
+    vy:0, isJumping:false
 };
 
 // Camera
@@ -120,10 +121,15 @@ joy.addEventListener("touchmove",e=>{
 
 // Tombol lompat
 let jumpBtn = document.getElementById("jumpBtn");
-let jumpVelocity=0, gravity=0.6, isJumping=false;
+let gravity=0.6;
 jumpBtn.addEventListener("touchstart", jump);
 jumpBtn.addEventListener("click", jump);
-function jump(){ if(!isJumping){ jumpVelocity=-15; isJumping=true; }}
+function jump(){
+    if(!player.isJumping){
+        player.vy=-12;
+        player.isJumping=true;
+    }
+}
 
 // Bangunan
 let colors=["#FF5733","#33C1FF","#8D33FF","#33FF57","#FFC300","#FF33A8"];
@@ -131,33 +137,33 @@ let buildings=[];
 for(let i=0;i<60;i++){
     buildings.push({
         x:(Math.random()-0.5)*2000,
-        y:(Math.random()-0.5)*2000,
-        color: colors[Math.floor(Math.random()*colors.length)],
+        z:(Math.random()-0.5)*2000,
         width:40+Math.random()*40,
-        height:40+Math.random()*80
+        height:40+Math.random()*80,
+        color: colors[Math.floor(Math.random()*colors.length)]
     });
 }
 
 // Update
 function update(){
-    // Kamera orbit kiri/kanan
+    // Kamera orbit
     camera.angle += joyX * 0.04;
 
-    // Maju mundur mengikuti arah kamera
+    // Maju mundur
     let move = -joyY * player.speed;
     if(move!=0){
         player.angle = camera.angle;
-        player.x += Math.sin(camera.angle)*move;
-        player.y += Math.cos(camera.angle)*move;
+        player.x += Math.sin(camera.angle)*move*500;
+        player.z += Math.cos(camera.angle)*move*500;
     }
 
     // Lompat
-    if(isJumping){
-        player.y += jumpVelocity;
-        jumpVelocity += gravity;
-        if(player.y>=0){ // ground level 0
+    if(player.isJumping){
+        player.y += player.vy;
+        player.vy += gravity;
+        if(player.y>=0){ // ground
             player.y=0;
-            isJumping=false;
+            player.isJumping=false;
         }
     }
 }
@@ -176,14 +182,14 @@ function draw(){
 
     // Bangunan
     buildings.forEach(b=>{
-        let dx=b.x-player.x;
-        let dy=b.y-player.y;
-        let rx = dx*Math.cos(-camera.angle)-dy*Math.sin(-camera.angle);
-        let ry = dx*Math.sin(-camera.angle)+dy*Math.cos(-camera.angle);
+        let dx = b.x - player.x;
+        let dz = b.z - player.z;
+        let ry = dz * Math.cos(-camera.angle) + dx * Math.sin(-camera.angle);
+        let rx = dx * Math.cos(-camera.angle) - dz * Math.sin(-camera.angle);
         if(ry>1){
             let scale = 300/ry;
-            ctx.fillStyle=b.color;
-            ctx.fillRect(rx*scale-b.width/2, -b.height, b.width, b.height);
+            ctx.fillStyle = b.color;
+            ctx.fillRect(rx*scale - b.width/2, -b.height - player.y, b.width, b.height);
         }
     });
 
@@ -191,7 +197,7 @@ function draw(){
 
     // Player kotak + kepala + kaki + badan
     let px = canvas.width/2;
-    let py = canvas.height/2;
+    let py = canvas.height/2 - player.y; // lompat terlihat
     // kaki
     ctx.fillStyle="black";
     ctx.fillRect(px-10,py+10,8,20);
