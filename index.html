@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Game Kota Ultimate</title>
+<title>Game Kota Final 100%</title>
 <style>
 body{margin:0;overflow:hidden;background:#87CEEB;font-family:Arial}
 canvas{display:block}
@@ -61,11 +61,10 @@ let player={
 x:0,
 y:0,
 angle:0,
-speed:0.05,
-turnSpeed:0.02
+speed:0.05
 };
 
-/* CAMERA ORBIT */
+/* CAMERA */
 let camera={
 angle:0
 };
@@ -95,13 +94,15 @@ stick.style.left=(30+x)+"px";
 stick.style.top=(30+y)+"px";
 });
 
-/* WARNA RUMAH */
+/* WARNA */
 let colors=["#FF5733","#33C1FF","#8D33FF","#33FF57","#FFC300","#FF33A8"];
+
+/* BANGUNAN */
 let houses=[];
 for(let i=0;i<60;i++){
 houses.push({
-x:(Math.random()-0.5)*180,
-y:Math.random()*300+30,
+x:(Math.random()-0.5)*200,
+y:Math.random()*400+40,
 color:colors[Math.floor(Math.random()*colors.length)]
 });
 }
@@ -109,16 +110,17 @@ color:colors[Math.floor(Math.random()*colors.length)]
 /* UPDATE */
 function update(){
 
-// belok badan sedikit
-player.angle += joyX * player.turnSpeed;
+// Kamera orbit bebas kiri kanan
+camera.angle += joyX * 0.04;
 
-// kamera orbit bebas (tidak ikut paksa badan)
-camera.angle += joyX * 0.03;
-
-// maju mundur
+// Maju mundur mengikuti arah kamera
 let move = -joyY * player.speed;
-player.x += Math.sin(player.angle) * move;
-player.y += Math.cos(player.angle) * move;
+
+if(move !== 0){
+player.angle = camera.angle; // badan ikut arah kamera saat jalan
+player.x += Math.sin(camera.angle) * move;
+player.y += Math.cos(camera.angle) * move;
+}
 }
 
 /* DRAW */
@@ -142,8 +144,8 @@ let rx=dx*Math.cos(-camera.angle)-dy*Math.sin(-camera.angle);
 let ry=dx*Math.sin(-camera.angle)+dy*Math.cos(-camera.angle);
 
 if(ry>1){
-let scale=140/ry;
-let size=50*scale;
+let scale=100/ry;   // ZOOM LEBIH DEKAT
+let size=45*scale;  // bangunan lebih kecil & tidak nutup jalan
 ctx.fillStyle=h.color;
 ctx.fillRect(rx*scale-size/2,-size,size,size);
 }
@@ -151,24 +153,24 @@ ctx.fillRect(rx*scale-size/2,-size,size,size);
 
 ctx.restore();
 
-/* PLAYER BENTUK LAMA */
+/* PLAYER bentuk lama */
 let px=canvas.width/2;
 let py=canvas.height/2;
 
-/* kaki */
+// kaki
 ctx.fillStyle="black";
 ctx.fillRect(px-10,py+10,8,20);
 ctx.fillRect(px+2,py+10,8,20);
 
-/* badan */
+// badan
 ctx.fillStyle="blue";
 ctx.fillRect(px-15,py-10,30,25);
 
-/* kepala */
+// kepala
 ctx.fillStyle="yellow";
 ctx.fillRect(px-12,py-30,24,20);
 
-/* nama */
+// nama
 ctx.fillStyle="black";
 ctx.textAlign="center";
 ctx.fillText(playerName,px,py-40);
