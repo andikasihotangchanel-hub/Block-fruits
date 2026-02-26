@@ -3,217 +3,216 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Game Kota Final 100%</title>
+<title>Game Kota Full</title>
 <style>
-body {
-  margin:0;
-  overflow:hidden;
-  font-family:Arial, sans-serif;
-  background:#87CEEB;
+body{
+    margin:0;
+    overflow:hidden;
+    background:#87CEEB;
+    font-family:Arial;
 }
 canvas{ display:block; }
 
-/* Layar Nama */
+/* Layar input nama */
 #nameScreen{
-  position: fixed;
-  width:100%; height:100%;
-  background: rgba(0,0,0,0.8);
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  color:white;
-  z-index:10;
+    position:fixed;width:100%;height:100%;
+    background:rgba(0,0,0,0.8);
+    display:flex;justify-content:center;align-items:center;
+    flex-direction:column;color:white;z-index:10;
 }
-#nameScreen input{padding:10px; font-size:18px; margin:10px;}
-#nameScreen button{padding:10px 20px; font-size:18px;}
+#nameScreen input{padding:10px;font-size:18px;margin:10px}
+#nameScreen button{padding:10px 20px;font-size:18px}
 
-/* Joystick */
+/* Joystick mobile */
 #joystick{
-  position: fixed;
-  bottom:30px; left:30px;
-  width:110px; height:110px;
-  background: rgba(0,0,0,0.3);
-  border-radius:50%;
-  touch-action:none;
+    position:fixed;bottom:30px;left:30px;
+    width:110px;height:110px;
+    background:rgba(0,0,0,0.3);
+    border-radius:50%;touch-action:none;
 }
 #stick{
-  position:absolute;
-  width:50px; height:50px;
-  background:white;
-  border-radius:50%;
-  left:30px; top:30px;
+    position:absolute;width:50px;height:50px;
+    background:white;border-radius:50%;
+    left:30px;top:30px;
 }
 
-/* Tombol Lompat */
+/* Tombol lompat */
 #jumpBtn{
-  position:absolute;
-  right:30px;
-  bottom:80px;
-  width:80px;
-  height:80px;
-  border-radius:50%;
-  background:#ff4444;
-  color:white;
-  font-weight:bold;
-  border:none;
-  font-size:18px;
-  box-shadow:0 4px 8px rgba(0,0,0,0.3);
+    position:absolute;right:30px;bottom:150px;
+    width:80px;height:80px;
+    border-radius:50%;
+    background:#ff4444;color:white;font-weight:bold;
+    border:none;font-size:18px;
+    box-shadow:0 4px 8px rgba(0,0,0,0.3);
 }
 </style>
 </head>
 <body>
 
+<!-- Input Nama -->
 <div id="nameScreen">
 <h2>Masukkan Nama</h2>
-<input type="text" id="nameInput" placeholder="Nama...">
+<input type="text" id="nameInput">
 <button onclick="startGame()">Mulai</button>
 </div>
 
+<!-- Joystick -->
 <div id="joystick"><div id="stick"></div></div>
-<button id="jumpBtn">JUMP</button>
+
+<!-- Canvas -->
 <canvas id="game"></canvas>
+
+<!-- Tombol Lompat -->
+<button id="jumpBtn">JUMP</button>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-window.addEventListener("resize", ()=>{canvas.width=window.innerWidth; canvas.height=window.innerHeight;});
 
-// ===== NAMA PLAYER =====
-let playerName = "Player";
+function resizeCanvas(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener("resize",resizeCanvas);
+
+// Nama player
+let playerName="Player";
 function startGame(){
-  let n = document.getElementById("nameInput").value;
-  if(n.trim() != "") playerName = n;
-  document.getElementById("nameScreen").style.display = "none";
+    let n = document.getElementById("nameInput").value;
+    if(n.trim()!="") playerName=n;
+    document.getElementById("nameScreen").style.display="none";
 }
 
-// ===== PLAYER =====
-let player = {x:0, y:0, angle:0, speed:3, width:1, height:1, vy:0};
-let groundY = 0;
-let isJumping = false;
-let gravity = 0.6;
+// Player
+let player = {
+    x:0, y:0,
+    angle:0,
+    speed:0.05,
+    width:30, height:25, head:20
+};
 
-// ===== CAMERA =====
-let camera = {angle:0};
+// Camera
+let camera = { angle:0 };
 
-// ===== JOYSTICK =====
+// Joystick
 let joyX=0, joyY=0, active=false;
-let joy = document.getElementById("joystick");
-let stick = document.getElementById("stick");
-
-joy.addEventListener("touchstart", ()=>active=true);
-joy.addEventListener("touchend", ()=>{
-  active=false; joyX=0; joyY=0;
-  stick.style.left="30px"; stick.style.top="30px";
+let joy=document.getElementById("joystick");
+let stick=document.getElementById("stick");
+joy.addEventListener("touchstart",()=>active=true);
+joy.addEventListener("touchend",()=>{
+    active=false; joyX=0; joyY=0;
+    stick.style.left="30px"; stick.style.top="30px";
 });
-joy.addEventListener("touchmove", e=>{
-  if(!active) return;
-  let r=joy.getBoundingClientRect();
-  let t=e.touches[0];
-  let x=t.clientX-r.left-55;
-  let y=t.clientY-r.top-55;
-  let d=Math.sqrt(x*x+y*y);
-  if(d>45){x*=45/d;y*=45/d;}
-  joyX = x/45;
-  joyY = y/45;
-  stick.style.left=(30+x)+"px";
-  stick.style.top=(30+y)+"px";
+joy.addEventListener("touchmove",e=>{
+    if(!active) return;
+    let r = joy.getBoundingClientRect();
+    let t = e.touches[0];
+    let x = t.clientX - r.left - 55;
+    let y = t.clientY - r.top - 55;
+    let d = Math.sqrt(x*x + y*y);
+    if(d>45){ x*=45/d; y*=45/d; }
+    joyX = x/45;
+    joyY = y/45;
+    stick.style.left=(30+x)+"px";
+    stick.style.top=(30+y)+"px";
 });
 
-// ===== TOMBOL LOMPAT =====
+// Tombol lompat
 let jumpBtn = document.getElementById("jumpBtn");
+let jumpVelocity=0, gravity=0.6, isJumping=false;
 jumpBtn.addEventListener("touchstart", jump);
-jumpBtn.addEventListener("mousedown", jump);
+jumpBtn.addEventListener("click", jump);
+function jump(){ if(!isJumping){ jumpVelocity=-15; isJumping=true; }}
 
-function jump(){
-  if(!isJumping){ player.vy=-12; isJumping=true; }
-}
-
-// ===== BANGUNAN =====
-let colors=["#555","#777","#999","#bbb"];
+// Bangunan
+let colors=["#FF5733","#33C1FF","#8D33FF","#33FF57","#FFC300","#FF33A8"];
 let buildings=[];
-for(let i=0;i<100;i++){
-  buildings.push({
-    x:(Math.random()-0.5)*2000,
-    y:(Math.random()-0.5)*2000,
-    width:50+Math.random()*50,
-    height:50+Math.random()*150,
-    color: colors[Math.floor(Math.random()*colors.length)]
-  });
+for(let i=0;i<60;i++){
+    buildings.push({
+        x:(Math.random()-0.5)*2000,
+        y:(Math.random()-0.5)*2000,
+        color: colors[Math.floor(Math.random()*colors.length)],
+        width:40+Math.random()*40,
+        height:40+Math.random()*80
+    });
 }
 
-// ===== UPDATE =====
+// Update
 function update(){
-  // Kamera putar bebas horizontal
-  camera.angle += joyX*0.04;
+    // Kamera orbit kiri/kanan
+    camera.angle += joyX * 0.04;
 
-  // Maju mundur
-  let move = -joyY*player.speed;
-  player.x += Math.sin(camera.angle)*move;
-  player.y += Math.cos(camera.angle)*move;
-  player.angle = camera.angle;
-
-  // Lompat
-  if(isJumping){
-    player.y += player.vy;
-    player.vy += gravity;
-    if(player.y >= groundY){player.y=groundY; isJumping=false; player.vy=0;}
-  }
-}
-
-// ===== DRAW =====
-function draw(){
-  ctx.fillStyle="#87CEEB";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-
-  ctx.save();
-  ctx.translate(canvas.width/2,canvas.height/2);
-
-  // render bangunan
-  buildings.forEach(b=>{
-    let dx = b.x - player.x;
-    let dy = b.y - player.y;
-    let rx = dx*Math.cos(-camera.angle) - dy*Math.sin(-camera.angle);
-    let ry = dx*Math.sin(-camera.angle) + dy*Math.cos(-camera.angle);
-
-    if(ry>0){
-      let scale = 300/(ry+200);
-      let w = b.width*scale;
-      let h = b.height*scale;
-      ctx.fillStyle = b.color;
-      ctx.fillRect(rx*scale-w/2, -h, w, h);
+    // Maju mundur mengikuti arah kamera
+    let move = -joyY * player.speed;
+    if(move!=0){
+        player.angle = camera.angle;
+        player.x += Math.sin(camera.angle)*move;
+        player.y += Math.cos(camera.angle)*move;
     }
-  });
-  ctx.restore();
 
-  // ===== PLAYER =====
-  let px=canvas.width/2, py=canvas.height/2;
-  // kaki
-  ctx.fillStyle="black";
-  ctx.fillRect(px-10, py+10, 8, 20);
-  ctx.fillRect(px+2, py+10, 8, 20);
-  // badan
-  ctx.fillStyle="blue";
-  ctx.fillRect(px-15, py-10, 30, 25);
-  // tangan
-  ctx.fillStyle="blue";
-  ctx.fillRect(px-25, py-10, 10, 20);
-  ctx.fillRect(px+15, py-10, 10, 20);
-  // kepala
-  ctx.fillStyle="yellow";
-  ctx.fillRect(px-12, py-30, 24, 20);
-  // nama
-  ctx.fillStyle="black";
-  ctx.textAlign="center";
-  ctx.fillText(playerName, px, py-40);
+    // Lompat
+    if(isJumping){
+        player.y += jumpVelocity;
+        jumpVelocity += gravity;
+        if(player.y>=0){ // ground level 0
+            player.y=0;
+            isJumping=false;
+        }
+    }
 }
 
+// Draw
+function draw(){
+    ctx.fillStyle="#87CEEB";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // Jalan
+    ctx.fillStyle="#555";
+    ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2);
+
+    ctx.save();
+    ctx.translate(canvas.width/2,canvas.height/2);
+
+    // Bangunan
+    buildings.forEach(b=>{
+        let dx=b.x-player.x;
+        let dy=b.y-player.y;
+        let rx = dx*Math.cos(-camera.angle)-dy*Math.sin(-camera.angle);
+        let ry = dx*Math.sin(-camera.angle)+dy*Math.cos(-camera.angle);
+        if(ry>1){
+            let scale = 300/ry;
+            ctx.fillStyle=b.color;
+            ctx.fillRect(rx*scale-b.width/2, -b.height, b.width, b.height);
+        }
+    });
+
+    ctx.restore();
+
+    // Player kotak + kepala + kaki + badan
+    let px = canvas.width/2;
+    let py = canvas.height/2;
+    // kaki
+    ctx.fillStyle="black";
+    ctx.fillRect(px-10,py+10,8,20);
+    ctx.fillRect(px+2,py+10,8,20);
+    // badan
+    ctx.fillStyle="blue";
+    ctx.fillRect(px-15,py-10,30,25);
+    // kepala
+    ctx.fillStyle="yellow";
+    ctx.fillRect(px-12,py-30,24,20);
+    // nama
+    ctx.fillStyle="black";
+    ctx.textAlign="center";
+    ctx.fillText(playerName,px,py-40);
+}
+
+// Loop
 function loop(){
-  update();
-  draw();
-  requestAnimationFrame(loop);
+    update();
+    draw();
+    requestAnimationFrame(loop);
 }
 loop();
 </script>
