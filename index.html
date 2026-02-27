@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Game HAPPY UPDATE</title>
+<title>HAPPY UPDATE</title>
 <style>
 body{
     margin:0;
@@ -12,18 +12,42 @@ body{
 canvas{
     display:block;
 }
-button{
+
+/* ===== JOYSTICK ===== */
+#joystickBase{
     position:fixed;
+    left:40px;
+    bottom:60px;
+    width:120px;
+    height:120px;
+    background:rgba(255,255,255,0.2);
+    border-radius:50%;
+}
+#joystickStick{
+    position:fixed;
+    left:80px;
+    bottom:100px;
+    width:60px;
+    height:60px;
+    background:blue;
+    border-radius:50%;
+}
+
+/* ===== JUMP BUTTON ===== */
+#jumpBtn{
+    position:fixed;
+    right:40px;
+    bottom:80px;
     width:70px;
     height:70px;
     border-radius:50%;
     border:none;
-    font-size:20px;
+    background:red;
     color:white;
+    font-size:18px;
 }
-#leftBtn{ left:30px; bottom:80px; background:blue; }
-#rightBtn{ left:120px; bottom:80px; background:blue; }
-#jumpBtn{ right:40px; bottom:80px; background:red; }
+
+/* ===== NAME SCREEN ===== */
 #nameScreen{
     position:fixed;
     width:100%;
@@ -40,11 +64,8 @@ button{
     font-size:18px;
 }
 #nameScreen button{
-    position:static;
     margin-top:15px;
-    border-radius:10px;
-    width:120px;
-    height:40px;
+    padding:10px 20px;
 }
 </style>
 </head>
@@ -58,8 +79,8 @@ button{
 
 <canvas id="game"></canvas>
 
-<button id="leftBtn">◀</button>
-<button id="rightBtn">▶</button>
+<div id="joystickBase"></div>
+<div id="joystickStick"></div>
 <button id="jumpBtn">JUMP</button>
 
 <script>
@@ -69,27 +90,22 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-let playerName = "PLAYER";
-
-// ===== EVENT BULAN MARET =====
-const currentMonth = new Date().getMonth();
-const isHappyUpdate = (currentMonth === 2); 
-// untuk test paksa aktif:
-// const isHappyUpdate = true;
-
 let player = {
     x: canvas.width/2,
     y: 0,
-    width: 40,
-    height: 80,
+    width:40,
+    height:80,
     velocityY:0,
     jumping:false
 };
 
-function startGame(){
-    let n = document.getElementById("nameInput").value;
-    if(n.trim()!="") playerName = n;
+// ===== EVENT MARET =====
+const currentMonth = new Date().getMonth();
+const isHappyUpdate = (currentMonth === 2);
+// untuk test aktifkan manual:
+// const isHappyUpdate = true;
 
+function startGame(){
     document.getElementById("nameScreen").style.display="none";
 
     if(isHappyUpdate){
@@ -98,10 +114,38 @@ function startGame(){
     }
 }
 
-// ===== CONTROL HP =====
-document.getElementById("leftBtn").addEventListener("touchstart",()=>{ player.x -= 20; });
-document.getElementById("rightBtn").addEventListener("touchstart",()=>{ player.x += 20; });
+// ===== JOYSTICK SYSTEM =====
+let joyStick = document.getElementById("joystickStick");
+let dragging = false;
 
+let baseX = 100;
+let baseY = canvas.height - 120;
+
+document.addEventListener("touchstart",(e)=>{
+    dragging = true;
+});
+
+document.addEventListener("touchend",()=>{
+    dragging = false;
+    joyStick.style.left = "80px";
+    joyStick.style.bottom = "100px";
+});
+
+document.addEventListener("touchmove",(e)=>{
+    if(!dragging) return;
+
+    let touch = e.touches[0];
+    let dx = touch.clientX - baseX;
+
+    if(dx > 40) dx = 40;
+    if(dx < -40) dx = -40;
+
+    joyStick.style.left = (80 + dx) + "px";
+
+    player.x += dx * 0.15;
+});
+
+// ===== JUMP =====
 document.getElementById("jumpBtn").addEventListener("touchstart",()=>{
     if(!player.jumping){
         player.velocityY = -12;
@@ -109,35 +153,26 @@ document.getElementById("jumpBtn").addEventListener("touchstart",()=>{
     }
 });
 
-// ===== CONTROL KEYBOARD =====
-let keys={};
-window.addEventListener("keydown",e=>{ keys[e.key]=true; });
-window.addEventListener("keyup",e=>{ keys[e.key]=false; });
-
+// ===== UPDATE =====
 function update(){
-
-    if(keys["ArrowLeft"]) player.x -=5;
-    if(keys["ArrowRight"]) player.x +=5;
-
     if(player.jumping){
         player.y += player.velocityY;
         player.velocityY += 0.6;
-        if(player.y>=0){
-            player.y=0;
-            player.jumping=false;
+        if(player.y >= 0){
+            player.y = 0;
+            player.jumping = false;
         }
     }
 }
 
+// ===== DRAW =====
 function draw(){
 
     if(isHappyUpdate){
 
-        // MALAM
         ctx.fillStyle="#0a0f1f";
         ctx.fillRect(0,0,canvas.width,canvas.height);
 
-        // TANAH
         ctx.fillStyle="#1e7a1e";
         ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2);
 
@@ -146,26 +181,24 @@ function draw(){
 
         // ===== NAMA DI LANGIT =====
         ctx.fillStyle="gold";
-ctx.font="60px Arial";
-ctx.textAlign="center";
-ctx.fillText("SELAMAT ULANG TAHUN", centerX, 110);
+        ctx.font="60px Arial";
+        ctx.textAlign="center";
+        ctx.fillText("SELAMAT ULANG TAHUN", centerX, 110);
 
-ctx.font="70px Arial";
-ctx.fillText("ANDIKA", centerX, 170);
+        ctx.font="70px Arial";
+        ctx.fillText("ANDIKA", centerX, 170);
 
-ctx.font="35px Arial";
-ctx.fillText("HAPPY UPDATE", centerX, 220);
+        ctx.font="35px Arial";
+        ctx.fillText("HAPPY UPDATE", centerX, 220);
 
         // ===== 3 TIANG =====
         ctx.fillStyle="white";
-
         ctx.fillRect(centerX-200, groundY-200, 40, 200);
         ctx.fillRect(centerX-20, groundY-200, 40, 200);
         ctx.fillRect(centerX+160, groundY-200, 40, 200);
 
         ctx.fillStyle="yellow";
         ctx.font="28px Arial";
-
         ctx.fillText("HAPPY", centerX-180, groundY-220);
         ctx.fillText("UPDATE", centerX, groundY-220);
         ctx.fillText("🎉", centerX+180, groundY-220);
@@ -189,39 +222,33 @@ ctx.fillText("HAPPY UPDATE", centerX, 220);
 
     } else {
 
-        // MODE NORMAL (kota sederhana)
         ctx.fillStyle="skyblue";
         ctx.fillRect(0,0,canvas.width,canvas.height);
 
         ctx.fillStyle="green";
         ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2);
-
-        ctx.fillStyle="gray";
-        ctx.fillRect(100,canvas.height/2-200,100,200);
-        ctx.fillRect(250,canvas.height/2-150,120,150);
-        ctx.fillRect(420,canvas.height/2-180,90,180);
     }
 
     // ===== PLAYER =====
     let ground = canvas.height/2;
 
-    ctx.fillStyle="yellow"; // kepala
+    ctx.fillStyle="yellow";
     ctx.fillRect(player.x, ground-80+player.y, 40, 30);
 
-    ctx.fillStyle="blue"; // badan
+    ctx.fillStyle="blue";
     ctx.fillRect(player.x, ground-50+player.y, 40, 40);
 
-    ctx.fillStyle="black"; // kaki
+    ctx.fillStyle="black";
     ctx.fillRect(player.x+5, ground-10+player.y, 10, 10);
     ctx.fillRect(player.x+25, ground-10+player.y, 10, 10);
 }
 
+// ===== LOOP =====
 function gameLoop(){
     update();
     draw();
     requestAnimationFrame(gameLoop);
 }
-
 gameLoop();
 </script>
 
