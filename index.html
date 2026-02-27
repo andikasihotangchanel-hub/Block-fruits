@@ -1,226 +1,228 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Game Kota + HAPPY UPDATE</title>
-
+<title>Game HAPPY UPDATE</title>
 <style>
 body{
     margin:0;
     overflow:hidden;
-    font-family:Arial, sans-serif;
+    background:black;
 }
-canvas{display:block;}
-
+canvas{
+    display:block;
+}
+button{
+    position:fixed;
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    border:none;
+    font-size:20px;
+    color:white;
+}
+#leftBtn{ left:30px; bottom:80px; background:blue; }
+#rightBtn{ left:120px; bottom:80px; background:blue; }
+#jumpBtn{ right:40px; bottom:80px; background:red; }
 #nameScreen{
     position:fixed;
     width:100%;
     height:100%;
     background:black;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    flex-direction:column;
     color:white;
-    z-index:10;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
 }
 #nameScreen input{
     padding:10px;
     font-size:18px;
-    margin:10px;
 }
 #nameScreen button{
-    padding:10px 20px;
-    font-size:18px;
-}
-
-#jumpBtn{
-    position:fixed;
-    right:30px;
-    bottom:80px;
-    width:80px;
-    height:80px;
-    border-radius:50%;
-    background:red;
-    color:white;
-    font-weight:bold;
-    border:none;
-    font-size:18px;
+    position:static;
+    margin-top:15px;
+    border-radius:10px;
+    width:120px;
+    height:40px;
 }
 </style>
 </head>
-
 <body>
 
 <div id="nameScreen">
     <h2>Masukkan Nama</h2>
-    <input type="text" id="nameInput">
+    <input id="nameInput" placeholder="Nama kamu">
     <button onclick="startGame()">Mulai</button>
 </div>
 
 <canvas id="game"></canvas>
+
+<button id="leftBtn">◀</button>
+<button id="rightBtn">▶</button>
 <button id="jumpBtn">JUMP</button>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-function resize(){
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
-resize();
-window.addEventListener("resize",resize);
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-let playerName = "Player";
+let playerName = "PLAYER";
+
+// ===== EVENT BULAN MARET =====
+const currentMonth = new Date().getMonth();
+const isHappyUpdate = (currentMonth === 2); 
+// untuk test paksa aktif:
+// const isHappyUpdate = true;
+
+let player = {
+    x: canvas.width/2,
+    y: 0,
+    width: 40,
+    height: 80,
+    velocityY:0,
+    jumping:false
+};
 
 function startGame(){
     let n = document.getElementById("nameInput").value;
     if(n.trim()!="") playerName = n;
+
     document.getElementById("nameScreen").style.display="none";
 
     if(isHappyUpdate){
-        let audio = new Audio("https://www.soundjay.com/human/sounds/happy-birthday-song-01.mp3");
-        audio.play();
+        const audio = new Audio("https://www.soundjay.com/human/sounds/happy-birthday-song-01.mp3");
+        audio.play().catch(()=>{});
     }
 }
 
-/* ===== EVENT SYSTEM ===== */
-const currentMonth = new Date().getMonth();
-const isHappyUpdate = (currentMonth === 2); // Maret
+// ===== CONTROL HP =====
+document.getElementById("leftBtn").addEventListener("touchstart",()=>{ player.x -= 20; });
+document.getElementById("rightBtn").addEventListener("touchstart",()=>{ player.x += 20; });
 
-/* ===== PLAYER ===== */
-let player={
-    x:0,
-    y:0,
-    jumpVelocity:0,
-    isJumping:false
-};
-
-document.getElementById("jumpBtn").addEventListener("click",jump);
-function jump(){
-    if(!player.isJumping){
-        player.jumpVelocity = -12;
-        player.isJumping=true;
+document.getElementById("jumpBtn").addEventListener("touchstart",()=>{
+    if(!player.jumping){
+        player.velocityY = -12;
+        player.jumping = true;
     }
-}
+});
 
-/* ===== BUILDINGS NORMAL ===== */
-let buildings=[];
-for(let i=0;i<40;i++){
-    buildings.push({
-        x:Math.random()*2000-1000,
-        y:Math.random()*500+200,
-        w:50,
-        h:100+Math.random()*100
-    });
-}
+// ===== CONTROL KEYBOARD =====
+let keys={};
+window.addEventListener("keydown",e=>{ keys[e.key]=true; });
+window.addEventListener("keyup",e=>{ keys[e.key]=false; });
 
-/* ===== UPDATE ===== */
 function update(){
 
-    if(player.isJumping){
-        player.y += player.jumpVelocity;
-        player.jumpVelocity += 0.6;
+    if(keys["ArrowLeft"]) player.x -=5;
+    if(keys["ArrowRight"]) player.x +=5;
+
+    if(player.jumping){
+        player.y += player.velocityY;
+        player.velocityY += 0.6;
         if(player.y>=0){
             player.y=0;
-            player.isJumping=false;
+            player.jumping=false;
         }
     }
 }
 
-/* ===== DRAW ===== */
 function draw(){
 
     if(isHappyUpdate){
+
         // MALAM
-        ctx.fillStyle="#0b0f2a";
-    }else{
-        ctx.fillStyle="#87CEEB";
-    }
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle="#0a0f1f";
+        ctx.fillRect(0,0,canvas.width,canvas.height);
 
-    if(isHappyUpdate){
+        // TANAH
+        ctx.fillStyle="#1e7a1e";
+        ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2);
 
-        // ===== NAMA BESAR DI LANGIT =====
+        let centerX = canvas.width/2;
+        let groundY = canvas.height/2;
+
+        // ===== NAMA DI LANGIT =====
         ctx.fillStyle="gold";
-        ctx.font="80px Arial";
-        ctx.textAlign="center";
-        ctx.fillText(playerName, canvas.width/2, 120);
+ctx.font="60px Arial";
+ctx.textAlign="center";
+ctx.fillText("SELAMAT ULANG TAHUN", centerX, 110);
 
-        ctx.font="50px Arial";
-        ctx.fillText("HAPPY UPDATE", canvas.width/2, 200);
+ctx.font="70px Arial";
+ctx.fillText("ANDIKA", centerX, 170);
+
+ctx.font="35px Arial";
+ctx.fillText("HAPPY UPDATE", centerX, 220);
 
         // ===== 3 TIANG =====
         ctx.fillStyle="white";
-        ctx.fillRect(canvas.width/2-250,canvas.height/2-150,40,200);
-        ctx.fillRect(canvas.width/2-20,canvas.height/2-150,40,200);
-        ctx.fillRect(canvas.width/2+210,canvas.height/2-150,40,200);
+
+        ctx.fillRect(centerX-200, groundY-200, 40, 200);
+        ctx.fillRect(centerX-20, groundY-200, 40, 200);
+        ctx.fillRect(centerX+160, groundY-200, 40, 200);
 
         ctx.fillStyle="yellow";
-        ctx.font="30px Arial";
-        ctx.fillText("HAPPY", canvas.width/2-230, canvas.height/2-170);
-        ctx.fillText("UPDATE", canvas.width/2, canvas.height/2-170);
-        ctx.fillText("🎉", canvas.width/2+230, canvas.height/2-170);
+        ctx.font="28px Arial";
 
-        // ===== KUE ULANG TAHUN =====
+        ctx.fillText("HAPPY", centerX-180, groundY-220);
+        ctx.fillText("UPDATE", centerX, groundY-220);
+        ctx.fillText("🎉", centerX+180, groundY-220);
+
+        // ===== KUE =====
         ctx.fillStyle="#8B4513";
-        ctx.fillRect(canvas.width/2-100, canvas.height/2+50, 200, 80);
+        ctx.fillRect(centerX-100, groundY+20, 200, 70);
 
         ctx.fillStyle="pink";
-        ctx.fillRect(canvas.width/2-100, canvas.height/2+30, 200, 30);
+        ctx.fillRect(centerX-100, groundY, 200, 30);
 
-        // Lilin
         for(let i=0;i<5;i++){
             ctx.fillStyle="white";
-            ctx.fillRect(canvas.width/2-60+i*30, canvas.height/2+10, 5, 20);
+            ctx.fillRect(centerX-60+i*30, groundY-20, 5, 20);
+
             ctx.fillStyle="orange";
             ctx.beginPath();
-            ctx.arc(canvas.width/2-58+i*30, canvas.height/2+5,5,0,Math.PI*2);
+            ctx.arc(centerX-58+i*30, groundY-25,5,0,Math.PI*2);
             ctx.fill();
         }
 
-    }else{
+    } else {
 
-        // GAME NORMAL
-        ctx.fillStyle="#228B22";
+        // MODE NORMAL (kota sederhana)
+        ctx.fillStyle="skyblue";
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+
+        ctx.fillStyle="green";
         ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2);
 
-        buildings.forEach(b=>{
-            ctx.fillStyle="gray";
-            ctx.fillRect(
-                b.x+canvas.width/2,
-                canvas.height/2-b.h,
-                b.w,
-                b.h
-            );
-        });
-
+        ctx.fillStyle="gray";
+        ctx.fillRect(100,canvas.height/2-200,100,200);
+        ctx.fillRect(250,canvas.height/2-150,120,150);
+        ctx.fillRect(420,canvas.height/2-180,90,180);
     }
 
     // ===== PLAYER =====
-    let px = canvas.width/2;
-    let py = canvas.height/2 + player.y;
+    let ground = canvas.height/2;
 
-    ctx.fillStyle="black";
-    ctx.fillRect(px-10,py,8,20);
-    ctx.fillRect(px+2,py,8,20);
+    ctx.fillStyle="yellow"; // kepala
+    ctx.fillRect(player.x, ground-80+player.y, 40, 30);
 
-    ctx.fillStyle="blue";
-    ctx.fillRect(px-15,py-10,30,25);
+    ctx.fillStyle="blue"; // badan
+    ctx.fillRect(player.x, ground-50+player.y, 40, 40);
 
-    ctx.fillStyle="yellow";
-    ctx.fillRect(px-12,py-30,24,20);
+    ctx.fillStyle="black"; // kaki
+    ctx.fillRect(player.x+5, ground-10+player.y, 10, 10);
+    ctx.fillRect(player.x+25, ground-10+player.y, 10, 10);
 }
 
-/* LOOP */
-function loop(){
+function gameLoop(){
     update();
     draw();
-    requestAnimationFrame(loop);
+    requestAnimationFrame(gameLoop);
 }
-loop();
+
+gameLoop();
 </script>
 
 </body>
