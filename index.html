@@ -2,80 +2,44 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>HAPPY UPDATE</title>
+<title>Free Camera Mode</title>
 <style>
-body{
-    margin:0;
-    overflow:hidden;
-    background:black;
-}
-canvas{
-    display:block;
-}
+body{margin:0;overflow:hidden;background:black;}
+canvas{display:block;}
 
-/* ===== JOYSTICK ===== */
 #joystickBase{
-    position:fixed;
-    left:40px;
-    bottom:60px;
-    width:120px;
-    height:120px;
-    background:rgba(255,255,255,0.2);
-    border-radius:50%;
+position:fixed;
+left:40px;
+bottom:60px;
+width:120px;
+height:120px;
+background:rgba(255,255,255,0.2);
+border-radius:50%;
 }
 #joystickStick{
-    position:fixed;
-    left:80px;
-    bottom:100px;
-    width:60px;
-    height:60px;
-    background:blue;
-    border-radius:50%;
+position:fixed;
+left:80px;
+bottom:100px;
+width:60px;
+height:60px;
+background:blue;
+border-radius:50%;
 }
-
-/* ===== JUMP BUTTON ===== */
 #jumpBtn{
-    position:fixed;
-    right:40px;
-    bottom:80px;
-    width:70px;
-    height:70px;
-    border-radius:50%;
-    border:none;
-    background:red;
-    color:white;
-    font-size:18px;
-}
-
-/* ===== NAME SCREEN ===== */
-#nameScreen{
-    position:fixed;
-    width:100%;
-    height:100%;
-    background:black;
-    color:white;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-}
-#nameScreen input{
-    padding:10px;
-    font-size:18px;
-}
-#nameScreen button{
-    margin-top:15px;
-    padding:10px 20px;
+position:fixed;
+right:40px;
+bottom:80px;
+width:70px;
+height:70px;
+border-radius:50%;
+border:none;
+background:red;
+color:white;
+font-size:18px;
 }
 </style>
 </head>
 <body>
-
-<div id="nameScreen">
-    <h2>Masukkan Nama</h2>
-    <input id="nameInput" placeholder="Nama kamu">
-    <button onclick="startGame()">Mulai</button>
-</div>
 
 <canvas id="game"></canvas>
 
@@ -91,163 +55,134 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 let player = {
-    x: canvas.width/2,
-    y: 0,
-    width:40,
-    height:80,
-    velocityY:0,
-    jumping:false
+x: 0,
+y: 0,
+width:40,
+height:80,
+velocityY:0,
+jumping:false
 };
 
-// ===== EVENT MARET =====
-const currentMonth = new Date().getMonth();
-const isHappyUpdate = (currentMonth === 2);
-// untuk test aktifkan manual:
-// const isHappyUpdate = true;
+let cameraX = 0;
 
-function startGame(){
-    document.getElementById("nameScreen").style.display="none";
+// ===== EVENT =====
+const isHappyUpdate = true;
 
-    if(isHappyUpdate){
-        const audio = new Audio("https://www.soundjay.com/human/sounds/happy-birthday-song-01.mp3");
-        audio.play().catch(()=>{});
-    }
-}
-
-// ===== JOYSTICK SYSTEM =====
+// ===== JOYSTICK PLAYER =====
 let joyStick = document.getElementById("joystickStick");
-let dragging = false;
-
+let draggingJoy = false;
 let baseX = 100;
-let baseY = canvas.height - 120;
 
 document.addEventListener("touchstart",(e)=>{
-    dragging = true;
+if(e.touches[0].clientX < 200){
+draggingJoy=true;
+}else{
+draggingCam=true;
+lastTouchX = e.touches[0].clientX;
+}
 });
 
 document.addEventListener("touchend",()=>{
-    dragging = false;
-    joyStick.style.left = "80px";
-    joyStick.style.bottom = "100px";
+draggingJoy=false;
+draggingCam=false;
+joyStick.style.left="80px";
+joyStick.style.bottom="100px";
 });
 
+let draggingCam = false;
+let lastTouchX = 0;
+
 document.addEventListener("touchmove",(e)=>{
-    if(!dragging) return;
+let touch=e.touches[0];
 
-    let touch = e.touches[0];
-    let dx = touch.clientX - baseX;
+if(draggingJoy){
+let dx=touch.clientX-baseX;
+if(dx>40)dx=40;
+if(dx<-40)dx=-40;
+joyStick.style.left=(80+dx)+"px";
+player.x+=dx*0.2;
+}
 
-    if(dx > 40) dx = 40;
-    if(dx < -40) dx = -40;
-
-    joyStick.style.left = (80 + dx) + "px";
-
-    player.x += dx * 0.15;
+if(draggingCam){
+let dx = touch.clientX - lastTouchX;
+cameraX -= dx;
+lastTouchX = touch.clientX;
+}
 });
 
 // ===== JUMP =====
 document.getElementById("jumpBtn").addEventListener("touchstart",()=>{
-    if(!player.jumping){
-        player.velocityY = -12;
-        player.jumping = true;
-    }
+if(!player.jumping){
+player.velocityY=-12;
+player.jumping=true;
+}
 });
 
 // ===== UPDATE =====
 function update(){
-    if(player.jumping){
-        player.y += player.velocityY;
-        player.velocityY += 0.6;
-        if(player.y >= 0){
-            player.y = 0;
-            player.jumping = false;
-        }
-    }
+if(player.jumping){
+player.y+=player.velocityY;
+player.velocityY+=0.6;
+if(player.y>=0){
+player.y=0;
+player.jumping=false;
+}
+}
 }
 
 // ===== DRAW =====
 function draw(){
 
-    if(isHappyUpdate){
+ctx.fillStyle="#0a0f1f";
+ctx.fillRect(0,0,canvas.width,canvas.height);
 
-        ctx.fillStyle="#0a0f1f";
-        ctx.fillRect(0,0,canvas.width,canvas.height);
+ctx.fillStyle="#1e7a1e";
+ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2);
 
-        ctx.fillStyle="#1e7a1e";
-        ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2);
+let centerX = canvas.width/2 - cameraX;
+let groundY = canvas.height/2;
 
-        let centerX = canvas.width/2;
-        let groundY = canvas.height/2;
+// ===== TEXT =====
+ctx.fillStyle="gold";
+ctx.font="60px Arial";
+ctx.textAlign="center";
+ctx.fillText("SELAMAT ULANG TAHUN", centerX, 110);
 
-        // ===== NAMA DI LANGIT =====
-        ctx.fillStyle="gold";
-        ctx.font="60px Arial";
-        ctx.textAlign="center";
-        ctx.fillText("SELAMAT ULANG TAHUN", centerX, 110);
+ctx.font="70px Arial";
+ctx.fillText("ANDIKA", centerX, 170);
 
-        ctx.font="70px Arial";
-        ctx.fillText("ANDIKA", centerX, 170);
+ctx.font="35px Arial";
+ctx.fillText("HAPPY UPDATE", centerX, 220);
 
-        ctx.font="35px Arial";
-        ctx.fillText("HAPPY UPDATE", centerX, 220);
+// ===== TIANG =====
+ctx.fillStyle="white";
+ctx.fillRect(centerX-200, groundY-200, 40, 200);
+ctx.fillRect(centerX-20, groundY-200, 40, 200);
+ctx.fillRect(centerX+160, groundY-200, 40, 200);
 
-        // ===== 3 TIANG =====
-        ctx.fillStyle="white";
-        ctx.fillRect(centerX-200, groundY-200, 40, 200);
-        ctx.fillRect(centerX-20, groundY-200, 40, 200);
-        ctx.fillRect(centerX+160, groundY-200, 40, 200);
+// ===== KUE =====
+ctx.fillStyle="#8B4513";
+ctx.fillRect(centerX-100, groundY+20, 200, 70);
 
-        ctx.fillStyle="yellow";
-        ctx.font="28px Arial";
-        ctx.fillText("HAPPY", centerX-180, groundY-220);
-        ctx.fillText("UPDATE", centerX, groundY-220);
-        ctx.fillText("🎉", centerX+180, groundY-220);
+ctx.fillStyle="pink";
+ctx.fillRect(centerX-100, groundY, 200, 30);
 
-        // ===== KUE =====
-        ctx.fillStyle="#8B4513";
-        ctx.fillRect(centerX-100, groundY+20, 200, 70);
+// ===== PLAYER =====
+let screenX = player.x - cameraX;
+let ground = canvas.height/2;
 
-        ctx.fillStyle="pink";
-        ctx.fillRect(centerX-100, groundY, 200, 30);
+ctx.fillStyle="yellow";
+ctx.fillRect(screenX, ground-80+player.y, 40, 30);
 
-        for(let i=0;i<5;i++){
-            ctx.fillStyle="white";
-            ctx.fillRect(centerX-60+i*30, groundY-20, 5, 20);
+ctx.fillStyle="blue";
+ctx.fillRect(screenX, ground-50+player.y, 40, 40);
 
-            ctx.fillStyle="orange";
-            ctx.beginPath();
-            ctx.arc(centerX-58+i*30, groundY-25,5,0,Math.PI*2);
-            ctx.fill();
-        }
-
-    } else {
-
-        ctx.fillStyle="skyblue";
-        ctx.fillRect(0,0,canvas.width,canvas.height);
-
-        ctx.fillStyle="green";
-        ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2);
-    }
-
-    // ===== PLAYER =====
-    let ground = canvas.height/2;
-
-    ctx.fillStyle="yellow";
-    ctx.fillRect(player.x, ground-80+player.y, 40, 30);
-
-    ctx.fillStyle="blue";
-    ctx.fillRect(player.x, ground-50+player.y, 40, 40);
-
-    ctx.fillStyle="black";
-    ctx.fillRect(player.x+5, ground-10+player.y, 10, 10);
-    ctx.fillRect(player.x+25, ground-10+player.y, 10, 10);
 }
 
-// ===== LOOP =====
 function gameLoop(){
-    update();
-    draw();
-    requestAnimationFrame(gameLoop);
+update();
+draw();
+requestAnimationFrame(gameLoop);
 }
 gameLoop();
 </script>
