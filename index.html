@@ -2,40 +2,27 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Free Camera Mode</title>
+<title>HAPPY UPDATE</title>
 <style>
-body{margin:0;overflow:hidden;background:black;}
-canvas{display:block;}
-
-#joystickBase{
+body { margin:0; overflow:hidden; background:black; }
+#joystick {
 position:fixed;
+bottom:40px;
 left:40px;
-bottom:60px;
 width:120px;
 height:120px;
-background:rgba(255,255,255,0.2);
+background:rgba(255,255,255,0.1);
 border-radius:50%;
+touch-action:none;
 }
-#joystickStick{
-position:fixed;
-left:80px;
-bottom:100px;
+#stick {
+position:absolute;
 width:60px;
 height:60px;
-background:blue;
+background:white;
 border-radius:50%;
-}
-#jumpBtn{
-position:fixed;
-right:40px;
-bottom:80px;
-width:70px;
-height:70px;
-border-radius:50%;
-border:none;
-background:red;
-color:white;
-font-size:18px;
+top:30px;
+left:30px;
 }
 </style>
 </head>
@@ -43,149 +30,161 @@ font-size:18px;
 
 <canvas id="game"></canvas>
 
-<div id="joystickBase"></div>
-<div id="joystickStick"></div>
-<button id="jumpBtn">JUMP</button>
+<audio id="bgMusic" loop>
+<source src="lagu.mp3" type="audio/mpeg">
+</audio>
+
+<div id="joystick"><div id="stick"></div></div>
 
 <script>
+// ====== MARCH CHECK ======
+const month = new Date().getMonth();
+if(month !== 2){
+alert("Event hanya tersedia bulan Maret 🎂");
+}
+
+// ====== CANVAS ======
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+canvas.width = innerWidth;
+canvas.height = innerHeight;
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+// ====== MUSIC ======
+let musicStarted=false;
+const bgMusic=document.getElementById("bgMusic");
+document.addEventListener("touchstart",()=>{
+if(!musicStarted){
+bgMusic.volume=0.8;
+bgMusic.play().catch(()=>{});
+musicStarted=true;
+}
+});
 
-let player = {
-x: 0,
-y: 0,
-width:40,
-height:80,
-velocityY:0,
-jumping:false
+// ====== PLAYER ======
+let player={
+x:0,y:0,z:0,
+vy:0,
+size:40,
+speed:0.6
 };
 
-let cameraX = 0;
+let camera={x:0,y:60,z:200,rotY:0};
 
-// ===== EVENT =====
-const isHappyUpdate = true;
+let keys={};
 
-// ===== JOYSTICK PLAYER =====
-let joyStick = document.getElementById("joystickStick");
-let draggingJoy = false;
-let baseX = 100;
+// ====== JOYSTICK ======
+const joystick=document.getElementById("joystick");
+const stick=document.getElementById("stick");
+let joyActive=false,joyX=0,joyY=0;
 
-document.addEventListener("touchstart",(e)=>{
-if(e.touches[0].clientX < 200){
-draggingJoy=true;
-}else{
-draggingCam=true;
-lastTouchX = e.touches[0].clientX;
-}
+joystick.addEventListener("touchstart",e=>{
+joyActive=true;
 });
 
-document.addEventListener("touchend",()=>{
-draggingJoy=false;
-draggingCam=false;
-joyStick.style.left="80px";
-joyStick.style.bottom="100px";
-});
-
-let draggingCam = false;
-let lastTouchX = 0;
-
-document.addEventListener("touchmove",(e)=>{
+joystick.addEventListener("touchmove",e=>{
+let rect=joystick.getBoundingClientRect();
 let touch=e.touches[0];
-
-if(draggingJoy){
-let dx=touch.clientX-baseX;
-if(dx>40)dx=40;
-if(dx<-40)dx=-40;
-joyStick.style.left=(80+dx)+"px";
-player.x+=dx*0.2;
+joyX=touch.clientX-(rect.left+60);
+joyY=touch.clientY-(rect.top+60);
+let dist=Math.sqrt(joyX*joyX+joyY*joyY);
+if(dist>40){
+joyX*=40/dist;
+joyY*=40/dist;
 }
+stick.style.left=(joyX+30)+"px";
+stick.style.top=(joyY+30)+"px";
+});
 
-if(draggingCam){
-let dx = touch.clientX - lastTouchX;
-cameraX -= dx;
-lastTouchX = touch.clientX;
+joystick.addEventListener("touchend",()=>{
+joyActive=false;
+joyX=0;joyY=0;
+stick.style.left="30px";
+stick.style.top="30px";
+});
+
+// ====== JUMP ======
+document.addEventListener("touchstart",e=>{
+if(e.target.id!=="stick"){
+if(player.y===0){
+player.vy=8;
+}
 }
 });
 
-// ===== JUMP =====
-document.getElementById("jumpBtn").addEventListener("touchstart",()=>{
-if(!player.jumping){
-player.velocityY=-12;
-player.jumping=true;
-}
-});
-
-// ===== UPDATE =====
 function update(){
-if(player.jumping){
-player.y+=player.velocityY;
-player.velocityY+=0.6;
-if(player.y>=0){
+
+// movement
+if(joyActive){
+player.x+=joyX*0.05;
+player.z+=joyY*0.05;
+}
+
+// gravity
+player.vy-=0.4;
+player.y+=player.vy;
+if(player.y<0){
 player.y=0;
-player.jumping=false;
-}
-}
+player.vy=0;
 }
 
-// ===== DRAW =====
+// camera follow
+camera.x=player.x;
+camera.z=player.z+200;
+}
+
+// ====== DRAW ======
 function draw(){
-
-ctx.fillStyle="#0a0f1f";
+ctx.fillStyle="black";
 ctx.fillRect(0,0,canvas.width,canvas.height);
 
-ctx.fillStyle="#1e7a1e";
+// sky text
+ctx.fillStyle="white";
+ctx.font="40px Arial";
+ctx.textAlign="center";
+ctx.fillText("selamat ulang tahun andika",
+canvas.width/2,100);
+
+// ground
+ctx.fillStyle="#111";
 ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2);
 
-let centerX = canvas.width/2 - cameraX;
-let groundY = canvas.height/2;
-
-// ===== TEXT =====
-ctx.fillStyle="gold";
-ctx.font="60px Arial";
-ctx.textAlign="center";
-ctx.fillText("SELAMAT ULANG TAHUN", centerX, 110);
-
-ctx.font="70px Arial";
-ctx.fillText("ANDIKA", centerX, 170);
-
-ctx.font="35px Arial";
-ctx.fillText("HAPPY UPDATE", centerX, 220);
-
-// ===== TIANG =====
+// player
 ctx.fillStyle="white";
-ctx.fillRect(centerX-200, groundY-200, 40, 200);
-ctx.fillRect(centerX-20, groundY-200, 40, 200);
-ctx.fillRect(centerX+160, groundY-200, 40, 200);
+ctx.fillRect(
+canvas.width/2-20,
+canvas.height/2-player.y-40,
+40,40
+);
 
-// ===== KUE =====
-ctx.fillStyle="#8B4513";
-ctx.fillRect(centerX-100, groundY+20, 200, 70);
-
-ctx.fillStyle="pink";
-ctx.fillRect(centerX-100, groundY, 200, 30);
-
-// ===== PLAYER =====
-let screenX = player.x - cameraX;
-let ground = canvas.height/2;
-
-ctx.fillStyle="yellow";
-ctx.fillRect(screenX, ground-80+player.y, 40, 30);
-
-ctx.fillStyle="blue";
-ctx.fillRect(screenX, ground-50+player.y, 40, 40);
-
+// 3 pillars
+for(let i=-1;i<=1;i++){
+ctx.fillStyle="gray";
+ctx.fillRect(
+canvas.width/2+i*150-25,
+canvas.height/2-150,
+50,150
+);
+ctx.fillStyle="white";
+ctx.fillText("HAPPY UPDATE",
+canvas.width/2+i*150,
+canvas.height/2-160);
 }
 
-function gameLoop(){
+// cake
+ctx.fillStyle="pink";
+ctx.fillRect(canvas.width/2-60,canvas.height/2-60,120,30);
+ctx.fillStyle="yellow";
+ctx.fillRect(canvas.width/2-5,canvas.height/2-90,10,30);
+}
+
+// ====== LOOP ======
+function loop(){
 update();
 draw();
-requestAnimationFrame(gameLoop);
+requestAnimationFrame(loop);
 }
-gameLoop();
-</script>
+loop();
 
+</script>
 </body>
 </html>
