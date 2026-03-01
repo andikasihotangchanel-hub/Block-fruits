@@ -2,226 +2,287 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>HAPPY UPDATE</title>
+<title>Event Jumat Agung</title>
 <style>
 body { margin:0; overflow:hidden; background:black; }
-canvas { touch-action:none; }
-#joystick{
-position:fixed;
-bottom:40px;
-left:40px;
-width:120px;
-height:120px;
-background:rgba(255,255,255,0.1);
-border-radius:50%;
-}
-#stick{
-position:absolute;
-width:60px;
-height:60px;
-background:white;
-border-radius:50%;
-top:30px;
-left:30px;
-}
+canvas { display:block; touch-action:none; }
 </style>
 </head>
 <body>
 
 <canvas id="game"></canvas>
 
-<audio id="bgMusic" loop>
-<source src="ultah.mp3" type="audio/mpeg">
+<audio id="music" loop>
+  <source src="ruang_kudus.mp3" type="audio/mpeg">
 </audio>
 
-<div id="joystick"><div id="stick"></div></div>
-
 <script>
-// ===== EVENT BULAN MARET =====
-if(new Date().getMonth()!==2){
-alert("Event hanya bulan Maret 🎂");
-}
 
-// ===== CANVAS =====
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
-canvas.width=innerWidth;
-canvas.height=innerHeight;
+// ================= EVENT 1-3 MARET 2026 =================
+const now = new Date();
+const eventActive =
+  now.getFullYear() === 2026 &&
+  now.getMonth() === 2 &&
+  now.getDate() >= 1 &&
+  now.getDate() <= 3;
 
-// ===== MUSIC =====
-let musicStarted=false;
-const bgMusic=document.getElementById("bgMusic");
-document.addEventListener("touchstart",()=>{
-if(!musicStarted){
-bgMusic.play().catch(()=>{});
-musicStarted=true;
-}
-});
+// ================= CANVAS =================
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+canvas.width = innerWidth;
+canvas.height = innerHeight;
 
-// ===== PLAYER =====
-let player={
-x:0,
-y:0,
-z:0,
-vy:0
+// ================= MUSIC =================
+const music = document.getElementById("music");
+document.addEventListener("touchstart", ()=>{
+  music.play().catch(()=>{});
+},{once:true});
+
+// ================= PLAYER =================
+let player = { x:0, y:0, z:0 };
+let sitting = false;
+
+// ================= CAMERA FREE =================
+let camera = {
+  x:0,
+  y:80,
+  z:200,
+  rotY:0,
+  rotX:0
 };
 
-// ===== CAMERA =====
-let camera={
-x:0,
-y:80,
-z:200,
-offsetY:80,
-rotX:0,
-rotY:0
+// ================= JOYSTICK =================
+let joy = {
+  active:false,
+  id:null,
+  baseX:0,
+  baseY:0,
+  stickX:0,
+  stickY:0,
+  radius:60
 };
 
-let lastTouchX=0;
-let lastTouchY=0;
-let cameraControl=false;
+let camTouch = {
+  active:false,
+  id:null,
+  lastX:0,
+  lastY:0
+};
 
-// Kamera geser bebas (area selain joystick)
-canvas.addEventListener("touchstart",e=>{
-if(e.target.id!=="stick"){
-cameraControl=true;
-lastTouchX=e.touches[0].clientX;
-lastTouchY=e.touches[0].clientY;
-}
-});
-
-canvas.addEventListener("touchmove",e=>{
-if(cameraControl){
-let touch=e.touches[0];
-let dx=touch.clientX-lastTouchX;
-let dy=touch.clientY-lastTouchY;
-
-camera.rotY+=dx*0.005;
-camera.rotX+=dy*0.005;
-
-camera.rotX=Math.max(-1,Math.min(1,camera.rotX));
-
-lastTouchX=touch.clientX;
-lastTouchY=touch.clientY;
-}
-});
-
-canvas.addEventListener("touchend",()=>{
-cameraControl=false;
-});
-
-// ===== JOYSTICK =====
-const joystick=document.getElementById("joystick");
-const stick=document.getElementById("stick");
-let joyX=0,joyY=0,joyActive=false;
-
-joystick.addEventListener("touchstart",()=>{joyActive=true;});
-
-joystick.addEventListener("touchmove",e=>{
-let rect=joystick.getBoundingClientRect();
-let t=e.touches[0];
-joyX=t.clientX-(rect.left+60);
-joyY=t.clientY-(rect.top+60);
-let d=Math.sqrt(joyX*joyX+joyY*joyY);
-if(d>40){ joyX*=40/d; joyY*=40/d; }
-stick.style.left=(joyX+30)+"px";
-stick.style.top=(joyY+30)+"px";
-});
-
-joystick.addEventListener("touchend",()=>{
-joyActive=false; joyX=0; joyY=0;
-stick.style.left="30px";
-stick.style.top="30px";
-});
-
-// ===== JUMP =====
-document.addEventListener("touchstart",e=>{
-if(e.target.id!=="stick"){
-if(player.y===0) player.vy=8;
-}
-});
-
-// ===== UPDATE =====
-function update(){
-
-// player move
-if(joyActive){
-player.x+=Math.sin(camera.rotY)*(-joyY*0.1);
-player.z+=Math.cos(camera.rotY)*(-joyY*0.1);
-player.x+=Math.cos(camera.rotY)*(joyX*0.1);
-player.z-=Math.sin(camera.rotY)*(joyX*0.1);
-}
-
-// gravity
-player.vy-=0.4;
-player.y+=player.vy;
-if(player.y<0){player.y=0;player.vy=0;}
-
-// camera follow
-camera.x=player.x-Math.sin(camera.rotY)*200;
-camera.z=player.z-Math.cos(camera.rotY)*200;
-camera.y=player.y+camera.offsetY+(camera.rotX*200);
-}
-
-// ===== PROJECT WORLD TO SCREEN =====
+// ================= PROJECTION =================
 function project(x,y,z){
-let dx=x-camera.x;
-let dy=y-camera.y;
-let dz=z-camera.z;
+  let dx = x - camera.x;
+  let dy = y - camera.y;
+  let dz = z - camera.z;
 
-let scale=300/(dz+300);
-return {
-x:canvas.width/2+dx*scale,
-y:canvas.height/2-dy*scale,
-scale:scale
-};
+  let cosY = Math.cos(camera.rotY);
+  let sinY = Math.sin(camera.rotY);
+
+  let rx = dx * cosY - dz * sinY;
+  let rz = dx * sinY + dz * cosY;
+
+  let cosX = Math.cos(camera.rotX);
+  let sinX = Math.sin(camera.rotX);
+
+  let ry = dy * cosX - rz * sinX;
+  rz = dy * sinX + rz * cosX;
+
+  let scale = 300/(rz+300);
+
+  return {
+    x: canvas.width/2 + rx*scale,
+    y: canvas.height/2 - ry*scale,
+    scale: scale
+  };
 }
 
-// ===== DRAW =====
+// ================= TOUCH START =================
+canvas.addEventListener("touchstart", e=>{
+  for(let t of e.changedTouches){
+
+    if(t.clientX < canvas.width/2 && !joy.active){
+      joy.active = true;
+      joy.id = t.identifier;
+      joy.baseX = t.clientX;
+      joy.baseY = t.clientY;
+      joy.stickX = t.clientX;
+      joy.stickY = t.clientY;
+    }
+    else if(t.clientX > canvas.width/2 && !camTouch.active){
+      camTouch.active = true;
+      camTouch.id = t.identifier;
+      camTouch.lastX = t.clientX;
+      camTouch.lastY = t.clientY;
+    }
+
+    // DETEKSI DUDUK
+    let nearBench =
+      Math.abs(player.z +120) < 40 &&
+      Math.abs(player.x) < 80;
+
+    if(nearBench && !sitting){
+      sitting = true;
+    } else if(sitting){
+      sitting = false;
+    }
+  }
+});
+
+// ================= TOUCH MOVE =================
+canvas.addEventListener("touchmove", e=>{
+  for(let t of e.changedTouches){
+
+    if(joy.active && t.identifier === joy.id){
+      let dx = t.clientX - joy.baseX;
+      let dy = t.clientY - joy.baseY;
+
+      let dist = Math.sqrt(dx*dx + dy*dy);
+      if(dist > joy.radius){
+        dx *= joy.radius/dist;
+        dy *= joy.radius/dist;
+      }
+
+      joy.stickX = joy.baseX + dx;
+      joy.stickY = joy.baseY + dy;
+
+      player.x += Math.sin(camera.rotY) * (-dy*0.05);
+      player.z += Math.cos(camera.rotY) * (-dy*0.05);
+      player.x += Math.cos(camera.rotY) * (dx*0.05);
+      player.z -= Math.sin(camera.rotY) * (dx*0.05);
+    }
+
+    if(camTouch.active && t.identifier === camTouch.id){
+      let dx = t.clientX - camTouch.lastX;
+      let dy = t.clientY - camTouch.lastY;
+
+      camera.rotY += dx*0.005;
+      camera.rotX += dy*0.005;
+      camera.rotX = Math.max(-1, Math.min(1, camera.rotX));
+
+      camTouch.lastX = t.clientX;
+      camTouch.lastY = t.clientY;
+    }
+  }
+});
+
+// ================= TOUCH END =================
+canvas.addEventListener("touchend", e=>{
+  for(let t of e.changedTouches){
+    if(t.identifier === joy.id) joy.active = false;
+    if(t.identifier === camTouch.id) camTouch.active = false;
+  }
+});
+
+// ================= UPDATE =================
+function update(){
+  camera.x = player.x;
+  camera.z = player.z + 200;
+}
+
+// ================= DRAW =================
 function draw(){
-ctx.fillStyle="black";
-ctx.fillRect(0,0,canvas.width,canvas.height);
 
-// ground
-let g=project(0,0,0);
-ctx.fillStyle="#111";
-ctx.fillRect(0,g.y,canvas.width,canvas.height/2);
+  ctx.fillStyle="black";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 
-// player
-let p=project(player.x,player.y,player.z);
-ctx.fillStyle="white";
-ctx.fillRect(p.x-20*p.scale,p.y-40*p.scale,40*p.scale,40*p.scale);
+  if(!eventActive){
+    ctx.fillStyle="white";
+    ctx.font="25px Arial";
+    ctx.fillText("Event aktif 1–3 Maret 2026",50,100);
+  }
 
-// pillars
-for(let i=-1;i<=1;i++){
-let pos=project(i*150,0,-100);
-ctx.fillStyle="gray";
-ctx.fillRect(pos.x-25,pos.y-150,pos.scale*50,150);
-ctx.fillStyle="white";
-ctx.fillText("HAPPY UPDATE",pos.x,pos.y-160);
+  // GEREJA
+  let church = project(0,0,-200);
+  ctx.fillStyle="#444";
+  ctx.fillRect(church.x-150, church.y-200, 300, 200);
+
+  ctx.beginPath();
+  ctx.moveTo(church.x-170, church.y-200);
+  ctx.lineTo(church.x, church.y-300);
+  ctx.lineTo(church.x+170, church.y-200);
+  ctx.fillStyle="#666";
+  ctx.fill();
+
+  ctx.fillStyle="white";
+  ctx.fillRect(church.x-5, church.y-260, 10, 50);
+  ctx.fillRect(church.x-20, church.y-240, 40, 10);
+
+  // BANGKU
+  let bench = project(0,0,-120);
+  ctx.fillStyle="#552200";
+  ctx.fillRect(bench.x-100, bench.y-20, 200, 20);
+
+  // PLAYER
+  let p = project(player.x,0,player.z);
+  ctx.fillStyle="white";
+  ctx.fillRect(p.x-20*p.scale, p.y-40*p.scale, 40*p.scale, 40*p.scale);
+
+  // ================= BUKU TERBUKA =================
+  if(sitting){
+
+    ctx.fillStyle="rgba(0,0,0,0.95)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    let bookWidth = canvas.width*0.8;
+    let bookHeight = canvas.height*0.6;
+    let bookX = canvas.width/2 - bookWidth/2;
+    let bookY = canvas.height/2 - bookHeight/2;
+
+    // halaman kiri
+    ctx.fillStyle="#f5f0e6";
+    ctx.fillRect(bookX, bookY, bookWidth/2, bookHeight);
+
+    // halaman kanan
+    ctx.fillStyle="#fdfaf2";
+    ctx.fillRect(bookX+bookWidth/2, bookY, bookWidth/2, bookHeight);
+
+    // garis tengah buku
+    ctx.fillStyle="#d8d2c4";
+    ctx.fillRect(canvas.width/2-2, bookY, 4, bookHeight);
+
+    ctx.fillStyle="black";
+    ctx.font="18px Arial";
+    ctx.textAlign="left";
+
+    ctx.fillText("Yesaya 53:5", bookX+30, bookY+40);
+    ctx.fillText("Dia tertikam oleh karena", bookX+30, bookY+80);
+    ctx.fillText("pemberontakan kita,", bookX+30, bookY+110);
+    ctx.fillText("diremukkan oleh karena", bookX+30, bookY+140);
+    ctx.fillText("kejahatan kita.", bookX+30, bookY+170);
+
+    ctx.fillText("Ganjaran yang mendatangkan", bookX+bookWidth/2+30, bookY+80);
+    ctx.fillText("keselamatan ditimpakan", bookX+bookWidth/2+30, bookY+110);
+    ctx.fillText("kepada-Nya,", bookX+bookWidth/2+30, bookY+140);
+    ctx.fillText("dan oleh bilur-bilur-Nya", bookX+bookWidth/2+30, bookY+170);
+    ctx.fillText("kita menjadi sembuh.", bookX+bookWidth/2+30, bookY+200);
+
+    ctx.textAlign="center";
+    ctx.fillText("Tap layar untuk menutup buku", canvas.width/2, bookY+bookHeight+40);
+  }
+
+  // JOYSTICK
+  if(joy.active){
+    ctx.globalAlpha=0.3;
+    ctx.beginPath();
+    ctx.arc(joy.baseX, joy.baseY, joy.radius, 0, Math.PI*2);
+    ctx.fillStyle="white";
+    ctx.fill();
+
+    ctx.globalAlpha=0.6;
+    ctx.beginPath();
+    ctx.arc(joy.stickX, joy.stickY, 30, 0, Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha=1;
+  }
 }
 
-// cake
-let cake=project(0,0,-50);
-ctx.fillStyle="pink";
-ctx.fillRect(cake.x-60,cake.y-30,120,30);
-ctx.fillStyle="yellow";
-ctx.fillRect(cake.x-5,cake.y-60,10,30);
-
-// sky text (di dunia)
-let sky=project(0,300,-300);
-ctx.fillStyle="white";
-ctx.font="40px Arial";
-ctx.textAlign="center";
-ctx.fillText("selamat ulang tahun andika",sky.x,sky.y);
-}
-
-// ===== LOOP =====
 function loop(){
-update();
-draw();
-requestAnimationFrame(loop);
+  update();
+  draw();
+  requestAnimationFrame(loop);
 }
 loop();
+
 </script>
 </body>
 </html>
