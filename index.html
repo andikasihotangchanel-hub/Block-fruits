@@ -1,278 +1,179 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Event Jumat Agung</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event Gereja</title>
 <style>
 body { margin:0; overflow:hidden; background:black; }
-canvas { display:block; touch-action:none; }
+canvas { display:block; }
 </style>
 </head>
 <body>
 
+<audio id="bgm" src="ruang_kudus.mp3" loop></audio>
 <canvas id="game"></canvas>
 
-<audio id="music" loop>
-  <source src="ruang_kudus.mp3" type="audio/mpeg">
-</audio>
-
 <script>
-
-// ================= EVENT 1-3 MARET 2026 =================
-const now = new Date();
-const eventActive =
-  now.getFullYear() === 2026 &&
-  now.getMonth() === 2 &&
-  now.getDate() >= 1 &&
-  now.getDate() <= 3;
-
-// ================= CANVAS =================
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 canvas.width = innerWidth;
 canvas.height = innerHeight;
 
-// ================= MUSIC =================
-const music = document.getElementById("music");
-document.addEventListener("touchstart", ()=>{
-  music.play().catch(()=>{});
-},{once:true});
+let audioStarted = false;
+document.addEventListener("touchstart", () => {
+  if(!audioStarted){
+    document.getElementById("bgm").play();
+    audioStarted = true;
+  }
+}, {once:true});
 
-// ================= PLAYER =================
+// ===== WORLD =====
 let player = { x:0, y:0, z:0 };
+let cam = { x:0, y:150, z:300, yaw:0 };
 let sitting = false;
 
-// ================= CAMERA FREE =================
-let camera = {
-  x:0,
-  y:80,
-  z:200,
-  rotY:0,
-  rotX:0
-};
+// ===== JOYSTICK =====
+let joy = { active:false, x:0, y:0, dx:0, dy:0 };
 
-// ================= JOYSTICK =================
-let joy = {
-  active:false,
-  id:null,
-  baseX:0,
-  baseY:0,
-  stickX:0,
-  stickY:0,
-  radius:60
-};
+canvas.addEventListener("touchstart", e=>{
+  let t=e.touches[0];
+  if(t.clientX < canvas.width/2){
+    joy.active=true;
+    joy.x=t.clientX;
+    joy.y=t.clientY;
+  }else{
+    cam.yaw += 0.2;
+  }
 
-let camTouch = {
-  active:false,
-  id:null,
-  lastX:0,
-  lastY:0
-};
+  // duduk
+  if(Math.abs(player.x)<60 && Math.abs(player.z+200)<60){
+    sitting = !sitting;
+  }
+});
 
-// ================= PROJECTION =================
+canvas.addEventListener("touchmove", e=>{
+  if(joy.active){
+    let t=e.touches[0];
+    joy.dx=t.clientX-joy.x;
+    joy.dy=t.clientY-joy.y;
+  }
+});
+
+canvas.addEventListener("touchend", ()=>{
+  joy.active=false;
+  joy.dx=0;
+  joy.dy=0;
+});
+
+// ===== 3D PROJECTION =====
 function project(x,y,z){
-  let dx = x - camera.x;
-  let dy = y - camera.y;
-  let dz = z - camera.z;
+  let dx=x-cam.x;
+  let dy=y-cam.y;
+  let dz=z-cam.z;
 
-  let cosY = Math.cos(camera.rotY);
-  let sinY = Math.sin(camera.rotY);
+  let cos=Math.cos(cam.yaw);
+  let sin=Math.sin(cam.yaw);
 
-  let rx = dx * cosY - dz * sinY;
-  let rz = dx * sinY + dz * cosY;
+  let rx=dx*cos - dz*sin;
+  let rz=dx*sin + dz*cos;
 
-  let cosX = Math.cos(camera.rotX);
-  let sinX = Math.sin(camera.rotX);
-
-  let ry = dy * cosX - rz * sinX;
-  rz = dy * sinX + rz * cosX;
-
-  let scale = 300/(rz+300);
-
+  let scale=500/(rz+500);
   return {
-    x: canvas.width/2 + rx*scale,
-    y: canvas.height/2 - ry*scale,
-    scale: scale
+    x:canvas.width/2 + rx*scale,
+    y:canvas.height/2 + dy*scale,
+    scale:scale,
+    depth:rz
   };
 }
 
-// ================= TOUCH START =================
-canvas.addEventListener("touchstart", e=>{
-  for(let t of e.changedTouches){
-
-    if(t.clientX < canvas.width/2 && !joy.active){
-      joy.active = true;
-      joy.id = t.identifier;
-      joy.baseX = t.clientX;
-      joy.baseY = t.clientY;
-      joy.stickX = t.clientX;
-      joy.stickY = t.clientY;
-    }
-    else if(t.clientX > canvas.width/2 && !camTouch.active){
-      camTouch.active = true;
-      camTouch.id = t.identifier;
-      camTouch.lastX = t.clientX;
-      camTouch.lastY = t.clientY;
-    }
-
-    // DETEKSI DUDUK
-    let nearBench =
-      Math.abs(player.z +120) < 40 &&
-      Math.abs(player.x) < 80;
-
-    if(nearBench && !sitting){
-      sitting = true;
-    } else if(sitting){
-      sitting = false;
-    }
-  }
-});
-
-// ================= TOUCH MOVE =================
-canvas.addEventListener("touchmove", e=>{
-  for(let t of e.changedTouches){
-
-    if(joy.active && t.identifier === joy.id){
-      let dx = t.clientX - joy.baseX;
-      let dy = t.clientY - joy.baseY;
-
-      let dist = Math.sqrt(dx*dx + dy*dy);
-      if(dist > joy.radius){
-        dx *= joy.radius/dist;
-        dy *= joy.radius/dist;
-      }
-
-      joy.stickX = joy.baseX + dx;
-      joy.stickY = joy.baseY + dy;
-
-      player.x += Math.sin(camera.rotY) * (-dy*0.05);
-      player.z += Math.cos(camera.rotY) * (-dy*0.05);
-      player.x += Math.cos(camera.rotY) * (dx*0.05);
-      player.z -= Math.sin(camera.rotY) * (dx*0.05);
-    }
-
-    if(camTouch.active && t.identifier === camTouch.id){
-      let dx = t.clientX - camTouch.lastX;
-      let dy = t.clientY - camTouch.lastY;
-
-      camera.rotY += dx*0.005;
-      camera.rotX += dy*0.005;
-      camera.rotX = Math.max(-1, Math.min(1, camera.rotX));
-
-      camTouch.lastX = t.clientX;
-      camTouch.lastY = t.clientY;
-    }
-  }
-});
-
-// ================= TOUCH END =================
-canvas.addEventListener("touchend", e=>{
-  for(let t of e.changedTouches){
-    if(t.identifier === joy.id) joy.active = false;
-    if(t.identifier === camTouch.id) camTouch.active = false;
-  }
-});
-
-// ================= UPDATE =================
+// ===== UPDATE =====
 function update(){
-  camera.x = player.x;
-  camera.z = player.z + 200;
+  if(!sitting){
+    player.x += joy.dx*0.02;
+    player.z += joy.dy*0.02;
+  }
+
+  cam.x = player.x;
+  cam.z = player.z + 300;
 }
 
-// ================= DRAW =================
+// ===== DRAW =====
 function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  ctx.fillStyle="black";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  // ground
+  ctx.fillStyle="#2e7d32";
+  ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2);
 
-  if(!eventActive){
-    ctx.fillStyle="white";
-    ctx.font="25px Arial";
-    ctx.fillText("Event aktif 1–3 Maret 2026",50,100);
-  }
+  // church body
+  let c = project(0,0,-400);
+  let size = 300*c.scale;
 
-  // GEREJA
-  let church = project(0,0,-200);
-  ctx.fillStyle="#444";
-  ctx.fillRect(church.x-150, church.y-200, 300, 200);
+  ctx.fillStyle="#777";
+  ctx.fillRect(c.x-size/2,c.y-size/2,size,size);
 
+  ctx.fillStyle="#999";
   ctx.beginPath();
-  ctx.moveTo(church.x-170, church.y-200);
-  ctx.lineTo(church.x, church.y-300);
-  ctx.lineTo(church.x+170, church.y-200);
-  ctx.fillStyle="#666";
+  ctx.moveTo(c.x-size/2,c.y-size/2);
+  ctx.lineTo(c.x,c.y-size);
+  ctx.lineTo(c.x+size/2,c.y-size/2);
   ctx.fill();
 
   ctx.fillStyle="white";
-  ctx.fillRect(church.x-5, church.y-260, 10, 50);
-  ctx.fillRect(church.x-20, church.y-240, 40, 10);
+  ctx.fillRect(c.x-5,c.y-size+40,10,40);
+  ctx.fillRect(c.x-20,c.y-size+55,40,10);
 
-  // BANGKU
-  let bench = project(0,0,-120);
-  ctx.fillStyle="#552200";
-  ctx.fillRect(bench.x-100, bench.y-20, 200, 20);
+  // bench
+  let b = project(0,0,-200);
+  ctx.fillStyle="#5d4037";
+  ctx.fillRect(b.x-80*b.scale,b.y-20*b.scale,160*b.scale,20*b.scale);
 
-  // PLAYER
+  // player
   let p = project(player.x,0,player.z);
-  ctx.fillStyle="white";
-  ctx.fillRect(p.x-20*p.scale, p.y-40*p.scale, 40*p.scale, 40*p.scale);
+  ctx.fillStyle="#1565c0";
+  ctx.fillRect(p.x-20*p.scale,p.y-60*p.scale,40*p.scale,60*p.scale);
 
-  // ================= BUKU TERBUKA =================
-  if(sitting){
+  ctx.fillStyle="#ffcc99";
+  ctx.beginPath();
+  ctx.arc(p.x,p.y-80*p.scale,20*p.scale,0,Math.PI*2);
+  ctx.fill();
 
-    ctx.fillStyle="rgba(0,0,0,0.95)";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-
-    let bookWidth = canvas.width*0.8;
-    let bookHeight = canvas.height*0.6;
-    let bookX = canvas.width/2 - bookWidth/2;
-    let bookY = canvas.height/2 - bookHeight/2;
-
-    // halaman kiri
-    ctx.fillStyle="#f5f0e6";
-    ctx.fillRect(bookX, bookY, bookWidth/2, bookHeight);
-
-    // halaman kanan
-    ctx.fillStyle="#fdfaf2";
-    ctx.fillRect(bookX+bookWidth/2, bookY, bookWidth/2, bookHeight);
-
-    // garis tengah buku
-    ctx.fillStyle="#d8d2c4";
-    ctx.fillRect(canvas.width/2-2, bookY, 4, bookHeight);
-
-    ctx.fillStyle="black";
-    ctx.font="18px Arial";
-    ctx.textAlign="left";
-
-    ctx.fillText("Yesaya 53:5", bookX+30, bookY+40);
-    ctx.fillText("Dia tertikam oleh karena", bookX+30, bookY+80);
-    ctx.fillText("pemberontakan kita,", bookX+30, bookY+110);
-    ctx.fillText("diremukkan oleh karena", bookX+30, bookY+140);
-    ctx.fillText("kejahatan kita.", bookX+30, bookY+170);
-
-    ctx.fillText("Ganjaran yang mendatangkan", bookX+bookWidth/2+30, bookY+80);
-    ctx.fillText("keselamatan ditimpakan", bookX+bookWidth/2+30, bookY+110);
-    ctx.fillText("kepada-Nya,", bookX+bookWidth/2+30, bookY+140);
-    ctx.fillText("dan oleh bilur-bilur-Nya", bookX+bookWidth/2+30, bookY+170);
-    ctx.fillText("kita menjadi sembuh.", bookX+bookWidth/2+30, bookY+200);
-
-    ctx.textAlign="center";
-    ctx.fillText("Tap layar untuk menutup buku", canvas.width/2, bookY+bookHeight+40);
-  }
-
-  // JOYSTICK
+  // joystick
   if(joy.active){
-    ctx.globalAlpha=0.3;
     ctx.beginPath();
-    ctx.arc(joy.baseX, joy.baseY, joy.radius, 0, Math.PI*2);
+    ctx.arc(joy.x,joy.y,60,0,Math.PI*2);
+    ctx.strokeStyle="white";
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(joy.x+joy.dx,joy.y+joy.dy,30,0,Math.PI*2);
     ctx.fillStyle="white";
     ctx.fill();
+  }
 
-    ctx.globalAlpha=0.6;
-    ctx.beginPath();
-    ctx.arc(joy.stickX, joy.stickY, 30, 0, Math.PI*2);
-    ctx.fill();
-    ctx.globalAlpha=1;
+  // buku saat duduk
+  if(sitting){
+    ctx.fillStyle="rgba(0,0,0,0.9)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle="#f5e6c8";
+    ctx.fillRect(canvas.width/2-200,150,400,300);
+
+    ctx.strokeStyle="#d2b48c";
+    ctx.lineWidth=4;
+    ctx.strokeRect(canvas.width/2-200,150,400,300);
+
+    ctx.fillStyle="black";
+    ctx.font="20px Arial";
+    ctx.textAlign="center";
+
+    ctx.fillText("Yesaya 53:5", canvas.width/2,190);
+    ctx.fillText("Dia tertikam oleh karena pemberontakan kita,", canvas.width/2,220);
+    ctx.fillText("diremukkan oleh karena kejahatan kita.", canvas.width/2,250);
+    ctx.fillText("Ganjaran yang mendatangkan keselamatan", canvas.width/2,280);
+    ctx.fillText("ditimpakan kepada-Nya.", canvas.width/2,310);
+
+    ctx.fillText("Tap layar untuk berdiri", canvas.width/2,380);
   }
 }
 
@@ -282,7 +183,6 @@ function loop(){
   requestAnimationFrame(loop);
 }
 loop();
-
 </script>
 </body>
 </html>
