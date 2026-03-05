@@ -5,19 +5,17 @@
 <title>City Blocks v0.3</title>
 
 <style>
-
 body{
 margin:0;
 overflow:hidden;
-background:#111;
-font-family:Arial;
+background:black;
 }
 
 canvas{
 display:block;
 }
 
-/* JOYSTICK */
+/* joystick */
 
 #joystick{
 position:fixed;
@@ -27,7 +25,6 @@ width:120px;
 height:120px;
 background:rgba(255,255,255,0.1);
 border-radius:50%;
-touch-action:none;
 }
 
 #stick{
@@ -40,7 +37,7 @@ left:30px;
 top:30px;
 }
 
-/* JUMP BUTTON */
+/* jump */
 
 #jumpBtn{
 position:fixed;
@@ -49,12 +46,11 @@ bottom:80px;
 width:80px;
 height:80px;
 border-radius:50%;
-background:#ff4444;
+background:red;
 color:white;
 border:none;
 font-size:18px;
 }
-
 </style>
 </head>
 
@@ -70,291 +66,163 @@ font-size:18px;
 
 <script>
 
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
+const canvas=document.getElementById("game")
+const ctx=canvas.getContext("2d")
 
 function resize(){
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight;
+canvas.width=window.innerWidth
+canvas.height=window.innerHeight
 }
-resize();
-window.addEventListener("resize",resize);
+resize()
+window.addEventListener("resize",resize)
 
-/* PLAYER */
+/* player */
 
 let player={
 x:0,
-z:0,
 y:0,
-speed:0.2,
-angle:0
-};
+speed:4
+}
 
-/* CAMERA */
+/* joystick */
 
-let cameraAngle=0;
+let joyX=0
+let joyY=0
 
-/* JUMP */
+let joy=document.getElementById("joystick")
+let stick=document.getElementById("stick")
 
-let jumpV=0;
-let gravity=0.5;
-let jumping=false;
+joy.addEventListener("touchmove",e=>{
+
+let rect=joy.getBoundingClientRect()
+
+let x=e.touches[0].clientX-rect.left-60
+let y=e.touches[0].clientY-rect.top-60
+
+joyX=x/40
+joyY=y/40
+
+stick.style.left=(x+30)+"px"
+stick.style.top=(y+30)+"px"
+
+})
+
+joy.addEventListener("touchend",()=>{
+
+joyX=0
+joyY=0
+
+stick.style.left="30px"
+stick.style.top="30px"
+
+})
+
+/* jump */
+
+let jump=0
+let velocity=0
+let gravity=0.6
+let jumping=false
 
 document.getElementById("jumpBtn").onclick=()=>{
 
 if(!jumping){
-jumpV=-10;
-jumping=true;
+velocity=-12
+jumping=true
 }
 
-};
-
-/* JOYSTICK */
-
-let joyX=0;
-let joyY=0;
-let active=false;
-
-let joy=document.getElementById("joystick");
-let stick=document.getElementById("stick");
-
-joy.addEventListener("touchstart",()=>active=true);
-
-joy.addEventListener("touchend",()=>{
-active=false;
-joyX=0;
-joyY=0;
-stick.style.left="30px";
-stick.style.top="30px";
-});
-
-joy.addEventListener("touchmove",e=>{
-
-if(!active)return;
-
-let r=joy.getBoundingClientRect();
-let t=e.touches[0];
-
-let x=t.clientX-r.left-60;
-let y=t.clientY-r.top-60;
-
-let d=Math.sqrt(x*x+y*y);
-
-if(d>50){
-x*=50/d;
-y*=50/d;
 }
 
-joyX=x/50;
-joyY=y/50;
-
-stick.style.left=(30+x)+"px";
-stick.style.top=(30+y)+"px";
-
-});
-
-/* CAMERA TOUCH */
-
-let touching=false;
-let lastX=0;
-
-canvas.addEventListener("touchstart",e=>{
-touching=true;
-lastX=e.touches[0].clientX;
-});
-
-canvas.addEventListener("touchend",()=>{
-touching=false;
-});
-
-canvas.addEventListener("touchmove",e=>{
-
-if(!touching)return;
-
-let dx=e.touches[0].clientX-lastX;
-
-cameraAngle+=dx*0.005;
-
-lastX=e.touches[0].clientX;
-
-});
-
-/* CITY OBJECTS */
-
-let buildings=[];
-for(let i=0;i<120;i++){
-buildings.push({
-x:(Math.random()-0.5)*800,
-z:(Math.random()-0.5)*800,
-h:50+Math.random()*150
-});
-}
-
-let trees=[];
-for(let i=0;i<80;i++){
-trees.push({
-x:(Math.random()-0.5)*800,
-z:(Math.random()-0.5)*800
-});
-}
-
-let cars=[];
-for(let i=0;i<10;i++){
-cars.push({
-x:(Math.random()-0.5)*800,
-z:(Math.random()-0.5)*800,
-speed:0.3
-});
-}
-
-let npcs=[];
-for(let i=0;i<20;i++){
-npcs.push({
-x:(Math.random()-0.5)*800,
-z:(Math.random()-0.5)*800,
-dir:Math.random()*Math.PI*2
-});
-}
-
-/* UPDATE */
+/* game loop */
 
 function update(){
 
-player.x+=joyX*player.speed*Math.cos(cameraAngle);
-player.z+=joyX*player.speed*Math.sin(cameraAngle);
+player.x+=joyX
+player.y+=joyY
 
-player.x+=joyY*player.speed*Math.cos(cameraAngle+Math.PI/2);
-player.z+=joyY*player.speed*Math.sin(cameraAngle+Math.PI/2);
+velocity+=gravity
+jump+=velocity
 
-/* jump */
-
-if(jumping){
-player.y+=jumpV;
-jumpV+=gravity;
-
-if(player.y>0){
-player.y=0;
-jumping=false;
-}
+if(jump>0){
+jump=0
+velocity=0
+jumping=false
 }
 
-/* cars */
-
-cars.forEach(car=>{
-car.z+=car.speed;
-
-if(car.z>400)car.z=-400;
-});
-
-/* npc */
-
-npcs.forEach(npc=>{
-npc.x+=Math.cos(npc.dir)*0.1;
-npc.z+=Math.sin(npc.dir)*0.1;
-});
-
 }
-
-/* DRAW */
 
 function draw(){
 
-ctx.fillStyle="#111";
-ctx.fillRect(0,0,canvas.width,canvas.height);
+/* sky */
+
+ctx.fillStyle="#050520"
+ctx.fillRect(0,0,canvas.width,canvas.height)
 
 /* ground */
 
-ctx.fillStyle="#333";
-ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height);
+ctx.fillStyle="#333"
+ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height)
+
+/* road */
+
+ctx.fillStyle="#222"
+ctx.fillRect(0,canvas.height/2+80,canvas.width,120)
 
 /* buildings */
 
-buildings.forEach(b=>{
+for(let i=-10;i<10;i++){
 
-let rx=b.x-player.x;
-let rz=b.z-player.z;
+ctx.fillStyle="#666"
 
-let scale=300/(rz+300);
+ctx.fillRect(
+canvas.width/2+i*200-player.x,
+canvas.height/2-200+jump,
+120,
+200
+)
 
-let x=canvas.width/2+rx*scale;
-let y=canvas.height/2+rz*scale;
-
-ctx.fillStyle="#888";
-ctx.fillRect(x,y,40*scale,b.h*scale);
-
-});
+}
 
 /* trees */
 
-trees.forEach(t=>{
+for(let i=-10;i<10;i++){
 
-let rx=t.x-player.x;
-let rz=t.z-player.z;
+ctx.fillStyle="green"
 
-let scale=300/(rz+300);
-
-let x=canvas.width/2+rx*scale;
-let y=canvas.height/2+rz*scale;
-
-ctx.fillStyle="brown";
-ctx.fillRect(x,y,5*scale,20*scale);
-
-ctx.fillStyle="green";
-ctx.beginPath();
-ctx.arc(x,y,15*scale,0,Math.PI*2);
-ctx.fill();
-
-});
-
-/* cars */
-
-cars.forEach(car=>{
-
-let rx=car.x-player.x;
-let rz=car.z-player.z;
-
-let scale=300/(rz+300);
-
-let x=canvas.width/2+rx*scale;
-let y=canvas.height/2+rz*scale;
-
-ctx.fillStyle="red";
-ctx.fillRect(x,y,30*scale,10*scale);
-
-});
-
-/* npc */
-
-npcs.forEach(npc=>{
-
-let rx=npc.x-player.x;
-let rz=npc.z-player.z;
-
-let scale=300/(rz+300);
-
-let x=canvas.width/2+rx*scale;
-let y=canvas.height/2+rz*scale;
-
-ctx.fillStyle="white";
-ctx.fillRect(x,y,10*scale,20*scale);
-
-});
+ctx.fillRect(
+canvas.width/2+i*180-player.x,
+canvas.height/2-40+jump,
+40,
+40
+)
 
 }
 
-/* GAME LOOP */
+/* player */
+
+ctx.fillStyle="white"
+
+ctx.fillRect(
+canvas.width/2-15,
+canvas.height/2-30+jump,
+30,
+30
+)
+
+}
 
 function loop(){
 
-update();
-draw();
+update()
+draw()
 
-requestAnimationFrame(loop);
+requestAnimationFrame(loop)
 
 }
 
-loop();
+loop()
 
 </script>
+
 </body>
 </html>
