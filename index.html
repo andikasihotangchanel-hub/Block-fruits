@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>City Blocks v0.4</title>
+<title>City Blocks v1.0</title>
 
 <style>
 body{
@@ -60,7 +60,6 @@ font-weight:bold;
 <script>
 
 let scene = new THREE.Scene()
-scene.background = new THREE.Color(0x87ceeb)
 
 let camera = new THREE.PerspectiveCamera(
 75,
@@ -86,6 +85,10 @@ let ground = new THREE.Mesh(groundGeo,groundMat)
 ground.rotation.x = -Math.PI/2
 scene.add(ground)
 
+let texture = new THREE.TextureLoader().load(
+"https://threejs.org/examples/textures/brick_diffuse.jpg"
+)
+
 function createCity(){
 
 for(let i=0;i<200;i++){
@@ -97,7 +100,7 @@ let d = 20 + Math.random()*40
 let geo = new THREE.BoxGeometry(w,h,d)
 
 let mat = new THREE.MeshStandardMaterial({
-color:0x888888
+map:texture
 })
 
 let building = new THREE.Mesh(geo,mat)
@@ -114,6 +117,88 @@ scene.add(building)
 
 createCity()
 
+/* CLOUDS */
+
+let clouds=[]
+
+function createClouds(){
+
+for(let i=0;i<20;i++){
+
+let geo = new THREE.SphereGeometry(20,16,16)
+let mat = new THREE.MeshStandardMaterial({color:0xffffff})
+
+let cloud = new THREE.Mesh(geo,mat)
+
+cloud.position.x = (Math.random()-0.5)*1500
+cloud.position.z = (Math.random()-0.5)*1500
+cloud.position.y = 200 + Math.random()*100
+
+scene.add(cloud)
+clouds.push(cloud)
+
+}
+
+}
+
+createClouds()
+
+/* NPC */
+
+let npcs=[]
+
+function createNPC(){
+
+for(let i=0;i<15;i++){
+
+let geo = new THREE.CapsuleGeometry(0.5,1.5,4,8)
+let mat = new THREE.MeshStandardMaterial({color:0x00ff00})
+
+let npc = new THREE.Mesh(geo,mat)
+
+npc.position.x=(Math.random()-0.5)*800
+npc.position.z=(Math.random()-0.5)*800
+npc.position.y=1
+
+npc.dir = Math.random()*Math.PI*2
+
+scene.add(npc)
+npcs.push(npc)
+
+}
+
+}
+
+createNPC()
+
+/* CARS */
+
+let cars=[]
+
+function createCars(){
+
+for(let i=0;i<8;i++){
+
+let geo = new THREE.BoxGeometry(3,1.5,6)
+let mat = new THREE.MeshStandardMaterial({color:0xff0000})
+
+let car = new THREE.Mesh(geo,mat)
+
+car.position.x=-500
+car.position.z=i*40-200
+car.position.y=1
+
+scene.add(car)
+cars.push(car)
+
+}
+
+}
+
+createCars()
+
+/* PLAYER */
+
 let player = {
 x:0,
 y:2,
@@ -124,17 +209,13 @@ speed:0.2
 
 camera.position.set(0,2,5)
 
+/* JOYSTICK */
+
 let moveX=0
 let moveZ=0
 
 let joystick = document.getElementById("joystick")
 let stick = document.getElementById("stick")
-
-let joyActive=false
-
-joystick.addEventListener("touchstart",e=>{
-joyActive=true
-})
 
 joystick.addEventListener("touchmove",e=>{
 
@@ -155,12 +236,13 @@ moveZ = y/30
 })
 
 joystick.addEventListener("touchend",e=>{
-joyActive=false
 moveX=0
 moveZ=0
 stick.style.left="25px"
 stick.style.top="25px"
 })
+
+/* JUMP */
 
 let jumpBtn = document.getElementById("jump")
 
@@ -170,23 +252,46 @@ player.vy=0.35
 }
 })
 
+/* CAMERA TOUCH */
+
 let rotX=0
 let rotY=0
 
+let lastX=0
+let lastY=0
+
+document.addEventListener("touchstart",e=>{
+lastX = e.touches[0].clientX
+lastY = e.touches[0].clientY
+})
+
 document.addEventListener("touchmove",e=>{
 
-if(e.touches.length==1){
+let x = e.touches[0].clientX
+let y = e.touches[0].clientY
 
-rotY += e.touches[0].movementX*0.002
-rotX += e.touches[0].movementY*0.002
+let dx = x - lastX
+let dy = y - lastY
 
-}
+lastX = x
+lastY = y
+
+rotY -= dx * 0.005
+rotX -= dy * 0.005
+
+rotX = Math.max(-1.5, Math.min(1.5, rotX))
 
 })
+
+/* DAY NIGHT */
+
+let time=0
 
 function animate(){
 
 requestAnimationFrame(animate)
+
+/* gravity */
 
 player.vy -= 0.02
 player.y += player.vy
@@ -196,17 +301,72 @@ player.y=2
 player.vy=0
 }
 
+/* movement */
+
 player.x -= Math.sin(rotY)*moveZ*player.speed
 player.z -= Math.cos(rotY)*moveZ*player.speed
 
 player.x += Math.cos(rotY)*moveX*player.speed
 player.z -= Math.sin(rotY)*moveX*player.speed
 
+/* map limit */
+
+player.x = Math.max(-900,Math.min(900,player.x))
+player.z = Math.max(-900,Math.min(900,player.z))
+
 camera.position.set(player.x,player.y,player.z)
 
 camera.rotation.order="YXZ"
 camera.rotation.y=rotY
 camera.rotation.x=rotX
+
+/* clouds */
+
+for(let c of clouds){
+
+c.position.x += 0.05
+
+if(c.position.x>800){
+c.position.x=-800
+}
+
+}
+
+/* NPC */
+
+for(let npc of npcs){
+
+npc.position.x += Math.sin(npc.dir)*0.05
+npc.position.z += Math.cos(npc.dir)*0.05
+
+if(Math.random()<0.01){
+npc.dir += (Math.random()-0.5)
+}
+
+}
+
+/* cars */
+
+for(let car of cars){
+
+car.position.x += 0.5
+
+if(car.position.x>500){
+car.position.x=-500
+}
+
+}
+
+/* day night */
+
+time += 0.001
+
+let sun = Math.sin(time)
+
+scene.background = new THREE.Color().setHSL(0.6,0.6,0.5 + sun*0.2)
+
+light.position.x = Math.cos(time)*200
+light.position.y = Math.sin(time)*200
 
 renderer.render(scene,camera)
 
@@ -215,5 +375,6 @@ renderer.render(scene,camera)
 animate()
 
 </script>
+
 </body>
 </html>
