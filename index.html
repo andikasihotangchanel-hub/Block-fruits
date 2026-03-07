@@ -1,228 +1,219 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>City Blocks v0.3</title>
+<meta charset="UTF-8">
+<title>City Blocks v0.4</title>
 
 <style>
 body{
 margin:0;
 overflow:hidden;
 background:black;
+font-family:sans-serif;
 }
-
-canvas{
-display:block;
-}
-
-/* joystick */
 
 #joystick{
 position:fixed;
-bottom:30px;
 left:30px;
-width:120px;
-height:120px;
-background:rgba(255,255,255,0.1);
+bottom:30px;
+width:90px;
+height:90px;
+background:rgba(255,255,255,0.2);
 border-radius:50%;
 }
 
 #stick{
 position:absolute;
-width:60px;
-height:60px;
+left:25px;
+top:25px;
+width:40px;
+height:40px;
 background:white;
 border-radius:50%;
-left:30px;
-top:30px;
 }
 
-/* jump */
-
-#jumpBtn{
+#jump{
 position:fixed;
 right:30px;
-bottom:80px;
+bottom:30px;
 width:80px;
 height:80px;
-border-radius:50%;
 background:red;
 color:white;
-border:none;
-font-size:18px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:bold;
 }
+
 </style>
 </head>
 
 <body>
 
-<canvas id="game"></canvas>
+<div id="joystick"><div id="stick"></div></div>
+<div id="jump">JUMP</div>
 
-<div id="joystick">
-<div id="stick"></div>
-</div>
-
-<button id="jumpBtn">JUMP</button>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
 <script>
 
-const canvas=document.getElementById("game")
-const ctx=canvas.getContext("2d")
+let scene = new THREE.Scene()
+scene.background = new THREE.Color(0x87ceeb)
 
-function resize(){
-canvas.width=window.innerWidth
-canvas.height=window.innerHeight
+let camera = new THREE.PerspectiveCamera(
+75,
+window.innerWidth/window.innerHeight,
+0.1,
+10000
+)
+
+let renderer = new THREE.WebGLRenderer()
+renderer.setSize(window.innerWidth,window.innerHeight)
+document.body.appendChild(renderer.domElement)
+
+let light = new THREE.DirectionalLight(0xffffff,1)
+light.position.set(10,50,20)
+scene.add(light)
+
+let ambient = new THREE.AmbientLight(0xffffff,0.6)
+scene.add(ambient)
+
+let groundGeo = new THREE.PlaneGeometry(2000,2000)
+let groundMat = new THREE.MeshStandardMaterial({color:0x444444})
+let ground = new THREE.Mesh(groundGeo,groundMat)
+ground.rotation.x = -Math.PI/2
+scene.add(ground)
+
+function createCity(){
+
+for(let i=0;i<200;i++){
+
+let w = 20 + Math.random()*40
+let h = 40 + Math.random()*200
+let d = 20 + Math.random()*40
+
+let geo = new THREE.BoxGeometry(w,h,d)
+
+let mat = new THREE.MeshStandardMaterial({
+color:0x888888
+})
+
+let building = new THREE.Mesh(geo,mat)
+
+building.position.x = (Math.random()-0.5)*1000
+building.position.z = (Math.random()-0.5)*1000
+building.position.y = h/2
+
+scene.add(building)
+
 }
-resize()
-window.addEventListener("resize",resize)
 
-/* player */
+}
 
-let player={
+createCity()
+
+let player = {
 x:0,
-y:0,
-speed:4
+y:2,
+z:0,
+vy:0,
+speed:0.2
 }
 
-/* joystick */
+camera.position.set(0,2,5)
 
-let joyX=0
-let joyY=0
+let moveX=0
+let moveZ=0
 
-let joy=document.getElementById("joystick")
-let stick=document.getElementById("stick")
+let joystick = document.getElementById("joystick")
+let stick = document.getElementById("stick")
 
-joy.addEventListener("touchmove",e=>{
+let joyActive=false
 
-let rect=joy.getBoundingClientRect()
+joystick.addEventListener("touchstart",e=>{
+joyActive=true
+})
 
-let x=e.touches[0].clientX-rect.left-60
-let y=e.touches[0].clientY-rect.top-60
+joystick.addEventListener("touchmove",e=>{
 
-joyX=x/40
-joyY=y/40
+let rect = joystick.getBoundingClientRect()
 
-stick.style.left=(x+30)+"px"
-stick.style.top=(y+30)+"px"
+let x = e.touches[0].clientX - rect.left - 45
+let y = e.touches[0].clientY - rect.top - 45
+
+x=Math.max(-30,Math.min(30,x))
+y=Math.max(-30,Math.min(30,y))
+
+stick.style.left = (25+x)+"px"
+stick.style.top = (25+y)+"px"
+
+moveX = x/30
+moveZ = y/30
 
 })
 
-joy.addEventListener("touchend",()=>{
+joystick.addEventListener("touchend",e=>{
+joyActive=false
+moveX=0
+moveZ=0
+stick.style.left="25px"
+stick.style.top="25px"
+})
 
-joyX=0
-joyY=0
+let jumpBtn = document.getElementById("jump")
 
-stick.style.left="30px"
-stick.style.top="30px"
+jumpBtn.addEventListener("touchstart",()=>{
+if(player.y<=2.01){
+player.vy=0.35
+}
+})
+
+let rotX=0
+let rotY=0
+
+document.addEventListener("touchmove",e=>{
+
+if(e.touches.length==1){
+
+rotY += e.touches[0].movementX*0.002
+rotX += e.touches[0].movementY*0.002
+
+}
 
 })
 
-/* jump */
+function animate(){
 
-let jump=0
-let velocity=0
-let gravity=0.6
-let jumping=false
+requestAnimationFrame(animate)
 
-document.getElementById("jumpBtn").onclick=()=>{
+player.vy -= 0.02
+player.y += player.vy
 
-if(!jumping){
-velocity=-12
-jumping=true
+if(player.y<2){
+player.y=2
+player.vy=0
 }
 
-}
+player.x -= Math.sin(rotY)*moveZ*player.speed
+player.z -= Math.cos(rotY)*moveZ*player.speed
 
-/* game loop */
+player.x += Math.cos(rotY)*moveX*player.speed
+player.z -= Math.sin(rotY)*moveX*player.speed
 
-function update(){
+camera.position.set(player.x,player.y,player.z)
 
-player.x+=joyX
-player.y+=joyY
+camera.rotation.order="YXZ"
+camera.rotation.y=rotY
+camera.rotation.x=rotX
 
-velocity+=gravity
-jump+=velocity
-
-if(jump>0){
-jump=0
-velocity=0
-jumping=false
-}
+renderer.render(scene,camera)
 
 }
 
-function draw(){
-
-/* sky */
-
-ctx.fillStyle="#050520"
-ctx.fillRect(0,0,canvas.width,canvas.height)
-
-/* ground */
-
-ctx.fillStyle="#333"
-ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height)
-
-/* road */
-
-ctx.fillStyle="#222"
-ctx.fillRect(0,canvas.height/2+80,canvas.width,120)
-
-/* buildings */
-
-for(let i=-10;i<10;i++){
-
-ctx.fillStyle="#666"
-
-ctx.fillRect(
-canvas.width/2+i*200-player.x,
-canvas.height/2-200+jump,
-120,
-200
-)
-
-}
-
-/* trees */
-
-for(let i=-10;i<10;i++){
-
-ctx.fillStyle="green"
-
-ctx.fillRect(
-canvas.width/2+i*180-player.x,
-canvas.height/2-40+jump,
-40,
-40
-)
-
-}
-
-/* player */
-
-ctx.fillStyle="white"
-
-ctx.fillRect(
-canvas.width/2-15,
-canvas.height/2-30+jump,
-30,
-30
-)
-
-}
-
-function loop(){
-
-update()
-draw()
-
-requestAnimationFrame(loop)
-
-}
-
-loop()
+animate()
 
 </script>
-
 </body>
 </html>
