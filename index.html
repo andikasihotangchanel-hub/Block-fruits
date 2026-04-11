@@ -151,11 +151,30 @@ if(s == 2 && !enemySpawned){
 
   // ===== AI MUSUH =====
 if(enemy.active){
-  if(enemy.x < p.x) enemy.x += 1.5;
-  else enemy.x -= 1.5;
 
-  // gravitasi musuh biar jatuh ke platform
-  enemy.y += 2;
+  // ngejar player (lebih cepat)
+  if(enemy.x < p.x) enemy.x += 2;
+  else enemy.x -= 2;
+
+  // gravitasi musuh
+  enemy.vy = enemy.vy || 0;
+  enemy.vy += 0.5;
+  enemy.y += enemy.vy;
+
+  // collision musuh dengan platform
+  for(let i of plat){
+    if(
+      enemy.x < i.x+i.w &&
+      enemy.x+enemy.w > i.x &&
+      enemy.y < i.y+i.h &&
+      enemy.y+enemy.h > i.y
+    ){
+      if(enemy.vy > 0){
+        enemy.y = i.y - enemy.h;
+        enemy.vy = 0;
+      }
+    }
+  }
 }
   
   // Gerak
@@ -298,10 +317,21 @@ function draw(){
   ctx.restore();
 }
 
-  for(let i=0;i<maxHP;i++){
-  ctx.fillStyle = i < hp ? "blue" : "black";
-  ctx.fillRect(c.width - 40 - (i*30), 20, 20, 20);
+  // 💙 NYAWA (pojok kanan atas, lebih jelas)
+for(let i=0;i<maxHP;i++){
+  // kotak luar (border)
+  ctx.strokeStyle = "white";
+  ctx.strokeRect(c.width - 50 - (i*35), 20, 25, 25);
+
+  // isi
+  if(i < hp){
+    ctx.fillStyle = "blue";
+    ctx.fillRect(c.width - 50 - (i*35), 20, 25, 25);
+  } else {
+    ctx.fillStyle = "black";
+    ctx.fillRect(c.width - 50 - (i*35), 20, 25, 25);
   }
+}
 
   // ===== KENA MUSUH =====
 if(enemy.active){
