@@ -101,15 +101,15 @@ jumpBtn.ontouchstart=()=>{
 // Stage system
 function stage(){
   if(p.x < 600){
-    gravity=0.5;
+    gravity=0.5; // bumi
     return 1;
   }
   else if(p.x < 1100){
-    gravity=0.2;
+    gravity=0.2; // atmosfer
     return 2;
   }
   else{
-    gravity=0;
+    gravity=0.05; // luar angkasa (masih ada sedikit tarik)
     return 3;
   }
 }
