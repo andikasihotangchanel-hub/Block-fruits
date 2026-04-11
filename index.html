@@ -45,6 +45,23 @@ c.height = innerHeight;
 
 // Player
 let p = {x:50,y:300,w:30,h:30,vx:0,vy:0,onGround:false};
+  
+  // ===== EVENT HAPPY UPDATE =====
+let enemy = {
+  x: 700,
+  y: 200,
+  w: 30,
+  h: 30,
+  active: false
+};
+
+let enemySpawned = false;
+let showText = false;
+let textTimer = 0;
+
+// Nyawa
+let maxHP = 3;
+let hp = 3;
 
 // Spawn awal
 const spawn = {x:50,y:300};
@@ -117,6 +134,30 @@ function stage(){
 function update(){
   let s = stage();
 
+if(showText){
+  if(Date.now() - textTimer > 10000){
+    showText = false;
+  }
+}
+  
+  // ===== SPAWN MUSUH DI STAGE 2 =====
+if(s == 2 && !enemySpawned){
+  enemy.active = true;
+  enemySpawned = true;
+
+  showText = true;
+  textTimer = Date.now();
+}
+
+  // ===== AI MUSUH =====
+if(enemy.active){
+  if(enemy.x < p.x) enemy.x += 1.5;
+  else enemy.x -= 1.5;
+
+  // gravitasi musuh biar jatuh ke platform
+  enemy.y += 2;
+}
+  
   // Gerak
   if(left) p.vx=-3;
   else if(right) p.vx=3;
@@ -235,11 +276,51 @@ function draw(){
     ctx.fillRect(i.x,i.y,i.w,i.h);
   }
 
+  if(enemy.active){
+  ctx.fillStyle = "red";
+  ctx.fillRect(enemy.x, enemy.y, enemy.w, enemy.h);
+  }
+
+  if(showText){
+  ctx.fillStyle = "white";
+  ctx.font = "16px Arial";
+  ctx.fillText(
+    "dia musuh pertama yang harus kamu lewati untuk menang berjuang lah",
+    p.x - 100,
+    50
+  );
+  }
+
   // Player
   ctx.fillStyle="white";
   ctx.fillRect(p.x,p.y,p.w,p.h);
 
   ctx.restore();
+}
+
+  for(let i=0;i<maxHP;i++){
+  ctx.fillStyle = i < hp ? "blue" : "black";
+  ctx.fillRect(c.width - 40 - (i*30), 20, 20, 20);
+  }
+
+  // ===== KENA MUSUH =====
+if(enemy.active){
+  if(
+    p.x < enemy.x + enemy.w &&
+    p.x + p.w > enemy.x &&
+    p.y < enemy.y + enemy.h &&
+    p.y + p.h > enemy.y
+  ){
+    hp -= 1;
+
+    // reset posisi player
+    reset();
+
+    if(hp <= 0){
+      alert("GAME OVER");
+      location.reload();
+    }
+  }
 }
 
 function loop(){
