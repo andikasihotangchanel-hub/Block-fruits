@@ -1,184 +1,216 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Parkour 3 Tahap</title>
+<title>Parkour 3 Dunia</title>
 <style>
-  body { margin:0; overflow:hidden; background:black; }
-  canvas { display:block; }
+body { margin:0; overflow:hidden; }
+canvas { display:block; }
 
-  /* Joystick */
-  .joystick {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-  }
+/* Joystick */
+.circle {
+  width:60px; height:60px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.4);
+  position:fixed;
+  bottom:20px;
+}
 
-  .circle {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.3);
-    margin: 10px;
-    display: inline-block;
-  }
+#left { left:20px; }
+#right { left:100px; }
 
-  /* Tombol lompat */
-  .jump {
-    position: fixed;
-    bottom: 40px;
-    right: 40px;
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    background: white;
-  }
+#jump {
+  right:40px;
+  bottom:30px;
+  position:fixed;
+  width:70px; height:70px;
+  border-radius:50%;
+  background:white;
+}
 </style>
 </head>
 <body>
 
-<canvas id="game"></canvas>
+<canvas id="c"></canvas>
 
-<div class="joystick">
-  <div id="left" class="circle"></div>
-  <div id="right" class="circle"></div>
-</div>
-
-<div id="jump" class="jump"></div>
+<div id="left" class="circle"></div>
+<div id="right" class="circle"></div>
+<div id="jump"></div>
 
 <script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+const c = document.getElementById("c");
+const ctx = c.getContext("2d");
+c.width = innerWidth;
+c.height = innerHeight;
 
 // Player
-let player = {
-  x: 50,
-  y: 300,
-  w: 30,
-  h: 30,
-  vx: 0,
-  vy: 0,
-  onGround: false
-};
+let p = {x:50,y:300,w:30,h:30,vx:0,vy:0,onGround:false};
 
-// Stage system
+// Spawn awal
+const spawn = {x:50,y:300};
+
 let gravity = 0.5;
 
-// Platform (rintangan hijau)
-let platforms = [
-  {x: 0, y: 350, w: 300, h: 20},
-  {x: 350, y: 300, w: 200, h: 20},
+// Platform
+let plat = [
+  // TANAH (BUMI)
+  {x:0,y:350,w:600,h:50},
 
-  // Garis stage 1 → 2
-  {x: 600, y: 0, w: 10, h: canvas.height},
+  // PARKOUR STAGE 1
+  {x:200,y:300,w:150,h:20},
+  {x:400,y:250,w:150,h:20},
 
-  // Stage 2
-  {x: 650, y: 250, w: 200, h: 20},
-  {x: 900, y: 200, w: 200, h: 20},
+  // GARIS STAGE 2
+  {x:600,y:0,w:10,h:c.height},
 
-  // Garis stage 2 → 3
-  {x: 1150, y: 0, w: 10, h: canvas.height},
+  // STAGE 2
+  {x:650,y:220,w:150,h:20},
+  {x:850,y:180,w:150,h:20},
 
-  // Stage 3
-  {x: 1200, y: 150, w: 200, h: 20},
-  {x: 1500, y: 120, w: 200, h: 20},
+  // GARIS STAGE 3
+  {x:1100,y:0,w:10,h:c.height},
 
-  // Finish
-  {x: 1800, y: 100, w: 50, h: 50}
+  // STAGE 3
+  {x:1150,y:150,w:150,h:20},
+  {x:1350,y:120,w:150,h:20},
+
+  // FINISH BESAR
+  {x:1600,y:80,w:120,h:120,finish:true}
 ];
 
 // Kontrol
-let moveLeft = false;
-let moveRight = false;
+let left=false,right=false;
 
-// Joystick event
-document.getElementById("left").ontouchstart = () => moveLeft = true;
-document.getElementById("left").ontouchend = () => moveLeft = false;
+leftBtn = document.getElementById("left");
+rightBtn = document.getElementById("right");
+jumpBtn = document.getElementById("jump");
 
-document.getElementById("right").ontouchstart = () => moveRight = true;
-document.getElementById("right").ontouchend = () => moveRight = false;
+leftBtn.ontouchstart=()=>left=true;
+leftBtn.ontouchend=()=>left=false;
 
-// Lompat
-document.getElementById("jump").ontouchstart = () => {
-  if (player.onGround) {
-    player.vy = -10;
-    player.onGround = false;
+rightBtn.ontouchstart=()=>right=true;
+rightBtn.ontouchend=()=>right=false;
+
+jumpBtn.ontouchstart=()=>{
+  if(p.onGround){
+    p.vy=-10;
+    p.onGround=false;
   }
 };
 
-function updateStage() {
-  if (player.x > 600 && player.x < 1150) {
-    gravity = 0.2; // atmosfer
-  } else if (player.x > 1150) {
-    gravity = 0; // luar angkasa
-  } else {
-    gravity = 0.5; // bumi
+// Stage system
+function stage(){
+  if(p.x < 600){
+    gravity=0.5;
+    return 1;
+  }
+  else if(p.x < 1100){
+    gravity=0.2;
+    return 2;
+  }
+  else{
+    gravity=0;
+    return 3;
   }
 }
 
-function update() {
-  updateStage();
+function update(){
+  let s = stage();
 
-  // Gerak horizontal
-  if (moveLeft) player.vx = -3;
-  else if (moveRight) player.vx = 3;
-  else player.vx = 0;
+  // Gerak
+  if(left) p.vx=-3;
+  else if(right) p.vx=3;
+  else p.vx=0;
 
-  // Gravitasi
-  player.vy += gravity;
+  p.vy += gravity;
+  p.x += p.vx;
+  p.y += p.vy;
 
-  player.x += player.vx;
-  player.y += player.vy;
-
-  player.onGround = false;
+  p.onGround=false;
 
   // Collision
-  platforms.forEach(p => {
-    if (
-      player.x < p.x + p.w &&
-      player.x + player.w > p.x &&
-      player.y < p.y + p.h &&
-      player.y + player.h > p.y
-    ) {
-      // Dari atas
-      if (player.vy > 0) {
-        player.y = p.y - player.h;
-        player.vy = 0;
-        player.onGround = true;
+  for(let i of plat){
+    if(
+      p.x < i.x+i.w &&
+      p.x+p.w > i.x &&
+      p.y < i.y+i.h &&
+      p.y+p.h > i.y
+    ){
+      if(p.vy>0){
+        p.y=i.y-p.h;
+        p.vy=0;
+        p.onGround=true;
+      }
+
+      if(i.finish){
+        alert("FINISH!");
+        reset();
       }
     }
-  });
+  }
+
+  // Jatuh
+  if(p.y > c.height){
+    if(s==1){
+      // jatuh ke tanah
+      p.x=50;
+      p.y=300;
+    }else{
+      // reset full
+      reset();
+    }
+  }
 }
 
-function draw() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+function reset(){
+  p.x=spawn.x;
+  p.y=spawn.y;
+  p.vy=0;
+}
+
+// Background beda tiap stage
+function drawBG(s){
+  if(s==1) ctx.fillStyle="skyblue";
+  else if(s==2) ctx.fillStyle="#400000";
+  else ctx.fillStyle="black";
+
+  ctx.fillRect(0,0,c.width,c.height);
+}
+
+function draw(){
+  let s = stage();
+
+  drawBG(s);
 
   ctx.save();
-  ctx.translate(-player.x + 100, 0);
-
-  // Player
-  ctx.fillStyle = "white";
-  ctx.fillRect(player.x, player.y, player.w, player.h);
+  ctx.translate(-p.x+100,0);
 
   // Platform
-  platforms.forEach(p => {
-    ctx.fillStyle = "green";
-    ctx.fillRect(p.x, p.y, p.w, p.h);
-  });
+  for(let i of plat){
+    if(i.finish){
+      ctx.fillStyle="yellow";
+    }else if(i.w==10){
+      ctx.fillStyle="lime"; // garis stage
+    }else{
+      ctx.fillStyle="green";
+    }
+    ctx.fillRect(i.x,i.y,i.w,i.h);
+  }
+
+  // Player
+  ctx.fillStyle="white";
+  ctx.fillRect(p.x,p.y,p.w,p.h);
 
   ctx.restore();
 }
 
-function gameLoop() {
+function loop(){
   update();
   draw();
-  requestAnimationFrame(gameLoop);
+  requestAnimationFrame(loop);
 }
 
-gameLoop();
+loop();
 </script>
 
 </body>
