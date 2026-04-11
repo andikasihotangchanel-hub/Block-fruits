@@ -122,21 +122,18 @@ function update(){
   else if(right) p.vx=3;
   else p.vx=0;
 
-  let s = stage();
-
 // gravitasi tetap jalan
 p.vy += gravity;
 
 // ===== MAGNET DI LUAR ANGKASA =====
 if(s == 3){
   let nearest = null;
-  let minDist = 9999;
+  let minDist = Infinity;
 
   for(let i of plat){
-    if(!i.finish && i.w != 10){ // bukan garis & bukan finish
+    if(!i.finish && i.w != 10){
       let dx = (i.x + i.w/2) - (p.x + p.w/2);
       let dy = (i.y) - (p.y + p.h);
-
       let dist = Math.sqrt(dx*dx + dy*dy);
 
       if(dist < minDist){
@@ -146,10 +143,11 @@ if(s == 3){
     }
   }
 
+  
   if(nearest){
     let targetY = nearest.y - p.h;
 
-    // tarik ke bawah (magnet)
+    // tarik ke arah platform (magnet)
     if(p.y < targetY){
       p.vy += 0.3;
     }
