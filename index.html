@@ -122,9 +122,44 @@ function update(){
   else if(right) p.vx=3;
   else p.vx=0;
 
-  p.vy += gravity;
-  p.x += p.vx;
-  p.y += p.vy;
+  let s = stage();
+
+// gravitasi tetap jalan
+p.vy += gravity;
+
+// ===== MAGNET DI LUAR ANGKASA =====
+if(s == 3){
+  let nearest = null;
+  let minDist = 9999;
+
+  for(let i of plat){
+    if(!i.finish && i.w != 10){ // bukan garis & bukan finish
+      let dx = (i.x + i.w/2) - (p.x + p.w/2);
+      let dy = (i.y) - (p.y + p.h);
+
+      let dist = Math.sqrt(dx*dx + dy*dy);
+
+      if(dist < minDist){
+        minDist = dist;
+        nearest = i;
+      }
+    }
+  }
+
+  if(nearest){
+    let targetY = nearest.y - p.h;
+
+    // tarik ke bawah (magnet)
+    if(p.y < targetY){
+      p.vy += 0.3;
+    }
+  }
+}
+
+// ===============================
+
+p.x += p.vx;
+p.y += p.vy;
 
   p.onGround=false;
 
@@ -149,7 +184,12 @@ function update(){
     }
   }
 
-  // Jatuh
+  // cegah naik terlalu tinggi di luar angkasa
+if(stage() == 3 && p.vy < 0){
+  p.vy *= 0.9; // rem gerakan ke atas
+}
+  
+  // jatuh
   if(p.y > c.height){
     if(s==1){
       // jatuh ke tanah
