@@ -55,6 +55,12 @@ let enemy = {
   active: false
 };
 
+  //==== REGEN ====
+  let regen = {x:0,y:0,w:120,h:20,active:false};
+let regenTimer = 0;
+let healing = false;
+let healStart = 0;
+
 let enemySpawned = false;
 let showText = false;
 let textTimer = 0;
@@ -181,8 +187,8 @@ if(!regen.active){
   }
 }
   
-  
-   (p.x < regen.x + regen.w &&
+  if(
+ p.x < regen.x + regen.w &&
     p.x + p.w > regen.x &&
     p.y < regen.y + regen.h &&
     p.y + p.h > regen.y
@@ -226,12 +232,6 @@ if(s == 2 && !enemySpawned){
   showText = true;
   textTimer = Date.now();
 }
-
-//==== REGEN ====
-  let regen = {x:0,y:0,w:120,h:20,active:false};
-let regenTimer = 0;
-let healing = false;
-let healStart = 0;
   
   // ===== AI MUSUH =====
 if(enemy.active){
@@ -435,7 +435,7 @@ let maxHP = 3;
 let hp = 3;
   ctx.restore();
 }
-
+  
   // NYAWA (pojok kanan atas, lebih jelas)
 for(let i=0;i<maxHP;i++){
   // kotak luar (border)
