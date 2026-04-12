@@ -181,9 +181,8 @@ if(!regen.active){
   }
 }
   
-if(regen.active){
-  if(
-    p.x < regen.x + regen.w &&
+  
+   (p.x < regen.x + regen.w &&
     p.x + p.w > regen.x &&
     p.y < regen.y + regen.h &&
     p.y + p.h > regen.y
@@ -431,7 +430,9 @@ function draw(){
   // Player
   ctx.fillStyle="white";
   ctx.fillRect(p.x,p.y,p.w,p.h);
-
+// Nyawa
+let maxHP = 3;
+let hp = 3;
   ctx.restore();
 }
 
@@ -451,10 +452,6 @@ ctx.fillText("HP:"+hp, 20, 30);
     ctx.fillRect(c.width - 50 - (i*35), 20, 25, 25);
   }
 }
-
-// Nyawa
-let maxHP = 3;
-let hp = 3;
   
 function loop(){
   update();
