@@ -76,7 +76,7 @@ let plat = [
   {x:650,y:300,w:120,h:20},
 
   // GARIS STAGE 2
-  {x:800,y:0,w:10,h:600.},
+  {x:800,y:0,w:10,h:600},
 
   // ===== STAGE 2 (NAIK DIKIT) =====
   {x:850,y:330,w:120,h:20},
@@ -85,7 +85,7 @@ let plat = [
   {x:1300,y:240,w:120,h:20},
 
   // GARIS STAGE 3
-  {x:1500,y:0,w:10,h:600.},
+  {x:1500,y:0,w:10,h:600},
 
   // ===== STAGE 3 (LEBIH ATAS TAPI MASIH KELIHATAN) =====
   {x:1550,y:300,w:120,h:20},
@@ -192,10 +192,7 @@ if(regen.active){
       p.y = regen.y - p.h;
       p.vy = 0;
       p.onGround = true;
-      let regen = {x:0,y:0,w:120,h:20,active:false};
-let regenTimer = 0;
-let healing = false;
-let healStart = 0;
+    
       // mulai heal kalau darah kurang
       if(hp < maxHP && !healing){
         healing = true;
@@ -231,6 +228,12 @@ if(s == 2 && !enemySpawned){
   textTimer = Date.now();
 }
 
+//==== REGEN ====
+  let regen = {x:0,y:0,w:120,h:20,active:false};
+let regenTimer = 0;
+let healing = false;
+let healStart = 0;
+  
   // ===== AI MUSUH =====
 if(enemy.active){
 
@@ -432,10 +435,6 @@ function draw(){
   ctx.restore();
 }
 
-  // Nyawa
-let maxHP = 3;
-let hp = 3;
-
   // NYAWA (pojok kanan atas, lebih jelas)
 for(let i=0;i<maxHP;i++){
   // kotak luar (border)
@@ -453,6 +452,10 @@ ctx.fillText("HP:"+hp, 20, 30);
   }
 }
 
+// Nyawa
+let maxHP = 3;
+let hp = 3;
+  
 function loop(){
   update();
   draw();
