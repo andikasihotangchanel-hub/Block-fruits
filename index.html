@@ -434,7 +434,6 @@ function draw(){
 let maxHP = 3;
 let hp = 3;
   ctx.restore();
-}
   
   // NYAWA (pojok kanan atas, lebih jelas)
 for(let i=0;i<maxHP;i++){
@@ -452,6 +451,8 @@ ctx.fillText("HP:"+hp, 20, 30);
     ctx.fillRect(c.width - 50 - (i*35), 20, 25, 25);
   }
 }
+}
+
   
 function loop(){
   update();
