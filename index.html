@@ -71,28 +71,34 @@ let gravity = 0.5;
 // Platform
 let plat = [
   // ===== TANAH (BUMI) =====
-  {x:0,y:400,w:600,h:60},
+  {x:0,y:400,w:800,h:60},
 
-  // ===== STAGE 1 (TENGAH) =====
-  {x:200,y:300,w:150,h:20},
-  {x:400,y:260,w:150,h:20},
+  // ===== STAGE 1 (LEBIH PANJANG) =====
+  {x:200,y:320,w:120,h:20},
+  {x:350,y:300,w:120,h:20},
+  {x:500,y:280,w:120,h:20},
+  {x:650,y:260,w:120,h:20},
 
-  // GARIS KE STAGE 2
-  {x:600,y:0,w:10,h:c.height},
+  // GARIS STAGE 2
+  {x:800,y:0,w:10,h:c.height},
 
-  // ===== STAGE 2 (SEDIKIT ATAS) =====
-  {x:650,y:240,w:150,h:20},
-  {x:850,y:200,w:150,h:20},
+  // ===== STAGE 2 (LEBIH PANJANG) =====
+  {x:850,y:260,w:120,h:20},
+  {x:1000,y:230,w:120,h:20},
+  {x:1150,y:200,w:120,h:20},
+  {x:1300,y:180,w:120,h:20},
 
-  // GARIS KE STAGE 3
-  {x:1100,y:0,w:10,h:c.height},
+  // GARIS STAGE 3
+  {x:1500,y:0,w:10,h:c.height},
 
-  // ===== STAGE 3 (LEBIH ATAS TAPI MASIH AMAN) =====
-  {x:1150,y:180,w:150,h:20},
-  {x:1350,y:150,w:150,h:20},
+  // ===== STAGE 3 (LEBIH PANJANG) =====
+  {x:1550,y:200,w:120,h:20},
+  {x:1700,y:170,w:120,h:20},
+  {x:1850,y:140,w:120,h:20},
+  {x:2000,y:120,w:120,h:20},
 
   // ===== FINISH BESAR =====
-  {x:1600,y:130,w:120,h:120,finish:true}
+  {x:2200,y:100,w:150,h:150,finish:true}
 ];
 
 // Kontrol
@@ -117,16 +123,16 @@ jumpBtn.ontouchstart=()=>{
 
 // Stage system
 function stage(){
-  if(p.x < 600){
-    gravity=0.5; // bumi
+  if(p.x < 800){
+    gravity = 0.5;
     return 1;
   }
-  else if(p.x < 1100){
-    gravity=0.2; // atmosfer
+  else if(p.x < 1500){
+    gravity = 0.2;
     return 2;
   }
   else{
-    gravity=0.05; // luar angkasa (masih ada sedikit tarik)
+    gravity = 0.05;
     return 3;
   }
 }
