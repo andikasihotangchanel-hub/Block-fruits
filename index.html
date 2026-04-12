@@ -46,7 +46,7 @@ c.height = innerHeight;
 // Player
 let p = {x:50,y:300,w:30,h:30,vx:0,vy:0,onGround:false};
   
-  // ===== EVENT HAPPY UPDATE =====
+  // ===== EVENT regens =====
 let enemy = {
   x: 700,
   y: 200,
@@ -71,34 +71,34 @@ let gravity = 0.5;
 // Platform
 let plat = [
   // ===== TANAH (BUMI) =====
-  {x:0,y:400,w:800,h:60},
+  {x:0,y:450,w:800,h:80},
 
-  // ===== STAGE 1 (LEBIH PANJANG) =====
-  {x:200,y:320,w:120,h:20},
-  {x:350,y:300,w:120,h:20},
-  {x:500,y:280,w:120,h:20},
-  {x:650,y:260,w:120,h:20},
+  // ===== STAGE 1 (LEBIH KE BAWAH) =====
+  {x:200,y:380,w:120,h:20},
+  {x:350,y:350,w:120,h:20},
+  {x:500,y:320,w:120,h:20},
+  {x:650,y:300,w:120,h:20},
 
   // GARIS STAGE 2
   {x:800,y:0,w:10,h:c.height},
 
-  // ===== STAGE 2 (LEBIH PANJANG) =====
-  {x:850,y:260,w:120,h:20},
-  {x:1000,y:230,w:120,h:20},
-  {x:1150,y:200,w:120,h:20},
-  {x:1300,y:180,w:120,h:20},
+  // ===== STAGE 2 (NAIK DIKIT) =====
+  {x:850,y:330,w:120,h:20},
+  {x:1000,y:300,w:120,h:20},
+  {x:1150,y:270,w:120,h:20},
+  {x:1300,y:240,w:120,h:20},
 
   // GARIS STAGE 3
   {x:1500,y:0,w:10,h:c.height},
 
-  // ===== STAGE 3 (LEBIH PANJANG) =====
-  {x:1550,y:200,w:120,h:20},
-  {x:1700,y:170,w:120,h:20},
-  {x:1850,y:140,w:120,h:20},
-  {x:2000,y:120,w:120,h:20},
+  // ===== STAGE 3 (LEBIH ATAS TAPI MASIH KELIHATAN) =====
+  {x:1550,y:300,w:120,h:20},
+  {x:1700,y:260,w:120,h:20},
+  {x:1850,y:220,w:120,h:20},
+  {x:2000,y:180,w:120,h:20},
 
   // ===== FINISH BESAR =====
-  {x:2200,y:100,w:150,h:150,finish:true}
+  {x:2200,y:150,w:150,h:150,finish:true}
 ];
 
 // Kontrol
@@ -143,6 +143,62 @@ function update(){
 if(showText){
   if(Date.now() - textTimer > 10000){
     showText = false;
+  }
+}
+
+// ===== SPAWN REGEN RANDOM =====
+if(!regen.active){
+  if(Math.random() < 0.002){ // kecil biar gak spam
+    regen.active = true;
+
+    regen.x = p.x + 100 + Math.random()*300;
+
+    // biar sesuai tinggi stage
+    let s = stage();
+    if(s == 1) regen.y = 320;
+    else if(s == 2) regen.y = 260;
+    else regen.y = 200;
+
+    regenTimer = Date.now();
+  }
+}
+
+  // ===== COLLISION REGEN (JADI PLATFORM) =====
+if(regen.active){
+  if(
+    p.x < regen.x + regen.w &&
+    p.x + p.w > regen.x &&
+    p.y < regen.y + regen.h &&
+    p.y + p.h > regen.y
+  ){
+    if(p.vy > 0){
+      p.y = regen.y - p.h;
+      p.vy = 0;
+      p.onGround = true;
+
+      // mulai heal kalau darah kurang
+      if(hp < maxHP && !healing){
+        healing = true;
+        healStart = Date.now();
+      }
+    }
+  }
+}
+
+  if(healing){
+  if(Date.now() - healStart > 1000){
+    hp = maxHP;
+    healing = false;
+    regen.active = false;
+  }
+  }
+
+  // ===== PROSES HEAL =====
+if(healing){
+  if(Date.now() - healStart > 1000){
+    hp = maxHP; // full darah
+    healing = false;
+    regen.active = false; // hilang setelah dipakai
   }
 }
   
@@ -329,6 +385,11 @@ function draw(){
     ctx.fillRect(i.x,i.y,i.w,i.h);
   }
 
+  if(regen.active){
+  ctx.fillStyle = "#00FFFF"; // biru muda
+  ctx.fillRect(regen.x, regen.y, regen.w, regen.h);
+  }
+
   if(enemy.active){
   ctx.fillStyle = "red";
   ctx.fillRect(enemy.x, enemy.y, enemy.w, enemy.h);
@@ -344,6 +405,27 @@ function draw(){
   );
   }
 
+// ===== REGEN =====
+if(regen.active){
+  if(
+    p.x < regen.x + regen.w &&
+    p.x + p.w > regen.x &&
+    p.y < regen.y + regen.h &&
+    p.y + p.h > regen.y
+  ){
+    if(p.vy > 0){
+      p.y = regen.y - p.h;
+      p.vy = 0;
+      p.onGround = true;
+
+      if(hp < maxHP && !healing){
+        healing = true;
+        healStart = Date.now();
+      }
+    }
+  }
+}
+  
   // Player
   ctx.fillStyle="white";
   ctx.fillRect(p.x,p.y,p.w,p.h);
