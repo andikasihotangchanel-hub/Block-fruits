@@ -59,10 +59,6 @@ let enemySpawned = false;
 let showText = false;
 let textTimer = 0;
 
-// Nyawa
-let maxHP = 3;
-let hp = 3;
-
 // Spawn awal
 const spawn = {x:50,y:300};
 
@@ -80,7 +76,7 @@ let plat = [
   {x:650,y:300,w:120,h:20},
 
   // GARIS STAGE 2
-  {x:800,y:0,w:10,h:600.height},
+  {x:800,y:0,w:10,h:600.},
 
   // ===== STAGE 2 (NAIK DIKIT) =====
   {x:850,y:330,w:120,h:20},
@@ -89,7 +85,7 @@ let plat = [
   {x:1300,y:240,w:120,h:20},
 
   // GARIS STAGE 3
-  {x:1500,y:0,w:10,h:600.height},
+  {x:1500,y:0,w:10,h:600.},
 
   // ===== STAGE 3 (LEBIH ATAS TAPI MASIH KELIHATAN) =====
   {x:1550,y:300,w:120,h:20},
@@ -147,6 +143,27 @@ if(showText){
   }
 }
 
+  // ===== REGEN =====
+if(regen.active){
+  if(
+    p.x < regen.x + regen.w &&
+    p.x + p.w > regen.x &&
+    p.y < regen.y + regen.h &&
+    p.y + p.h > regen.y
+  ){
+    if(p.vy > 0){
+      p.y = regen.y - p.h;
+      p.vy = 0;
+      p.onGround = true;
+
+      if(hp < maxHP && !healing){
+        healing = true;
+        healStart = Date.now();
+      }
+    }
+  }
+}
+
 // ===== SPAWN REGEN RANDOM =====
 if(!regen.active){
   if(Math.random() < 0.002){ // kecil biar gak spam
@@ -163,8 +180,7 @@ if(!regen.active){
     regenTimer = Date.now();
   }
 }
-
-  // ===== COLLISION REGEN (JADI PLATFORM) =====
+  
 if(regen.active){
   if(
     p.x < regen.x + regen.w &&
@@ -176,7 +192,10 @@ if(regen.active){
       p.y = regen.y - p.h;
       p.vy = 0;
       p.onGround = true;
-
+      let regen = {x:0,y:0,w:120,h:20,active:false};
+let regenTimer = 0;
+let healing = false;
+let healStart = 0;
       // mulai heal kalau darah kurang
       if(hp < maxHP && !healing){
         healing = true;
@@ -405,27 +424,6 @@ function draw(){
     50
   );
   }
-
-// ===== REGEN =====
-if(regen.active){
-  if(
-    p.x < regen.x + regen.w &&
-    p.x + p.w > regen.x &&
-    p.y < regen.y + regen.h &&
-    p.y + p.h > regen.y
-  ){
-    if(p.vy > 0){
-      p.y = regen.y - p.h;
-      p.vy = 0;
-      p.onGround = true;
-
-      if(hp < maxHP && !healing){
-        healing = true;
-        healStart = Date.now();
-      }
-    }
-  }
-}
   
   // Player
   ctx.fillStyle="white";
@@ -433,6 +431,10 @@ if(regen.active){
 
   ctx.restore();
 }
+
+  // Nyawa
+let maxHP = 3;
+let hp = 3;
 
   // NYAWA (pojok kanan atas, lebih jelas)
 for(let i=0;i<maxHP;i++){
