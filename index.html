@@ -177,6 +177,34 @@ if(enemy.active){
   }
 }
   
+// ===== KENA MUSUH =====
+if(enemy.active){
+  if(
+    p.x < enemy.x + enemy.w &&
+    p.x + p.w > enemy.x &&
+    p.y < enemy.y + enemy.h &&
+    p.y + p.h > enemy.y
+  ){
+    // kurangi nyawa
+    hp -= 1;
+
+    // biar gak kena terus-terusan (cooldown)
+    enemy.active = false;
+
+    setTimeout(()=>{
+      enemy.active = true;
+    },1000);
+
+    // reset posisi player
+    reset();
+
+    if(hp <= 0){
+      alert("GAME OVER");
+      location.reload();
+    }
+  }
+}
+  
   // Gerak
   if(left) p.vx=-3;
   else if(right) p.vx=3;
@@ -322,7 +350,8 @@ for(let i=0;i<maxHP;i++){
   // kotak luar (border)
   ctx.strokeStyle = "white";
   ctx.strokeRect(c.width - 50 - (i*35), 20, 25, 25);
-
+ctx.fillStyle = "white";
+ctx.fillText("HP:"+hp, 20, 30);
   // isi
   if(i < hp){
     ctx.fillStyle = "blue";
@@ -330,34 +359,6 @@ for(let i=0;i<maxHP;i++){
   } else {
     ctx.fillStyle = "black";
     ctx.fillRect(c.width - 50 - (i*35), 20, 25, 25);
-  }
-}
-
-  // ===== KENA MUSUH =====
-if(enemy.active){
-  if(
-    p.x < enemy.x + enemy.w &&
-    p.x + p.w > enemy.x &&
-    p.y < enemy.y + enemy.h &&
-    p.y + p.h > enemy.y
-  ){
-    // kurangi nyawa
-    hp -= 1;
-
-    // biar gak kena terus-terusan (cooldown)
-    enemy.active = false;
-
-    setTimeout(()=>{
-      enemy.active = true;
-    },1000);
-
-    // reset posisi player
-    reset();
-
-    if(hp <= 0){
-      alert("GAME OVER");
-      location.reload();
-    }
   }
 }
 
