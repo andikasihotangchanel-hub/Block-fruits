@@ -341,7 +341,15 @@ if(enemy.active){
     p.y < enemy.y + enemy.h &&
     p.y + p.h > enemy.y
   ){
+    // kurangi nyawa
     hp -= 1;
+
+    // biar gak kena terus-terusan (cooldown)
+    enemy.active = false;
+
+    setTimeout(()=>{
+      enemy.active = true;
+    },1000);
 
     // reset posisi player
     reset();
