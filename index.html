@@ -156,11 +156,7 @@ if(showText){
   // ===== REGEN =====
 if(regen.active){
   if(
-    p.x < regen.x + regen.w &&
-    p.x + p.w > regen.x &&
-    p.y < regen.y + regen.h &&
-    p.y + p.h > regen.y
-  ){
+  )
     if(p.vy > 0){
       p.y = regen.y - p.h;
       p.vy = 0;
@@ -172,7 +168,6 @@ if(regen.active){
       }
     }
   }
-}
 
 // ===== SPAWN REGEN RANDOM =====
 if(!regen.active){
@@ -346,36 +341,48 @@ if(stage() == 3 && p.vy < 0){
   p.vy *= 0.9; // rem gerakan ke atas
 }
 
-  //COLLISION REGEN
-  if(regen.active){
-    if(
-      p.x < regen.x + regen.w &&
-      p.x + p.w > regen.x &&
-      p.y < regen.y + regen.h &&
-      p.y + p.h > regen.y
-    ){
-      if(p.vy > 0){
-        p.y = regen.y - p.h;
-        p.vy = 0;
-        p.onGround = true;
+// SPAWN
+if(!regen.active){
+  if(Math.random() < 0.002){
+    regen.active = true;
+    regen.x = p.x + 100 + Math.random()*300;
 
-        // mulai heal
-        if(hp < maxHP && !healing){
-          healing = true;
-          healStart = Date.now();
-        }
+    let s = stage();
+    if(s == 1) regen.y = 320;
+    else if(s == 2) regen.y = 260;
+    else regen.y = 200;
+  }
+}
+
+// COLLISION + HEAL
+if(regen.active){
+  if(
+    p.x < regen.x + regen.w &&
+    p.x + p.w > regen.x &&
+    p.y < regen.y + regen.h &&
+    p.y + p.h > regen.y
+  ){
+    if(p.vy > 0){
+      p.y = regen.y - p.h;
+      p.vy = 0;
+      p.onGround = true;
+
+      if(hp < maxHP && !healing){
+        healing = true;
+        healStart = Date.now();
       }
     }
   }
+}
 
-  //PROSES HEAL
-  if(healing){
-    if(Date.now() - healStart > 1000){
-      hp = maxHP;
-      healing = false;
-      regen.active = false;
-    }
+// PROSES HEAL
+if(healing){
+  if(Date.now() - healStart > 1000){
+    hp = maxHP;
+    healing = false;
+    regen.active = false;
   }
+}
 
   
   // jatuh
@@ -465,9 +472,9 @@ for(let i=0;i<maxHP;i++){
     ctx.fillStyle = "black";
     ctx.fillRect(c.width - 50 - (i*35), 20, 25, 25);
   }
+}
   ctx.fillStyle = "white";
 ctx.fillText("HP:"+hp, 20, 30);
-}
 }
 
   
