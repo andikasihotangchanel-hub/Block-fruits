@@ -210,14 +210,6 @@ if(!regen.active){
     }
   }
 }
-
-  if(healing){
-  if(Date.now() - healStart > 1000){
-    hp = maxHP;
-    healing = false;
-    regen.active = false;
-  }
-  }
   
   // ===== SPAWN MUSUH DI STAGE 2 =====
 if(s == 2 && !enemySpawned){
@@ -465,8 +457,6 @@ for(let i=0;i<maxHP;i++){
   // kotak luar (border)
   ctx.strokeStyle = "white";
   ctx.strokeRect(c.width - 50 - (i*35), 20, 25, 25);
-ctx.fillStyle = "white";
-ctx.fillText("HP:"+hp, 20, 30);
   // isi
   if(i < hp){
     ctx.fillStyle = "blue";
@@ -475,6 +465,8 @@ ctx.fillText("HP:"+hp, 20, 30);
     ctx.fillStyle = "black";
     ctx.fillRect(c.width - 50 - (i*35), 20, 25, 25);
   }
+  ctx.fillStyle = "white";
+ctx.fillText("HP:"+hp, 20, 30);
 }
 }
 
