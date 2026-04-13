@@ -7,7 +7,6 @@
 body { margin:0; overflow:hidden; }
 canvas { display:block; }
 
-/* Joystick */
 .circle {
   width:60px; height:60px;
   border-radius:50%;
@@ -46,22 +45,15 @@ c.height = innerHeight;
 // Player
 let p = {x:50,y:300,w:30,h:30,vx:0,vy:0,onGround:false};
 
-  // Nyawa
+// Nyawa
 let maxHP = 3;
 let hp = 3;
-  
-  // ===== EVENT regens =====
-let enemy = {
-  x: 700,
-  y: 200,
-  w: 30,
-  h: 30,
-  active: false
-};
 
-  //==== REGEN ====
-  let regen = {x:0,y:0,w:120,h:20,active:false};
-let regenTimer = 0;
+// Enemy
+let enemy = {x:700,y:200,w:30,h:30,active:false,vy:0};
+
+// REGEN (FIX)
+let regen = {x:0,y:0,w:120,h:20,active:false};
 let healing = false;
 let healStart = 0;
 
@@ -69,41 +61,32 @@ let enemySpawned = false;
 let showText = false;
 let textTimer = 0;
 
-// Spawn awal
 const spawn = {x:50,y:300};
-
 let gravity = 0.5;
 
 // Platform
 let plat = [
-  // ===== TANAH (BUMI) =====
   {x:0,y:450,w:800,h:80},
 
-  // ===== STAGE 1 (LEBIH KE BAWAH) =====
   {x:200,y:380,w:120,h:20},
   {x:350,y:350,w:120,h:20},
   {x:500,y:320,w:120,h:20},
   {x:650,y:300,w:120,h:20},
 
-  // GARIS STAGE 2
   {x:800,y:0,w:10,h:600},
 
-  // ===== STAGE 2 (NAIK DIKIT) =====
   {x:850,y:330,w:120,h:20},
   {x:1000,y:300,w:120,h:20},
   {x:1150,y:270,w:120,h:20},
   {x:1300,y:240,w:120,h:20},
 
-  // GARIS STAGE 3
   {x:1500,y:0,w:10,h:600},
 
-  // ===== STAGE 3 (LEBIH ATAS TAPI MASIH KELIHATAN) =====
   {x:1550,y:300,w:120,h:20},
   {x:1700,y:260,w:120,h:20},
   {x:1850,y:220,w:120,h:20},
   {x:2000,y:180,w:120,h:20},
 
-  // ===== FINISH BESAR =====
   {x:2200,y:150,w:150,h:150,finish:true}
 ];
 
@@ -127,175 +110,44 @@ jumpBtn.ontouchstart=()=>{
   }
 };
 
-// Stage system
+// Stage
 function stage(){
-  if(p.x < 800){
-    gravity = 0.5;
-    return 1;
-  }
-  else if(p.x < 1500){
-    gravity = 0.2;
-    return 2;
-  }
-  else{
-    gravity = 0.05;
-    return 3;
-  }
+  if(p.x < 800){ gravity=0.5; return 1; }
+  else if(p.x < 1500){ gravity=0.2; return 2; }
+  else{ gravity=0.05; return 3; }
 }
 
 function update(){
   let s = stage();
-console.log("jalan");
-  
-if(showText){
-  if(Date.now() - textTimer > 10000){
+
+  if(showText && Date.now() - textTimer > 10000){
     showText = false;
   }
-}
 
-  // ===== REGEN =====
-if(regen.active){
-  if(
-    p.x < regen.x + regen.w &&
-    p.x + p.w > regen.x &&
-    p.y < regen.y + regen.h &&
-    p.y + p.h > regen.y
-  ){
-  
-    if(p.vy > 0){
-      p.y = regen.y - p.h;
-      p.vy = 0;
-      p.onGround = true;
+  // ===== SPAWN REGEN (SATU SAJA) =====
+  if(!regen.active){
+    if(Math.random() < 0.002){
+      regen.active = true;
+      regen.x = p.x + 100 + Math.random()*300;
 
-      if(hp < maxHP && !healing){
-        healing = true;
-        healStart = Date.now();
-      }
+      if(s==1) regen.y = 320;
+      else if(s==2) regen.y = 260;
+      else regen.y = 200;
     }
   }
-  
-    if(p.vy > 0){
-      p.y = regen.y - p.h;
-      p.vy = 0;
-      p.onGround = true;
-    
-      // mulai heal kalau darah kurang
-      if(hp < maxHP && !healing){
-        healing = true;
-        healStart = Date.now();
-      }
-    } 
-  
-  // ===== SPAWN MUSUH DI STAGE 2 =====
-if(s == 2 && !enemySpawned){
-  enemy.active = true;
-  enemySpawned = true;
 
-  showText = true;
-  textTimer = Date.now();
-}
-  
-  // ===== AI MUSUH =====
-if(enemy.active){
-
-  // ngejar player (lebih cepat)
-  if(enemy.x < p.x) enemy.x += 5;
-  else enemy.x -= 2;
-
-  // gravitasi musuh
-  enemy.vy = enemy.vy || 0;
-  enemy.vy += 0.5;
-  enemy.y += enemy.vy;
-
-  // collision musuh dengan platform
-  for(let i of plat){
-    if(
-      enemy.x < i.x+i.w &&
-      enemy.x+enemy.w > i.x &&
-      enemy.y < i.y+i.h &&
-      enemy.y+enemy.h > i.y
-    ){
-      if(enemy.vy > 0){
-        enemy.y = i.y - enemy.h;
-        enemy.vy = 0;
-      }
-    }
-  }
-}
-  
-// ===== KENA MUSUH =====
-if(enemy.active){
-  if(
-    p.x < enemy.x + enemy.w &&
-    p.x + p.w > enemy.x &&
-    p.y < enemy.y + enemy.h &&
-    p.y + p.h > enemy.y
-  ){
-    // kurangi nyawa
-    hp -= 1;
-
-    // biar gak kena terus-terusan (cooldown)
-    enemy.active = false;
-
-    setTimeout(()=>{
-      enemy.active = true;
-    },1000);
-
-    // reset posisi player
-    reset();
-
-    if(hp <= 0){
-      alert("GAME OVER");
-      location.reload();
-    }
-  }
-}
-  
-  // Gerak
+  // GERAK
   if(left) p.vx=-3;
   else if(right) p.vx=3;
   else p.vx=0;
 
-// gravitasi tetap jalan
-p.vy += gravity;
-
-// ===== MAGNET DI LUAR ANGKASA =====
-if(s == 3){
-  let nearest = null;
-  let minDist = Infinity;
-
-  for(let i of plat){
-    if(!i.finish && i.w != 10){
-      let dx = (i.x + i.w/2) - (p.x + p.w/2);
-      let dy = (i.y) - (p.y + p.h);
-      let dist = Math.sqrt(dx*dx + dy*dy);
-
-      if(dist < minDist){
-        minDist = dist;
-        nearest = i;
-      }
-    }
-  }
-
-  
-  if(nearest){
-    let targetY = nearest.y - p.h;
-
-    // tarik ke arah platform (magnet)
-    if(p.y < targetY){
-      p.vy += 0.3;
-    }
-  }
-}
-
-// ===============================
-
-p.x += p.vx;
-p.y += p.vy;
+  p.vy += gravity;
+  p.x += p.vx;
+  p.y += p.vy;
 
   p.onGround=false;
 
-  // Collision
+  // COLLISION PLATFORM
   for(let i of plat){
     if(
       p.x < i.x+i.w &&
@@ -316,65 +168,54 @@ p.y += p.vy;
     }
   }
 
-  // cegah naik terlalu tinggi di luar angkasa
-if(stage() == 3 && p.vy < 0){
-  p.vy *= 0.9; // rem gerakan ke atas
-}
+  // ===== COLLISION REGEN (SATU SAJA) =====
+  if(regen.active){
+    if(
+      p.x < regen.x + regen.w &&
+      p.x + p.w > regen.x &&
+      p.y < regen.y + regen.h &&
+      p.y + p.h > regen.y
+    ){
+      if(p.vy > 0){
+        p.y = regen.y - p.h;
+        p.vy = 0;
+        p.onGround = true;
 
-// SPAWN
-if(!regen.active){
-  if(Math.random() < 0.002){
-    regen.active = true;
-    regen.x = p.x + 100 + Math.random()*300;
-
-    let s = stage();
-    if(s == 1) regen.y = 320;
-    else if(s == 2) regen.y = 260;
-    else regen.y = 200;
-  }
-}
-
-// COLLISION + HEAL
-if(regen.active){
-  if(
-    p.x < regen.x + regen.w &&
-    p.x + p.w > regen.x &&
-    p.y < regen.y + regen.h &&
-    p.y + p.h > regen.y
-  ){
-    if(p.vy > 0){
-      p.y = regen.y - p.h;
-      p.vy = 0;
-      p.onGround = true;
-
-      if(hp < maxHP && !healing){
-        healing = true;
-        healStart = Date.now();
+        if(hp < maxHP && !healing){
+          healing = true;
+          healStart = Date.now();
+        }
       }
     }
   }
-}
 
-// PROSES HEAL
-if(healing){
-  if(Date.now() - healStart > 1000){
-    hp = maxHP;
-    healing = false;
-    regen.active = false;
-  }
-}
-
-  
-  // jatuh
-  if(p.y > c.height){
-    if(s==1){
-      // jatuh ke tanah
-      p.x=50;
-      p.y=300;
-    }else{
-      // reset full
-      reset();
+  // HEAL
+  if(healing){
+    if(Date.now() - healStart > 1000){
+      hp = maxHP;
+      healing = false;
+      regen.active = false;
     }
+  }
+
+  // MUSUH
+  if(s==2 && !enemySpawned){
+    enemy.active=true;
+    enemySpawned=true;
+    showText=true;
+    textTimer=Date.now();
+  }
+
+  if(enemy.active){
+    if(enemy.x < p.x) enemy.x += 2;
+    else enemy.x -= 2;
+
+    enemy.vy += 0.5;
+    enemy.y += enemy.vy;
+  }
+
+  if(p.y > c.height){
+    reset();
   }
 }
 
@@ -384,80 +225,48 @@ function reset(){
   p.vy=0;
 }
 
-// Background beda tiap stage
-function drawBG(s){
-  if(s==1) ctx.fillStyle="skyblue";
-  else if(s==2) ctx.fillStyle="#400000";
-  else ctx.fillStyle="black";
-
-  ctx.fillRect(0,0,c.width,c.height);
-}
-
 function draw(){
   let s = stage();
 
-  drawBG(s);
+  ctx.fillStyle = s==1?"skyblue":s==2?"#400000":"black";
+  ctx.fillRect(0,0,c.width,c.height);
 
   ctx.save();
   ctx.translate(-p.x+100,0);
 
-  // Platform
   for(let i of plat){
-    if(i.finish){
-      ctx.fillStyle="yellow";
-    }else if(i.w==10){
-      ctx.fillStyle="lime"; // garis stage
-    }else{
-      ctx.fillStyle="green";
-    }
+    ctx.fillStyle = i.finish?"yellow":i.w==10?"lime":"green";
     ctx.fillRect(i.x,i.y,i.w,i.h);
   }
 
   if(regen.active){
-  ctx.fillStyle = "#00FFFF"; // biru muda
-  ctx.fillRect(regen.x, regen.y, regen.w, regen.h);
+    ctx.fillStyle="#00FFFF";
+    ctx.fillRect(regen.x,regen.y,regen.w,regen.h);
   }
 
   if(enemy.active){
-  ctx.fillStyle = "red";
-  ctx.fillRect(enemy.x, enemy.y, enemy.w, enemy.h);
+    ctx.fillStyle="red";
+    ctx.fillRect(enemy.x,enemy.y,enemy.w,enemy.h);
   }
 
-  if(showText){
-  ctx.fillStyle = "white";
-  ctx.font = "16px Arial";
-  ctx.fillText(
-    "dia musuh pertama yang harus kamu lewati untuk menang berjuang lah",
-    p.x - 100,
-    50
-  );
-  }
-  
-  // Player
   ctx.fillStyle="white";
   ctx.fillRect(p.x,p.y,p.w,p.h);
 
   ctx.restore();
-  
-  // NYAWA (pojok kanan atas, lebih jelas)
-for(let i=0;i<maxHP;i++){
-  // kotak luar (border)
-  ctx.strokeStyle = "white";
-  ctx.strokeRect(c.width - 50 - (i*35), 20, 25, 25);
-  // isi
-  if(i < hp){
-    ctx.fillStyle = "blue";
-    ctx.fillRect(c.width - 50 - (i*35), 20, 25, 25);
-  } else {
-    ctx.fillStyle = "black";
-    ctx.fillRect(c.width - 50 - (i*35), 20, 25, 25);
+
+  // ===== UI NYAWA =====
+  for(let i=0;i<maxHP;i++){
+    ctx.strokeStyle="white";
+    ctx.strokeRect(c.width-50-(i*35),20,25,25);
+
+    ctx.fillStyle = i<hp ? "blue" : "black";
+    ctx.fillRect(c.width-50-(i*35),20,25,25);
   }
-}
-  ctx.fillStyle = "white";
-ctx.fillText("HP:"+hp, 20, 30);
+
+  ctx.fillStyle="white";
+  ctx.fillText("HP:"+hp,20,30);
 }
 
-  
 function loop(){
   update();
   draw();
