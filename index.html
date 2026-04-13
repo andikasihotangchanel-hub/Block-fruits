@@ -229,11 +229,6 @@ if(enemy.active){
   if(dx > 0) enemy.x += speed;
   else enemy.x -= speed;
 
-  // lompat kalau player lebih tinggi
-if(p.y < enemy.y - 40 && enemy.onGround){
-  enemy.vy = -8;
-}
-
   // gravitasi
   enemy.vy += 0.5;
   enemy.y += enemy.vy;
