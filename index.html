@@ -225,6 +225,10 @@ if(enemy.active){
   if(dx > 0) enemy.x += speed;
   else enemy.x -= speed;
   }
+  
+  if(p.y < enemy.y - 80 && enemy.onGround && Math.random() < 0.02){
+  enemy.vy = -6;
+  }
 
   if(dx > 0) enemy.x += speed;
   else enemy.x -= speed;
