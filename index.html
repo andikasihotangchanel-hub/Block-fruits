@@ -45,6 +45,10 @@ c.height = innerHeight;
 
 // Player
 let p = {x:50,y:300,w:30,h:30,vx:0,vy:0,onGround:false};
+
+  // Nyawa
+let maxHP = 3;
+let hp = 3;
   
   // ===== EVENT regens =====
 let enemy = {
@@ -214,15 +218,6 @@ if(!regen.active){
     regen.active = false;
   }
   }
-
-  // ===== PROSES HEAL =====
-if(healing){
-  if(Date.now() - healStart > 1000){
-    hp = maxHP; // full darah
-    healing = false;
-    regen.active = false; // hilang setelah dipakai
-  }
-}
   
   // ===== SPAWN MUSUH DI STAGE 2 =====
 if(s == 2 && !enemySpawned){
@@ -358,6 +353,38 @@ p.y += p.vy;
 if(stage() == 3 && p.vy < 0){
   p.vy *= 0.9; // rem gerakan ke atas
 }
+
+  //COLLISION REGEN
+  if(regen.active){
+    if(
+      p.x < regen.x + regen.w &&
+      p.x + p.w > regen.x &&
+      p.y < regen.y + regen.h &&
+      p.y + p.h > regen.y
+    ){
+      if(p.vy > 0){
+        p.y = regen.y - p.h;
+        p.vy = 0;
+        p.onGround = true;
+
+        // mulai heal
+        if(hp < maxHP && !healing){
+          healing = true;
+          healStart = Date.now();
+        }
+      }
+    }
+  }
+
+  //PROSES HEAL
+  if(healing){
+    if(Date.now() - healStart > 1000){
+      hp = maxHP;
+      healing = false;
+      regen.active = false;
+    }
+  }
+
   
   // jatuh
   if(p.y > c.height){
@@ -430,9 +457,7 @@ function draw(){
   // Player
   ctx.fillStyle="white";
   ctx.fillRect(p.x,p.y,p.w,p.h);
-// Nyawa
-let maxHP = 3;
-let hp = 3;
+
   ctx.restore();
   
   // NYAWA (pojok kanan atas, lebih jelas)
