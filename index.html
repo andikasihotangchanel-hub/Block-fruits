@@ -206,13 +206,82 @@ function update(){
     textTimer=Date.now();
   }
 
-  if(enemy.active){
-    if(enemy.x < p.x) enemy.x += 2;
-    else enemy.x -= 2;
+  // ===== AI MUSUH =====
+if(enemy.active){
 
-    enemy.vy += 0.5;
-    enemy.y += enemy.vy;
+  let dx = p.x - enemy.x;
+
+  let speed = 2;
+
+  if(Math.abs(dx) < 200) speed = 3;
+  if(Math.abs(dx) < 100) speed = 5;
+
+  if(hp == 1){
+  if(dx > 0) enemy.x += 6;
+  else enemy.x -= 6;
   }
+
+  if(Math.abs(dx) > 5){
+  if(dx > 0) enemy.x += speed;
+  else enemy.x -= speed;
+  }
+
+  if(dx > 0) enemy.x += speed;
+  else enemy.x -= speed;
+
+  // lompat kalau player lebih tinggi
+if(p.y < enemy.y - 40 && enemy.onGround){
+  enemy.vy = -8;
+}
+
+  // gravitasi
+  enemy.vy += 0.5;
+  enemy.y += enemy.vy;
+
+  // collision platform
+  enemy.onGround = false;
+  for(let i of plat){
+    if(
+      enemy.x < i.x+i.w &&
+      enemy.x+enemy.w > i.x &&
+      enemy.y < i.y+i.h &&
+      enemy.y+enemy.h > i.y
+    ){
+      if(enemy.vy > 0){
+        enemy.y = i.y - enemy.h;
+        enemy.vy = 0;
+        enemy.onGround = true;
+      }
+    }
+  }
+}
+
+  // ===== KENA MUSUH =====
+if(enemy.active){
+  if(
+    p.x < enemy.x + enemy.w &&
+    p.x + p.w > enemy.x &&
+    p.y < enemy.y + enemy.h &&
+    p.y + p.h > enemy.y
+  ){
+    hp -= 1; // normal
+// atau
+hp -= 2; // brutal mode
+
+    enemy.active = false;
+
+    setTimeout(()=>{
+      enemy.active = true;
+    },1000);
+
+    reset();
+
+    if(hp <= 0){
+      alert("GAME OVER");
+      location.reload();
+    }
+  }
+}
 
   if(p.y > c.height){
     reset();
