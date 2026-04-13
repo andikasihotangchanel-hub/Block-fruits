@@ -155,8 +155,7 @@ if(showText){
 
   // ===== REGEN =====
 if(regen.active){
-  if(
-  )
+  
     if(p.vy > 0){
       p.y = regen.y - p.h;
       p.vy = 0;
@@ -168,30 +167,7 @@ if(regen.active){
       }
     }
   }
-
-// ===== SPAWN REGEN RANDOM =====
-if(!regen.active){
-  if(Math.random() < 0.002){ // kecil biar gak spam
-    regen.active = true;
-
-    regen.x = p.x + 100 + Math.random()*300;
-
-    // biar sesuai tinggi stage
-    let s = stage();
-    if(s == 1) regen.y = 320;
-    else if(s == 2) regen.y = 260;
-    else regen.y = 200;
-
-    regenTimer = Date.now();
-  }
-}
   
-  if(
- p.x < regen.x + regen.w &&
-    p.x + p.w > regen.x &&
-    p.y < regen.y + regen.h &&
-    p.y + p.h > regen.y
-  ){
     if(p.vy > 0){
       p.y = regen.y - p.h;
       p.vy = 0;
@@ -202,9 +178,7 @@ if(!regen.active){
         healing = true;
         healStart = Date.now();
       }
-    }
-  }
-}
+    } 
   
   // ===== SPAWN MUSUH DI STAGE 2 =====
 if(s == 2 && !enemySpawned){
