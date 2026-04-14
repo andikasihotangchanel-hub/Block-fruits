@@ -49,6 +49,36 @@ let p = {x:50,y:300,w:30,h:30,vx:0,vy:0,onGround:false};
 let maxHP = 3;
 let hp = 3;
 
+  let banned = false;
+let banEndTime = 0;
+
+  let savedBan = localStorage.getItem("banEnd");
+
+if(savedBan){
+  banEndTime = parseInt(savedBan);
+  if(Date.now() < banEndTime){
+    banned = true;
+  } else {
+    localStorage.removeItem("banEnd");
+  }
+}
+
+      function triggerBan(){
+  banned = true;
+
+  // 24 jam
+  banEndTime = Date.now() + (24 * 60 * 60 * 1000);
+
+  localStorage.setItem("banEnd", banEndTime);
+      }
+
+  let lastX = p.x;
+let regenCount = 0;
+let lastRegenTime = 0;
+
+let enemyIdleTime = 0;
+let lastEnemyX = 0;
+
 // Enemy
 let enemy = {x:700,y:200,w:30,h:30,active:false,vy:0};
 
@@ -120,6 +150,10 @@ function stage(){
 function update(){
   let s = stage();
 
+  if(hp > maxHP){
+  triggerBan();
+  }
+
   if(showText && Date.now() - textTimer > 10000){
     showText = false;
   }
@@ -144,6 +178,14 @@ function update(){
   p.vy += gravity;
   p.x += p.vx;
   p.y += p.vy;
+
+  let distance = Math.abs(p.x - lastX);
+
+if(distance > 200){ 
+  triggerBan(); // teleport terlalu jauh
+}
+
+lastX = p.x;
 
   p.onGround=false;
 
@@ -191,11 +233,24 @@ function update(){
 
   // HEAL
   if(healing){
-    if(Date.now() - healStart > 1000){
-      hp = maxHP;
-      healing = false;
-      regen.active = false;
+  if(Date.now() - healStart > 1000){
+
+    regenCount++;
+
+    if(Date.now() - lastRegenTime < 3000){
+      if(regenCount > 3){
+        triggerBan(); // spam regen
+      }
+    } else {
+      regenCount = 1;
     }
+
+    lastRegenTime = Date.now();
+
+    hp = maxHP;
+    healing = false;
+    regen.active = false;
+  }
   }
 
   // MUSUH
