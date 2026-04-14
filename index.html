@@ -42,6 +42,21 @@ const ctx = c.getContext("2d");
 c.width = innerWidth;
 c.height = innerHeight;
 
+  let banned = false;
+let banEndTime = localStorage.getItem("banTime");
+
+if(banEndTime){
+  banEndTime = Number(banEndTime);
+
+  if(Date.now() < banEndTime){
+    banned = true;
+  }else{
+    // 🔥 BAN SUDAH HABIS → HAPUS
+    localStorage.removeItem("banTime");
+    banned = false;
+  }
+}
+
 // Player
 let p = {x:50,y:300,w:30,h:30,vx:0,vy:0,onGround:false};
 
@@ -64,12 +79,12 @@ if(savedBan){
 }
 
       function triggerBan(){
+  let banEnd = Date.now() + (24 * 60 * 60 * 1000); // 24 jam
+
+  localStorage.setItem("banTime", banEnd);
+
   banned = true;
-
-  // 24 jam
-  banEndTime = Date.now() + (24 * 60 * 60 * 1000);
-
-  localStorage.setItem("banEnd", banEndTime);
+  banEndTime = banEnd;
       }
 
   let lastX = p.x;
