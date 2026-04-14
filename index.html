@@ -150,6 +150,8 @@ function stage(){
 function update(){
   let s = stage();
 
+  if(banned) return;
+
   if(hp > maxHP){
   triggerBan();
   }
@@ -347,6 +349,45 @@ function reset(){
 }
 
 function draw(){
+
+if(banned){
+
+  ctx.fillStyle = "black";
+  ctx.fillRect(0,0,c.width,c.height);
+
+  ctx.fillStyle = "red";
+  ctx.font = "bold 50px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("BANED", c.width/2, 150);
+
+  let sisa = Math.max(0, banEndTime - Date.now());
+
+  let jam = Math.floor(sisa / 3600000);
+  let menit = Math.floor((sisa % 3600000) / 60000);
+  let detik = Math.floor((sisa % 60000) / 1000);
+
+  ctx.fillStyle = "white";
+  ctx.font = "20px Arial";
+
+  ctx.fillText(
+    "kamu melanggar ketentuan game",
+    c.width/2, 220
+  );
+
+  ctx.fillText(
+    "reset dalam: " + jam + ":" + menit + ":" + detik,
+    c.width/2, 260
+  );
+
+  ctx.font = "12px Arial";
+  ctx.fillText(
+    "oleh admin game",
+    c.width/2, 300
+  );
+
+  return;
+}
+  
   let s = stage();
 
   ctx.fillStyle = s==1?"skyblue":s==2?"#400000":"black";
