@@ -64,17 +64,12 @@ let p = {x:50,y:300,w:30,h:30,vx:0,vy:0,onGround:false};
 let maxHP = 3;
 let hp = 3;
 
-  let banned = false;
-let banEndTime = 0;
-
-  let savedBan = localStorage.getItem("banEnd");
-
 if(savedBan){
   banEndTime = parseInt(savedBan);
   if(Date.now() < banEndTime){
     banned = true;
   } else {
-    localStorage.removeItem("banEnd");
+    
   }
 }
 
@@ -198,7 +193,7 @@ function update(){
 
   let distance = Math.abs(p.x - lastX);
 
-if(distance > 200){ 
+if(distance > 300 && !p.onGround){
   triggerBan(); // teleport terlalu jauh
 }
 
@@ -254,15 +249,17 @@ lastX = p.x;
 
     regenCount++;
 
-    if(Date.now() - lastRegenTime < 3000){
-      if(regenCount > 3){
-        triggerBan(); // spam regen
-      }
-    } else {
-      regenCount = 1;
-    }
+    if(Date.now() - lastRegenTime < 2000){
+  regenCount++;
+}else{
+  regenCount = 1;
+}
 
-    lastRegenTime = Date.now();
+if(regenCount > 6){
+  triggerBan();
+}
+
+lastRegenTime = Date.now();
 
     hp = maxHP;
     healing = false;
@@ -297,13 +294,6 @@ if(enemy.active){
   if(dx > 0) enemy.x += speed;
   else enemy.x -= speed;
   }
-  
-  if(p.y < enemy.y - 80 && enemy.onGround && Math.random() < 0.02){
-  enemy.vy = -6;
-  }
-
-  if(dx > 0) enemy.x += speed;
-  else enemy.x -= speed;
 
   // gravitasi
   enemy.vy += 0.5;
