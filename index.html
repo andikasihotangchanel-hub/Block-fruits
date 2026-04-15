@@ -38,6 +38,8 @@ canvas { display:block; }
 
 <script>
 
+  alert("SCRIPT JALAN");
+
   window.onerror = function(msg, url, line){
   alert("ERROR: " + msg + " di baris " + line);
   }
@@ -468,8 +470,12 @@ if(banned){
 }
 
 function loop(){
-  update();
-  draw();
+  try{
+    update();
+    draw();
+  }catch(e){
+    alert("ERROR: " + e.message);
+  }
   requestAnimationFrame(loop);
 }
 
