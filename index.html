@@ -68,12 +68,17 @@ let p = {x:50,y:300,w:30,h:30,vx:0,vy:0,onGround:false};
 let maxHP = 3;
 let hp = 3;
 
-if(savedBan){
-  banEndTime = parseInt(savedBan);
+  let banned = false;
+let banEndTime = localStorage.getItem("banTime");
+
+if(banEndTime){
+  banEndTime = Number(banEndTime);
+
   if(Date.now() < banEndTime){
     banned = true;
-  } else {
-    
+  }else{
+    localStorage.removeItem("banTime");
+    banned = false;
   }
 }
 
