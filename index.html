@@ -37,6 +37,10 @@ canvas { display:block; }
 <div id="jump"></div>
 
 <script>
+
+  window.onerror = function(msg, url, line){
+  alert("ERROR: " + msg + " di baris " + line);
+  }
 const c = document.getElementById("c");
 const ctx = c.getContext("2d");
 c.width = innerWidth;
