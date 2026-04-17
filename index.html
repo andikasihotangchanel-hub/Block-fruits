@@ -14,7 +14,6 @@ canvas { display:block; }
   position:fixed;
   bottom:20px;
 }
-
 #left { left:20px; }
 #right { left:100px; }
 
@@ -31,83 +30,61 @@ canvas { display:block; }
 <body>
 
 <canvas id="c"></canvas>
-
 <div id="left" class="circle"></div>
 <div id="right" class="circle"></div>
 <div id="jump"></div>
 
 <script>
 
-  alert("SCRIPT JALAN");
-
-  window.onerror = function(msg, url, line){
+// DEBUG BIAR GAK PUTIH
+window.onerror = function(msg, url, line){
   alert("ERROR: " + msg + " di baris " + line);
-  }
+}
+
 const c = document.getElementById("c");
 const ctx = c.getContext("2d");
 c.width = innerWidth;
 c.height = innerHeight;
 
-  let banned = false;
+// ===== BAN SYSTEM =====
+let banned = false;
 let banEndTime = localStorage.getItem("banTime");
 
 if(banEndTime){
   banEndTime = Number(banEndTime);
-
   if(Date.now() < banEndTime){
     banned = true;
-  }else{
-    // 🔥 BAN SUDAH HABIS → HAPUS
+  } else {
     localStorage.removeItem("banTime");
-    banned = false;
   }
 }
 
-// Player
-let p = {x:50,y:300,w:30,h:30,vx:0,vy:0,onGround:false};
+function triggerBan(){
+  let banEnd = Date.now() + (24 * 60 * 60 * 1000);
+  localStorage.setItem("banTime", banEnd);
+  banned = true;
+  banEndTime = banEnd;
+}
 
-// Nyawa
+// ===== PLAYER =====
+let p = {x:50,y:300,w:30,h:30,vx:0,vy:0,onGround:false};
 let maxHP = 3;
 let hp = 3;
 
-  let banned = false;
-let banEndTime = localStorage.getItem("banTime");
-
-if(banEndTime){
-  banEndTime = Number(banEndTime);
-
-  if(Date.now() < banEndTime){
-    banned = true;
-  }else{
-    localStorage.removeItem("banTime");
-    banned = false;
-  }
-}
-
-      function triggerBan(){
-  let banEnd = Date.now() + (24 * 60 * 60 * 1000); // 24 jam
-
-  localStorage.setItem("banTime", banEnd);
-
-  banned = true;
-  banEndTime = banEnd;
-      }
-
-  let lastX = p.x;
+// ===== TRACKING =====
+let lastX = p.x;
 let regenCount = 0;
 let lastRegenTime = 0;
 
-let enemyIdleTime = 0;
-let lastEnemyX = 0;
+// ===== ENEMY =====
+let enemy = {x:700,y:200,w:30,h:30,active:false,vy:0,onGround:false};
 
-// Enemy
-let enemy = {x:700,y:200,w:30,h:30,active:false,vy:0};
-
-// REGEN (FIX)
+// ===== REGEN =====
 let regen = {x:0,y:0,w:120,h:20,active:false};
 let healing = false;
 let healStart = 0;
 
+// ===== SYSTEM =====
 let enemySpawned = false;
 let showText = false;
 let textTimer = 0;
@@ -115,10 +92,9 @@ let textTimer = 0;
 const spawn = {x:50,y:300};
 let gravity = 0.5;
 
-// Platform
+// ===== PLATFORM =====
 let plat = [
   {x:0,y:450,w:800,h:80},
-
   {x:200,y:380,w:120,h:20},
   {x:350,y:350,w:120,h:20},
   {x:500,y:320,w:120,h:20},
@@ -141,115 +117,73 @@ let plat = [
   {x:2200,y:150,w:150,h:150,finish:true}
 ];
 
-// Kontrol
+// ===== CONTROL =====
 let left=false,right=false;
 
-leftBtn = document.getElementById("left");
-rightBtn = document.getElementById("right");
-jumpBtn = document.getElementById("jump");
+document.getElementById("left").ontouchstart=()=>left=true;
+document.getElementById("left").ontouchend=()=>left=false;
 
-leftBtn.ontouchstart=()=>left=true;
-leftBtn.ontouchend=()=>left=false;
+document.getElementById("right").ontouchstart=()=>right=true;
+document.getElementById("right").ontouchend=()=>right=false;
 
-rightBtn.ontouchstart=()=>right=true;
-rightBtn.ontouchend=()=>right=false;
-
-jumpBtn.ontouchstart=()=>{
+document.getElementById("jump").ontouchstart=()=>{
   if(p.onGround){
     p.vy=-10;
     p.onGround=false;
   }
 };
 
-// Stage
+// ===== STAGE =====
 function stage(){
   if(p.x < 800){ gravity=0.5; return 1; }
   else if(p.x < 1500){ gravity=0.2; return 2; }
   else{ gravity=0.05; return 3; }
 }
 
+// ===== UPDATE =====
 function update(){
+  if(banned) return;
+
   let s = stage();
 
-  if(banned){
-  // tampilan BAN
-  return;
-  }
+  // ANTI CHEAT
+  if(hp > maxHP) triggerBan();
 
-  if(hp > maxHP){
-  triggerBan();
-  }
-
-  if(showText && Date.now() - textTimer > 10000){
+  // TEXT MUSUH
+  if(showText && Date.now() - textTimer > 8000){
     showText = false;
   }
 
-  // ===== SPAWN REGEN (SATU SAJA) =====
-  if(!regen.active){
-    if(Math.random() < 0.002){
-      regen.active = true;
-      regen.x = p.x + 100 + Math.random()*300;
-
-      if(s==1) regen.y = 320;
-      else if(s==2) regen.y = 260;
-      else regen.y = 200;
-    }
+  // SPAWN REGEN
+  if(!regen.active && Math.random() < 0.002){
+    regen.active = true;
+    regen.x = p.x + 100 + Math.random()*300;
+    regen.y = s==1?320:s==2?260:200;
   }
 
   // GERAK
-  if(left) p.vx=-5;
-  else if(right) p.vx=5;
-  else p.vx=0;
-
+  p.vx = left?-5:right?5:0;
   p.vy += gravity;
   p.x += p.vx;
   p.y += p.vy;
 
-  let distance = Math.abs(p.x - lastX);
-
-if(distance > 300 && !p.onGround){
-  triggerBan(); // teleport terlalu jauh
-}
-
-lastX = p.x;
+  // ANTI TELEPORT
+  if(Math.abs(p.x - lastX) > 400){
+    triggerBan();
+  }
+  lastX = p.x;
 
   p.onGround=false;
 
-  //==== COLLISON REGEN ====
-  if(regen.active){
-  if(
-    p.x < regen.x + regen.w &&
-    p.x + p.w > regen.x &&
-    p.y < regen.y + regen.h &&
-    p.y + p.h > regen.y
-  ){
-    if(p.vy > 0){
-      p.y = regen.y - p.h;
-      p.vy = 0;
-      p.onGround = true;
-
-      if(hp < maxHP && !healing){
-        healing = true;
-        healStart = Date.now();
-      }
-    }
-  }
-  }
-
-  // COLLISION PLATFORM
+  // PLATFORM
   for(let i of plat){
-    if(
-      p.x < i.x+i.w &&
-      p.x+p.w > i.x &&
-      p.y < i.y+i.h &&
-      p.y+p.h > i.y
-    ){
+    if(p.x < i.x+i.w && p.x+p.w > i.x &&
+       p.y < i.y+i.h && p.y+p.h > i.y){
       if(p.vy>0){
         p.y=i.y-p.h;
         p.vy=0;
         p.onGround=true;
       }
-
       if(i.finish){
         alert("FINISH!");
         reset();
@@ -257,14 +191,10 @@ lastX = p.x;
     }
   }
 
-  // ===== COLLISION REGEN (SATU SAJA) =====
+  // REGEN COLLISION (CUMA 1)
   if(regen.active){
-    if(
-      p.x < regen.x + regen.w &&
-      p.x + p.w > regen.x &&
-      p.y < regen.y + regen.h &&
-      p.y + p.h > regen.y
-    ){
+    if(p.x < regen.x+regen.w && p.x+p.w > regen.x &&
+       p.y < regen.y+regen.h && p.y+p.h > regen.y){
       if(p.vy > 0){
         p.y = regen.y - p.h;
         p.vy = 0;
@@ -279,30 +209,22 @@ lastX = p.x;
   }
 
   // HEAL
-  if(healing){
-  if(Date.now() - healStart > 1000){
-
-    regenCount++;
-
+  if(healing && Date.now() - healStart > 1000){
     if(Date.now() - lastRegenTime < 2000){
-  regenCount++;
-}else{
-  regenCount = 1;
-}
+      regenCount++;
+    } else {
+      regenCount = 1;
+    }
 
-if(regenCount > 6){
-  triggerBan();
-}
+    if(regenCount > 5) triggerBan();
 
-lastRegenTime = Date.now();
-
+    lastRegenTime = Date.now();
     hp = maxHP;
     healing = false;
     regen.active = false;
   }
-  }
 
-  // MUSUH
+  // SPAWN MUSUH
   if(s==2 && !enemySpawned){
     enemy.active=true;
     enemySpawned=true;
@@ -310,76 +232,45 @@ lastRegenTime = Date.now();
     textTimer=Date.now();
   }
 
-  // ===== AI MUSUH =====
-if(enemy.active){
+  // AI MUSUH
+  if(enemy.active){
+    let dx = p.x - enemy.x;
+    let speed = Math.abs(dx) < 200 ? 3 : 2;
 
-  let dx = p.x - enemy.x;
+    if(Math.abs(dx) > 5){
+      enemy.x += dx>0 ? speed : -speed;
+    }
 
-  let speed = 2;
+    enemy.vy += 0.5;
+    enemy.y += enemy.vy;
 
-  if(Math.abs(dx) < 200) speed = 3;
-  if(Math.abs(dx) < 100) speed = 3;
-
-  if(hp == 1){
-  if(dx > 0) enemy.x += 6;
-  else enemy.x -= 6;
-  }
-
-  if(Math.abs(dx) > 5){
-  if(dx > 0) enemy.x += speed;
-  else enemy.x -= speed;
-  }
-
-  // gravitasi
-  enemy.vy += 0.5;
-  enemy.y += enemy.vy;
-
-  // collision platform
-  enemy.onGround = false;
-  for(let i of plat){
-    if(
-      enemy.x < i.x+i.w &&
-      enemy.x+enemy.w > i.x &&
-      enemy.y < i.y+i.h &&
-      enemy.y+enemy.h > i.y
-    ){
-      if(enemy.vy > 0){
-        enemy.y = i.y - enemy.h;
-        enemy.vy = 0;
-        enemy.onGround = true;
+    enemy.onGround=false;
+    for(let i of plat){
+      if(enemy.x < i.x+i.w && enemy.x+enemy.w > i.x &&
+         enemy.y < i.y+i.h && enemy.y+enemy.h > i.y){
+        if(enemy.vy>0){
+          enemy.y=i.y-enemy.h;
+          enemy.vy=0;
+          enemy.onGround=true;
+        }
       }
     }
   }
-}
 
-  // ===== KENA MUSUH =====
-if(enemy.active){
-  if(
-    p.x < enemy.x + enemy.w &&
-    p.x + p.w > enemy.x &&
-    p.y < enemy.y + enemy.h &&
-    p.y + p.h > enemy.y
-  ){
-    hp -= 1;
-
-    enemy.active = false;
-
-    setTimeout(()=>{
-      enemy.active = true;
-    },1000);
-
-    reset();
-
-    if(hp <= 0){
-      alert("GAME OVER");
-      location.reload();
+  // KENA MUSUH
+  if(enemy.active){
+    if(p.x < enemy.x+enemy.w && p.x+p.w > enemy.x &&
+       p.y < enemy.y+enemy.h && p.y+p.h > enemy.y){
+      hp--;
+      reset();
+      if(hp<=0){
+        alert("GAME OVER");
+        location.reload();
+      }
     }
   }
-}
 
-  if(p.y > c.height){
-    reset();
-  }
+  if(p.y > c.height) reset();
 }
 
 function reset(){
@@ -388,48 +279,30 @@ function reset(){
   p.vy=0;
 }
 
+// ===== DRAW =====
 function draw(){
 
-if(banned){
+  if(banned){
+    ctx.fillStyle="black";
+    ctx.fillRect(0,0,c.width,c.height);
 
-  ctx.fillStyle = "black";
-  ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle="red";
+    ctx.font="bold 50px Arial";
+    ctx.textAlign="center";
+    ctx.fillText("BANED", c.width/2,150);
 
-  ctx.fillStyle = "red";
-  ctx.font = "bold 50px Arial";
-  ctx.textAlign = "center";
-  ctx.fillText("BANED", c.width/2, 150);
+    let sisa = banEndTime - Date.now();
+    let jam = Math.floor(sisa/3600000);
+    let menit = Math.floor((sisa%3600000)/60000);
+    let detik = Math.floor((sisa%60000)/1000);
 
-  let sisa = Math.max(0, banEndTime - Date.now());
+    ctx.fillStyle="white";
+    ctx.font="20px Arial";
+    ctx.fillText("reset dalam: "+jam+":"+menit+":"+detik, c.width/2,250);
+    return;
+  }
 
-  let jam = Math.floor(sisa / 3600000);
-  let menit = Math.floor((sisa % 3600000) / 60000);
-  let detik = Math.floor((sisa % 60000) / 1000);
-
-  ctx.fillStyle = "white";
-  ctx.font = "20px Arial";
-
-  ctx.fillText(
-    "kamu melanggar ketentuan game",
-    c.width/2, 220
-  );
-
-  ctx.fillText(
-    "reset dalam: " + jam + ":" + menit + ":" + detik,
-    c.width/2, 260
-  );
-
-  ctx.font = "12px Arial";
-  ctx.fillText(
-    "oleh admin game",
-    c.width/2, 300
-  );
-
-  return;
-}
-  
   let s = stage();
-
   ctx.fillStyle = s==1?"skyblue":s==2?"#400000":"black";
   ctx.fillRect(0,0,c.width,c.height);
 
@@ -451,17 +324,22 @@ if(banned){
     ctx.fillRect(enemy.x,enemy.y,enemy.w,enemy.h);
   }
 
+  // TEXT MUSUH
+  if(showText){
+    ctx.fillStyle="white";
+    ctx.font="16px Arial";
+    ctx.fillText("Musuh pertama! Lewati dia!", p.x-100,50);
+  }
+
   ctx.fillStyle="white";
   ctx.fillRect(p.x,p.y,p.w,p.h);
 
   ctx.restore();
 
-  // ===== UI NYAWA =====
   for(let i=0;i<maxHP;i++){
     ctx.strokeStyle="white";
     ctx.strokeRect(c.width-50-(i*35),20,25,25);
-
-    ctx.fillStyle = i<hp ? "blue" : "black";
+    ctx.fillStyle = i<hp?"blue":"black";
     ctx.fillRect(c.width-50-(i*35),20,25,25);
   }
 
@@ -469,13 +347,10 @@ if(banned){
   ctx.fillText("HP:"+hp,20,30);
 }
 
+// ===== LOOP =====
 function loop(){
-  try{
-    update();
-    draw();
-  }catch(e){
-    alert("ERROR: " + e.message);
-  }
+  update();
+  draw();
   requestAnimationFrame(loop);
 }
 
