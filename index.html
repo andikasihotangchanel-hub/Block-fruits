@@ -168,8 +168,8 @@ function update(){
   p.y += p.vy;
 
   // ANTI TELEPORT
-  if(Math.abs(p.x - lastX) > 400){
-    triggerBan();
+  if(Math.abs(p.x - lastX) > 400 && !p.onGround){
+  triggerBan();
   }
   lastX = p.x;
 
