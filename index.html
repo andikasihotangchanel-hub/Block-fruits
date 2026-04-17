@@ -59,8 +59,35 @@ if(banEndTime){
   }
 }
 
-function triggerBan(){
-  let banEnd = Date.now() + (24 * 60 * 60 * 1000);
+function triggerBan(level = "normal"){
+
+  let min = 0;
+  let max = 0;
+
+  // 🔥 Tentukan range berdasarkan pelanggaran
+  if(level == "ringan"){
+    min = 5 * 60 * 1000;      // 5 menit
+    max = 20 * 60 * 1000;     // 20 menit
+  }
+  else if(level == "normal"){
+    min = 12 * 60 * 1000;     // 12 menit
+    max = 2 * 60 * 60 * 1000; // 2 jam
+  }
+  else if(level == "berat"){
+    min = 3 * 60 * 60 * 1000;     // 3 jam
+    max = 24 * 60 * 60 * 1000;    // 24 jam
+  }
+
+  // 🎲 random waktu
+  let randomTime = Math.floor(Math.random() * (max - min)) + min;
+
+  let banEnd = Date.now() + randomTime;
+
+  localStorage.setItem("banTime", banEnd);
+
+  banned = true;
+  banEndTime = banEnd;
+}
   localStorage.setItem("banTime", banEnd);
   banned = true;
   banEndTime = banEnd;
@@ -147,7 +174,8 @@ function update(){
   let s = stage();
 
   // ANTI CHEAT
-  if(hp > maxHP) triggerBan();
+  if(hp>maxHP)
+  triggerBan("normal");
 
   // TEXT MUSUH
   if(showText && Date.now() - textTimer > 8000){
@@ -169,7 +197,7 @@ function update(){
 
   // ANTI TELEPORT
   if(Math.abs(p.x - lastX) > 400 && !p.onGround){
-  triggerBan();
+  triggerBan("berat");
   }
   lastX = p.x;
 
@@ -216,7 +244,7 @@ function update(){
       regenCount = 1;
     }
 
-    if(regenCount > 5) triggerBan();
+    if(regenCount > 5) triggerBan("normal");
 
     lastRegenTime = Date.now();
     hp = maxHP;
