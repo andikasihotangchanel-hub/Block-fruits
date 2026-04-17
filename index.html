@@ -64,31 +64,25 @@ function triggerBan(level = "normal"){
   let min = 0;
   let max = 0;
 
-  // 🔥 Tentukan range berdasarkan pelanggaran
   if(level == "ringan"){
-    min = 5 * 60 * 1000;      // 5 menit
-    max = 20 * 60 * 1000;     // 20 menit
+    min = 5 * 60 * 1000;
+    max = 20 * 60 * 1000;
   }
   else if(level == "normal"){
-    min = 12 * 60 * 1000;     // 12 menit
-    max = 2 * 60 * 60 * 1000; // 2 jam
+    min = 12 * 60 * 1000;
+    max = 2 * 60 * 60 * 1000;
   }
   else if(level == "berat"){
-    min = 3 * 60 * 60 * 1000;     // 3 jam
-    max = 24 * 60 * 60 * 1000;    // 24 jam
+    min = 3 * 60 * 60 * 1000;
+    max = 24 * 60 * 60 * 1000;
   }
 
-  // 🎲 random waktu
   let randomTime = Math.floor(Math.random() * (max - min)) + min;
 
   let banEnd = Date.now() + randomTime;
 
   localStorage.setItem("banTime", banEnd);
 
-  banned = true;
-  banEndTime = banEnd;
-}
-  localStorage.setItem("banTime", banEnd);
   banned = true;
   banEndTime = banEnd;
 }
@@ -196,7 +190,7 @@ function update(){
   p.y += p.vy;
 
   // ANTI TELEPORT
-  if(Math.abs(p.x - lastX) > 400 && !p.onGround){
+  if(Math.abs(p.x - lastX) > 600 && !p.onGround){
   triggerBan("berat");
   }
   lastX = p.x;
