@@ -217,7 +217,7 @@ function update(){
   if(regen.active){
     if(p.x < regen.x+regen.w && p.x+p.w > regen.x &&
        p.y < regen.y+regen.h && p.y+p.h > regen.y){
-      if(p.vy > 0){
+      if(p.y + p.h <= regen.y + 10){
         p.y = regen.y - p.h;
         p.vy = 0;
         p.onGround = true;
