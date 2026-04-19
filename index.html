@@ -193,7 +193,7 @@ function update(){
 
   // ANTI TELEPORT
   if(Date.now() - safeTime > 1000){ // ⏱ 1 detik aman
-  if(Math.abs(p.x - lastX) > 600 && !p.onGround){
+  if(Math.abs(p.x - lastX) > 1000 && !p.onGround){
     triggerBan("berat");
   }
   }
