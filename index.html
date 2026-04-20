@@ -36,6 +36,10 @@ canvas { display:block; }
 
 <script>
 
+  window.onerror = function(msg, url, line){
+  alert("ERROR: " + msg + " di baris " + line);
+  }
+
 // ===== CANVAS =====
 const c = document.getElementById("c");
 const ctx = c.getContext("2d");
