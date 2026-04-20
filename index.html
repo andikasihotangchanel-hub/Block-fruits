@@ -171,10 +171,17 @@ function update(){
 
   // anti teleport (AMAN)
   if(Date.now() - safeTime > 1000){
-    if(Math.abs(p.x - lastX) > 1000 && !p.onGround){
-      triggerBan("berat");
-    }
+
+  let speedX = Math.abs(p.vx);
+  let distanceX = Math.abs(p.x - lastX);
+
+  // 🚫 BAN hanya jika gerak horizontal terlalu cepat
+  if(distanceX > 1000 && speedX > 8){
+    triggerBan("berat");
   }
+
+  }
+  
   lastX = p.x;
 
   p.onGround = false;
