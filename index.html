@@ -105,7 +105,31 @@ let regenCount = 0;
 let lastRegenTime = 0;
 
 // ===== ENEMY =====
-let enemy = {x:700,y:200,w:30,h:30,active:false,vy:0};
+let enemy = {
+  x:700,
+  y:200,
+  w:30,
+  h:30,
+  active:false,
+  vy:0,
+  onGround:false,
+
+  hp:3,
+  maxHP:3,
+
+  state:"normal", // normal / lemah
+  lastSwitch:0
+};
+
+  let chats = [];
+
+function addChat(sender, text){
+  chats.push({
+    sender: sender,
+    text: text,
+    time: Date.now()
+  });
+}
 
 // ===== REGEN =====
 let regen = {x:0,y:0,w:120,h:20,active:false};
@@ -275,6 +299,15 @@ function update(){
   }
 
   if(enemy.active){
+
+// ===== MODE LENGAH =====
+if(enemy.active){
+  if(Date.now() - enemy.lastSwitch > (enemy.state=="normal" ? 50000 : 20000)){
+    enemy.state = enemy.state=="normal" ? "lemah" : "normal";
+    enemy.lastSwitch = Date.now();
+  }
+}
+    
     let dx = p.x - enemy.x;
 
     if(Math.abs(dx)>5){
@@ -301,17 +334,31 @@ function update(){
 
   // ===== KENA MUSUH =====
   if(enemy.active){
-    if(
-      p.x < enemy.x+enemy.w &&
-      p.x+p.w > enemy.x &&
-      p.y < enemy.y+enemy.h &&
-      p.y+p.h > enemy.y
-    ){
-      hp--;
-      safeTime = Date.now();
-      reset();
+  if(p.x < enemy.x+enemy.w && p.x+p.w > enemy.x &&
+     p.y < enemy.y+enemy.h && p.y+p.h > enemy.y){
 
+    // ✅ kalau lompat dari atas & musuh lagi lemah
+    if(p.vy > 0 && p.y + p.h <= enemy.y + 10 && enemy.state=="lemah"){
+      
+      enemy.hp--;
+      p.vy = -8; // mantul dikit
+
+      addChat("player","Hancur sekarang!");
+      addChat("enemy","Kau berani juga...");
+
+      if(enemy.hp <= 0){
+        enemy.active = false;
+        spawnParticles(enemy.x, enemy.y);
+        addChat("player","Selesai akhirnya.");
+      }
+
+    } else {
+      // ❌ kena biasa
+      hp--;
+      reset();
       safeTime = Date.now();
+
+      addChat("enemy","Kau tidak bisa mengalahkanku!");
 
       if(hp<=0){
         alert("GAME OVER");
@@ -319,9 +366,10 @@ function update(){
       }
     }
   }
+  
 
   if(p.y > c.height) reset();
-}
+  }
 
 // ===== RESET =====
 function reset(){
@@ -384,10 +432,10 @@ function draw(){
   }
 
   // enemy
-  if(enemy.active){
-    ctx.fillStyle="red";
-    ctx.fillRect(enemy.x,enemy.y,enemy.w,enemy.h);
-  }
+if(enemy.active){
+  ctx.fillStyle = enemy.state=="lemah" ? "black" : "red";
+  ctx.fillRect(enemy.x,enemy.y,enemy.w,enemy.h);
+}
 
   // player
   ctx.fillStyle="white";
@@ -402,6 +450,25 @@ function draw(){
     ctx.fillStyle = i<hp?"blue":"black";
     ctx.fillRect(c.width-50-(i*35),20,25,25);
   }
+}
+
+  let yPos = c.height - 80;
+
+for(let i=chats.length-1;i>=0;i--){
+  let chat = chats[i];
+
+  if(Date.now() - chat.time > 4000) continue;
+
+  ctx.fillStyle = chat.sender=="player" ? "cyan" : "red";
+  ctx.font = "14px Arial";
+
+  ctx.fillText(
+    (chat.sender=="player"?"Player: ":"Musuh: ") + chat.text,
+    50,
+    yPos
+  );
+
+  yPos -= 20;
 }
 
 // ===== LOOP =====
