@@ -131,6 +131,21 @@ function addChat(sender, text){
   });
 }
 
+//==== PARTICLE ====
+  let particles = [];
+
+function spawnParticles(x,y){
+  for(let i=0;i<30;i++){
+    particles.push({
+      x:x,
+      y:y,
+      vx:(Math.random()-0.5)*4,
+      vy:Math.random()*-5,
+      life:60
+    });
+  }
+}
+
 // ===== REGEN =====
 let regen = {x:0,y:0,w:120,h:20,active:false};
 let healing = false;
@@ -369,6 +384,16 @@ if(enemy.active){
   
 
   if(p.y > c.height) reset();
+
+for(let i of particles){
+  i.x += i.vx;
+  i.y += i.vy;
+  i.vy += 0.2;
+  i.life--;
+}
+
+particles = particles.filter(p=>p.life>0);
+    
   }
 
 // ===== RESET =====
@@ -441,6 +466,11 @@ if(enemy.active){
   ctx.fillStyle="white";
   ctx.fillRect(p.x,p.y,p.w,p.h);
 
+  for(let i of particles){
+  ctx.fillStyle = `hsl(${Math.random()*360},100%,50%)`;
+  ctx.fillRect(i.x,i.y,5,5);
+  }
+
   ctx.restore();
 
   // HP UI
@@ -450,9 +480,8 @@ if(enemy.active){
     ctx.fillStyle = i<hp?"blue":"black";
     ctx.fillRect(c.width-50-(i*35),20,25,25);
   }
-}
 
-  let yPos = c.height - 80;
+let yPos = c.height - 80;
 
 for(let i=chats.length-1;i>=0;i--){
   let chat = chats[i];
@@ -469,6 +498,8 @@ for(let i=chats.length-1;i>=0;i--){
   );
 
   yPos -= 20;
+}
+  
 }
 
 // ===== LOOP =====
