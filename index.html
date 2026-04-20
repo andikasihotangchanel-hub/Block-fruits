@@ -88,8 +88,8 @@ function triggerBan(level="normal"){
 }
 
 // ===== PLAYER =====
-let p = {x:50,y:300,w:30,h:30,vx:0,vy:0,onGround:false};
-let spawn = {x:50,y:450};
+let spawn = {x:50,y:400};
+let p = {x:50,y:400,w:30,h:30,vx:0,vy:0,onGround:false};
 let gravity = 0.5;
 
 // ===== HP =====
@@ -316,12 +316,10 @@ function update(){
   if(enemy.active){
 
 // ===== MODE LENGAH =====
-if(enemy.active){
   if(Date.now() - enemy.lastSwitch > (enemy.state=="normal" ? 50000 : 20000)){
     enemy.state = enemy.state=="normal" ? "lemah" : "normal";
     enemy.lastSwitch = Date.now();
   }
-}
     
     let dx = p.x - enemy.x;
 
@@ -393,7 +391,6 @@ for(let i of particles){
 }
 
 particles = particles.filter(p=>p.life>0);
-    
   }
 
 // ===== RESET =====
