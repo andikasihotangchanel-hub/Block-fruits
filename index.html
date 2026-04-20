@@ -117,12 +117,10 @@ let gravity = 0.5;
 
   let currentStage = 1;
 
-  generatePlatform();
-
-// ===== PLATFORM =====
+  // ===== PLATFORM =====
 let plat = [];
 
-let mode = "normal"; // ganti: mudah / normal / sulit
+let mode = "normal";
 
 function generatePlatform(){
   plat = [];
@@ -147,15 +145,15 @@ function generatePlatform(){
     });
   }
 
-  // tembok pembatas antar dunia
   plat.push({x:800,y:0,w:10,h:600});
   plat.push({x:1500,y:0,w:10,h:600});
   plat.push({x:2200,y:0,w:10,h:600});
 
-  // finish
   plat.push({x:2600,y:200,w:150,h:150,finish:true});
 }
-
+  
+generatePlatform();
+  
 // ===== CONTROL =====
 let left=false,right=false;
 
