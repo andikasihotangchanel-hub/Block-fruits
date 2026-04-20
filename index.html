@@ -43,6 +43,9 @@ c.width = innerWidth;
 c.height = innerHeight;
 
 // ===== BAN SYSTEM =====
+
+const GAME_VERSION = "1.1"; // ganti tiap update
+  
 let banned = false;
 let banEndTime = Number(localStorage.getItem("banTime"));
 
@@ -50,6 +53,24 @@ if(banEndTime && Date.now() < banEndTime){
   banned = true;
 }else{
   localStorage.removeItem("banTime");
+}
+
+  let savedVersion = localStorage.getItem("gameVersion");
+
+if(savedVersion !== GAME_VERSION){
+
+  // 🔥 kalau player lagi kena ban → reset jadi 2 menit
+  if(banned){
+    let resetTime = 2 * 60 * 1000 + 59 * 1000; // 2:59
+    let newBan = Date.now() + resetTime;
+
+    localStorage.setItem("banTime", newBan);
+
+    banEndTime = newBan;
+  }
+
+  // simpan versi terbaru
+  localStorage.setItem("gameVersion", GAME_VERSION);
 }
 
 function triggerBan(level="normal"){
