@@ -336,6 +336,10 @@ if(enemy.active){
   if(Math.abs(dx)>5){
     enemy.x += dx>0 ? 2 : -2;
   }
+// LOMPAT 
+  if(Math.abs(dx) < 100 && enemy.onGround){
+  enemy.vy = -8; // musuh bisa lompat
+  }
 
   // GRAVITY MUSUH
   enemy.vy += 0.5;
@@ -453,7 +457,10 @@ function draw(){
   ctx.fillRect(0,0,c.width,c.height);
 
   ctx.save();
-  ctx.translate(-p.x+100,0);
+  let camX = 0;
+
+  camX += (p.x - camX - 100) * 0.1;
+ctx.translate(-camX,0);
 
   // platform
   for(let i of plat){
