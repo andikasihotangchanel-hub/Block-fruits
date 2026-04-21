@@ -456,15 +456,17 @@ function draw(){
 
   ctx.fillRect(0,0,c.width,c.height);
 
-  ctx.save();
-  let camX = 0;
+ ctx.save();
 
-  camX += (p.x - camX - 100) * 0.3;
-ctx.translate(-camX,0);
+// smooth follow
+camX += (p.x - camX - 100) * 0.3;
 
-  if(Math.abs(p.x - camX) > 500){
+// 🚫 anti ketinggalan
+if(Math.abs(p.x - camX) > 500){
   camX = p.x - 100;
-  }
+}
+
+ctx.translate(-camX,0);
 
   // platform
   for(let i of plat){
