@@ -35,6 +35,11 @@ canvas { display:block; }
 </head>
 <body>
 
+<button id="leftBtn">Left</button>
+<button id="rightBtn">Right</button>
+<button id="jumpBtn">Jump</button>
+  
+
 <canvas id="c"></canvas>
 <div id="left" class="circle"></div>
 <div id="right" class="circle"></div>
@@ -257,6 +262,8 @@ rightBtn.addEventListener("touchstart", pressRight);
 rightBtn.addEventListener("touchend", releaseRight);
 rightBtn.addEventListener("mousedown", pressRight);
 rightBtn.addEventListener("mouseup", releaseRight);
+
+  let jumpBuffer = 0;
 
 jumpBtn.addEventListener("touchstart", pressJump);
 jumpBtn.addEventListener("mousedown", pressJump);
