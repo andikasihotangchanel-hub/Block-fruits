@@ -166,6 +166,8 @@ let healStart = 0;
 let mode = "normal";
 
 // ===== PLATFORM =====
+let plat = [];
+  
 function generatePlatform(){
   plat = [];
 
@@ -208,7 +210,9 @@ function generatePlatform(){
     finish:true
   });
 }
-
+  
+generatePlatform();
+  
 // ===== CONTROL =====
 let left=false,right=false;
 
