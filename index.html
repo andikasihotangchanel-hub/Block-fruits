@@ -25,6 +25,12 @@ canvas { display:block; }
   border-radius:50%;
   background:white;
 }
+
+.circle, #jump {
+  touch-action: none;
+  user-select: none;
+}
+  
 </style>
 </head>
 <body>
@@ -96,6 +102,8 @@ let spawn = {x:50,y:400};
 let p = {x:50,y:400,w:30,h:30,vx:0,vy:0,onGround:false};
 
 let camX = 0;
+
+  let jumpBuffer = 0;
   
 let gravity = 0.5;
 
@@ -216,22 +224,42 @@ generatePlatform();
 // ===== CONTROL =====
 let left=false,right=false;
 
-leftBtn = document.getElementById("left");
-rightBtn = document.getElementById("right");
-jumpBtn = document.getElementById("jump");
+function pressLeft(e){
+  e.preventDefault();
+  left = true;
+}
+function releaseLeft(){
+  left = false;
+}
 
-leftBtn.ontouchstart=()=>left=true;
-leftBtn.ontouchend=()=>left=false;
+function pressRight(e){
+  e.preventDefault();
+  right = true;
+}
+function releaseRight(){
+  right = false;
+}
 
-rightBtn.ontouchstart=()=>right=true;
-rightBtn.ontouchend=()=>right=false;
+function pressJump(e){
+  e.preventDefault();
 
-jumpBtn.ontouchstart=()=>{
-  if(p.onGround){
-    p.vy=-10;
-    p.onGround=false;
-  }
-};
+  // buffer lompat biar gak miss
+  jumpBuffer = Date.now();
+}
+
+// EVENT TOUCH + MOUSE (biar fleksibel)
+leftBtn.addEventListener("touchstart", pressLeft);
+leftBtn.addEventListener("touchend", releaseLeft);
+leftBtn.addEventListener("mousedown", pressLeft);
+leftBtn.addEventListener("mouseup", releaseLeft);
+
+rightBtn.addEventListener("touchstart", pressRight);
+rightBtn.addEventListener("touchend", releaseRight);
+rightBtn.addEventListener("mousedown", pressRight);
+rightBtn.addEventListener("mouseup", releaseRight);
+
+jumpBtn.addEventListener("touchstart", pressJump);
+jumpBtn.addEventListener("mousedown", pressJump);
 
 // ===== STAGE =====
 function stage(){
@@ -291,6 +319,13 @@ function update(){
       }
     }
   }
+
+  // ===== JUMP BUFFER =====
+if(Date.now() - jumpBuffer < 150 && p.onGround){
+  p.vy = -10;
+  p.onGround = false;
+  jumpBuffer = 0;
+}
 
   // ===== SPAWN REGEN =====
   if(!regen.active && Math.random()<0.002){
