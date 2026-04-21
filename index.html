@@ -459,8 +459,12 @@ function draw(){
   ctx.save();
   let camX = 0;
 
-  camX += (p.x - camX - 100) * 0.1;
+  camX += (p.x - camX - 100) * 0.3;
 ctx.translate(-camX,0);
+
+  if(Math.abs(p.x - camX) > 500){
+  camX = p.x - 100;
+  }
 
   // platform
   for(let i of plat){
