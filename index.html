@@ -139,14 +139,18 @@ function addChat(sender, text){
   let particles = [];
 
 function spawnParticles(x,y){
-  for(let i=0;i<30;i++){
-    particles.push({
-      x:x,
-      y:y,
-      vx:(Math.random()-0.5)*4,
-      vy:Math.random()*-5,
-      life:60
-    });
+  try{
+    for(let i=0;i<30;i++){
+      particles.push({
+        x:x,
+        y:y,
+        vx:(Math.random()-0.5)*4,
+        vy:Math.random()*-5,
+        life:60
+      });
+    }
+  }catch(e){
+    console.log(e);
   }
 }
 
@@ -317,37 +321,42 @@ function update(){
     enemy.active=true;
   }
 
-  if(enemy.active){
+  // ===== ENEMY LOGIC =====
+if(enemy.active){
 
-// ===== MODE LENGAH =====
+  // MODE LENGAH
   if(Date.now() - enemy.lastSwitch > (enemy.state=="normal" ? 50000 : 20000)){
     enemy.state = enemy.state=="normal" ? "lemah" : "normal";
     enemy.lastSwitch = Date.now();
   }
-    
-    let dx = p.x - enemy.x;
 
-    if(Math.abs(dx)>5){
-      enemy.x += dx>0?2:-2;
-    }
+  // GERAK MUSUH
+  let dx = p.x - enemy.x;
 
-    enemy.vy += 0.5;
-    enemy.y += enemy.vy;
+  if(Math.abs(dx)>5){
+    enemy.x += dx>0 ? 2 : -2;
+  }
 
-    for(let i of plat){
-      if(
-        enemy.x < i.x+i.w &&
-        enemy.x+enemy.w > i.x &&
-        enemy.y < i.y+i.h &&
-        enemy.y+enemy.h > i.y
-      ){
-        if(enemy.vy>0){
-          enemy.y=i.y-enemy.h;
-          enemy.vy=0;
-        }
+  // GRAVITY MUSUH
+  enemy.vy += 0.5;
+  enemy.y += enemy.vy;
+
+  // COLLISION MUSUH
+  for(let i of plat){
+    if(
+      enemy.x < i.x+i.w &&
+      enemy.x+enemy.w > i.x &&
+      enemy.y < i.y+i.h &&
+      enemy.y+enemy.h > i.y
+    ){
+      if(enemy.vy>0){
+        enemy.y = i.y - enemy.h;
+        enemy.vy = 0;
       }
     }
   }
+
+}
 
   // ===== KENA MUSUH =====
   if(enemy.active){
@@ -383,11 +392,11 @@ function update(){
       }
     }
   }
-  
+  }
 
   if(p.y > c.height) reset();
 
-for(let i of particles){
+  for(let i of particles){
   i.x += i.vx;
   i.y += i.vy;
   i.vy += 0.2;
@@ -395,7 +404,7 @@ for(let i of particles){
 }
 
 particles = particles.filter(p=>p.life>0);
-  }
+}
 
 // ===== RESET =====
 function reset(){
@@ -427,6 +436,7 @@ function draw(){
   }
 
   let s = stage();
+  if(!s) return;
 
   // background
   if(s==1) ctx.fillStyle="skyblue";
