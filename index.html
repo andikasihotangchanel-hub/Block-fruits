@@ -12,10 +12,9 @@ body {
 canvas {
   display: block;
   background: black; /* 🔥 penting biar gak putih */
-}
-  
   width: 100vw;
   height: 100vh;
+}
 
 .circle {
   width:60px; height:60px;
@@ -277,8 +276,6 @@ rightBtn.addEventListener("touchstart", pressRight);
 rightBtn.addEventListener("touchend", releaseRight);
 rightBtn.addEventListener("mousedown", pressRight);
 rightBtn.addEventListener("mouseup", releaseRight);
-
-  let jumpBuffer = 0;
 
 jumpBtn.addEventListener("touchstart", pressJump);
 jumpBtn.addEventListener("mousedown", pressJump);
