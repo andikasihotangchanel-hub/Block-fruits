@@ -4,8 +4,18 @@
 <meta charset="UTF-8">
 <title>Parkour 4 Dunia</title>
 <style>
-body { margin:0; overflow:hidden; }
-canvas { display:block; }
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+  background: black; /* 🔥 penting biar gak putih */
+}
+  
+  width: 100vw;
+  height: 100vh;
 
 .circle {
   width:60px; height:60px;
@@ -106,9 +116,9 @@ function triggerBan(level="normal"){
 let spawn = {x:50,y:400};
 let p = {x:50,y:400,w:30,h:30,vx:0,vy:0,onGround:false};
 
+let jumpBuffer = 0;
+  
 let camX = 0;
-
-  let jumpBuffer = 0;
   
 let gravity = 0.5;
 
@@ -225,6 +235,11 @@ function generatePlatform(){
 }
   
 generatePlatform();
+
+
+  const leftBtn = document.getElementById("leftBtn");
+const rightBtn = document.getElementById("rightBtn");
+const jumpBtn = document.getElementById("jumpBtn");
   
 // ===== CONTROL =====
 let left=false,right=false;
@@ -280,6 +295,8 @@ function stage(){
 function update(){
 
   if(banned) return;
+
+  console.log("BANNED:", banned);
 
   let s = stage();
 
