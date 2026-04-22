@@ -236,9 +236,9 @@ function generatePlatform(){
 generatePlatform();
 
 
-  const leftBtn = document.getElementById("leftBtn");
-const rightBtn = document.getElementById("rightBtn");
-const jumpBtn = document.getElementById("jumpBtn");
+  const leftBtn = document.getElementById("left");
+const rightBtn = document.getElementById("right");
+const jumpBtn = document.getElementById("jump");
   
 // ===== CONTROL =====
 let left=false,right=false;
@@ -271,11 +271,13 @@ leftBtn.addEventListener("touchstart", pressLeft);
 leftBtn.addEventListener("touchend", releaseLeft);
 leftBtn.addEventListener("mousedown", pressLeft);
 leftBtn.addEventListener("mouseup", releaseLeft);
-
+leftBtn.addEventListener("touchcancel", releaseLeft);
+  
 rightBtn.addEventListener("touchstart", pressRight);
 rightBtn.addEventListener("touchend", releaseRight);
 rightBtn.addEventListener("mousedown", pressRight);
 rightBtn.addEventListener("mouseup", releaseRight);
+rightBtn.addEventListener("touchcancel", releaseRight);
 
 jumpBtn.addEventListener("touchstart", pressJump);
 jumpBtn.addEventListener("mousedown", pressJump);
