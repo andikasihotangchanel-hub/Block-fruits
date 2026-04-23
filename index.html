@@ -448,22 +448,23 @@ p.vy += g;
 
   // ===== COLLISION PLATFORM =====
   for(let i of plat){
-    if(
-      p.x < i.x+i.w &&
-      p.x+p.w > i.x &&
-      p.y < i.y+i.h &&
-      p.y+p.h > i.y
-    ){
-      if(p.vy > 0){
-        p.y = i.y - p.h;
-        p.vy = 0;
-        p.onGround = true;
-coyoteTime = Date.now(); // simpan waktu terakhir nyentuh tanah
-
-        if(i.finish){
-  startEnding();
-        }
+  if(
+    p.x < i.x+i.w &&
+    p.x+p.w > i.x &&
+    p.y < i.y+i.h &&
+    p.y+p.h > i.y
+  ){
+    if(p.vy > 0){
+      p.y = i.y - p.h;
+      p.vy = 0;
+      p.onGround = true;
+      coyoteTime = Date.now();
     }
+
+    if(i.finish){
+      startEnding();
+    }
+  }
   }
 
   // ===== JUMP BUFFER =====
