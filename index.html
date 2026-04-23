@@ -45,6 +45,18 @@ canvas {
 <body>
 
 <canvas id="c"></canvas>
+
+<video id="endingVideo" style="
+position:fixed;
+top:0;
+left:0;
+width:100vw;
+height:100vh;
+display:none;
+z-index:999;
+object-fit:cover;
+" src="endingnya.mp4"></video>
+  
 <div id="left" class="circle"></div>
 <div id="right" class="circle"></div>
 <div id="jump"></div>
@@ -132,6 +144,22 @@ let debuffs = {
   heavy: false,
   reverse: false
 };
+
+  function startEnding(){
+  mode = "ending";
+
+  // stop semua gerakan
+  p.vx = 0;
+  p.vy = 0;
+  enemy.active = false;
+
+  // tampilkan video
+  document.getElementById("endingVideo").style.display = "block";
+
+  let vid = document.getElementById("endingVideo");
+  vid.currentTime = 0;
+  vid.play();
+  }
 
 let buffEnd = 0;
 let debuffEnd = 0;
@@ -253,7 +281,9 @@ let healing = false;
 let healStart = 0;
 
 // ===== MODE =====
-let mode = "normal";
+let mode = "main"; // main / ending
+
+  let showTamat = false;
 
 // ===== PLATFORM =====
 let plat = [];
@@ -307,6 +337,12 @@ generatePlatform();
   const leftBtn = document.getElementById("left");
 const rightBtn = document.getElementById("right");
 const jumpBtn = document.getElementById("jump");
+
+ let video = document.getElementById("endingVideo");
+
+video.onended = function(){
+  showTamat = true;
+}; 
   
 // ===== CONTROL =====
 let left=false,right=false;
@@ -370,6 +406,8 @@ function update(){
   triggerLuckEvent();
   }
 
+  if(mode !== "main") return;
+
   // gerak
   let moveSpeed = 5;
 
@@ -421,12 +459,10 @@ p.vy += g;
         p.vy = 0;
         p.onGround = true;
 coyoteTime = Date.now(); // simpan waktu terakhir nyentuh tanah
-      }
 
-      if(i.finish){
-        alert("FINISH!");
-        location.reload();
-      }
+        if(i.finish){
+  startEnding();
+        }
     }
   }
 
@@ -721,6 +757,13 @@ if(enemy.active){
   for(let i of particles){
   ctx.fillStyle = `hsl(${Math.random()*360},100%,50%)`;
   ctx.fillRect(i.x,i.y,5,5);
+  }
+
+  if(showTamat){
+  ctx.fillStyle = "white";
+  ctx.font = "bold 50px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("TAMAT", c.width/2, c.height/2);
   }
 
   ctx.restore();
