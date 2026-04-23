@@ -198,6 +198,55 @@ function spawnParticles(x,y){
   }
 }
 
+  function triggerLuckEvent(){
+
+  let isGood = Math.random() < 0.5;
+
+  if(isGood){
+    let rand = Math.floor(Math.random()*3);
+
+    // RESET dulu
+    buffs = {shield:false, speed:false, lowGravity:false};
+
+    if(rand === 0){
+      buffs.shield = true;
+      addChat("player","LUCKY! Dapat Shield 🛡️");
+    }
+    else if(rand === 1){
+      buffs.speed = true;
+      addChat("player","LUCKY! Speed naik ⚡");
+    }
+    else{
+      buffs.lowGravity = true;
+      addChat("player","LUCKY! Lompat tinggi 🌙");
+    }
+
+    buffEnd = Date.now() + 5000; // 5 detik
+
+  } else {
+
+    let rand = Math.floor(Math.random()*3);
+
+    // RESET dulu
+    debuffs = {slow:false, heavy:false, reverse:false};
+
+    if(rand === 0){
+      debuffs.slow = true;
+      addChat("enemy","SIAL! Kamu melambat 🐢");
+    }
+    else if(rand === 1){
+      debuffs.heavy = true;
+      addChat("enemy","SIAL! Gravity berat 💀");
+    }
+    else{
+      debuffs.reverse = true;
+      addChat("enemy","SIAL! Kontrol terbalik 🔄");
+    }
+
+    debuffEnd = Date.now() + 5000; // 5 detik
+  }
+    }
+
 // ===== REGEN =====
 let regen = {x:0,y:0,w:120,h:20,active:false};
 let healing = false;
@@ -381,55 +430,6 @@ coyoteTime = Date.now(); // simpan waktu terakhir nyentuh tanah
     }
   }
 
-  function triggerLuckEvent(){
-
-  let isGood = Math.random() < 0.5;
-
-  if(isGood){
-    let rand = Math.floor(Math.random()*3);
-
-    // RESET dulu
-    buffs = {shield:false, speed:false, lowGravity:false};
-
-    if(rand === 0){
-      buffs.shield = true;
-      addChat("player","LUCKY! Dapat Shield 🛡️");
-    }
-    else if(rand === 1){
-      buffs.speed = true;
-      addChat("player","LUCKY! Speed naik ⚡");
-    }
-    else{
-      buffs.lowGravity = true;
-      addChat("player","LUCKY! Lompat tinggi 🌙");
-    }
-
-    buffEnd = Date.now() + 5000; // 5 detik
-
-  } else {
-
-    let rand = Math.floor(Math.random()*3);
-
-    // RESET dulu
-    debuffs = {slow:false, heavy:false, reverse:false};
-
-    if(rand === 0){
-      debuffs.slow = true;
-      addChat("enemy","SIAL! Kamu melambat 🐢");
-    }
-    else if(rand === 1){
-      debuffs.heavy = true;
-      addChat("enemy","SIAL! Gravity berat 💀");
-    }
-    else{
-      debuffs.reverse = true;
-      addChat("enemy","SIAL! Kontrol terbalik 🔄");
-    }
-
-    debuffEnd = Date.now() + 5000; // 5 detik
-  }
-  }
-
   // ===== JUMP BUFFER =====
 if(
   Date.now() - jumpBuffer < 150 &&
@@ -583,7 +583,7 @@ for(let i of plat){
     // ✅ kalau lompat dari atas & musuh lagi lemah
     if(p.vy > 0 && p.y + p.h <= enemy.y + 10 && enemy.state=="lemah"){
       
-      enemy.if(!buffs.shield){
+      if(!buffs.shield){
   hp--;
 }else{
   addChat("player","Shield aktif! Aman 😎");
@@ -626,6 +626,16 @@ for(let i of plat){
 }
 
 particles = particles.filter(p=>p.life>0);
+
+// ===== CLEAR BUFF =====
+if(Date.now() > buffEnd){
+  buffs = {shield:false, speed:false, lowGravity:false};
+}
+
+if(Date.now() > debuffEnd){
+  debuffs = {slow:false, heavy:false, reverse:false};
+}
+  
 }
 
 // ===== RESET =====
@@ -633,14 +643,6 @@ function reset(){
   p.x=spawn.x;
   p.y=spawn.y;
   p.vy=0;
-}
-
-  if(Date.now() > buffEnd){
-  buffs = {shield:false, speed:false, lowGravity:false};
-}
-
-if(Date.now() > debuffEnd){
-  debuffs = {slow:false, heavy:false, reverse:false};
 }
 
 // ===== DRAW =====
