@@ -136,6 +136,53 @@ let debuffs = {
 let buffEnd = 0;
 let debuffEnd = 0;
 
+  // ✅ TARUH DI SINI
+function triggerLuckEvent(){
+  let isGood = Math.random() < 0.5;
+
+  if(isGood){
+    let rand = Math.floor(Math.random()*3);
+
+    buffs = {shield:false, speed:false, lowGravity:false};
+
+    if(rand === 0){
+      buffs.shield = true;
+      addChat("player","LUCKY! Dapat Shield 🛡️");
+    }
+    else if(rand === 1){
+      buffs.speed = true;
+      addChat("player","LUCKY! Speed naik ⚡");
+    }
+    else{
+      buffs.lowGravity = true;
+      addChat("player","LUCKY! Lompat tinggi 🌙");
+    }
+
+    buffEnd = Date.now() + 5000;
+
+  } else {
+
+    let rand = Math.floor(Math.random()*3);
+
+    debuffs = {slow:false, heavy:false, reverse:false};
+
+    if(rand === 0){
+      debuffs.slow = true;
+      addChat("enemy","SIAL! Kamu melambat 🐢");
+    }
+    else if(rand === 1){
+      debuffs.heavy = true;
+      addChat("enemy","SIAL! Gravity berat 💀");
+    }
+    else{
+      debuffs.reverse = true;
+      addChat("enemy","SIAL! Kontrol terbalik 🔄");
+    }
+
+    debuffEnd = Date.now() + 5000;
+  }
+}
+
 // ===== HP =====
 let maxHP = 3;
 let hp = 3;
@@ -198,54 +245,7 @@ function spawnParticles(x,y){
   }
 }
 
-  function triggerLuckEvent(){
-
-  let isGood = Math.random() < 0.5;
-
-  if(isGood){
-    let rand = Math.floor(Math.random()*3);
-
-    // RESET dulu
-    buffs = {shield:false, speed:false, lowGravity:false};
-
-    if(rand === 0){
-      buffs.shield = true;
-      addChat("player","LUCKY! Dapat Shield 🛡️");
-    }
-    else if(rand === 1){
-      buffs.speed = true;
-      addChat("player","LUCKY! Speed naik ⚡");
-    }
-    else{
-      buffs.lowGravity = true;
-      addChat("player","LUCKY! Lompat tinggi 🌙");
-    }
-
-    buffEnd = Date.now() + 5000; // 5 detik
-
-  } else {
-
-    let rand = Math.floor(Math.random()*3);
-
-    // RESET dulu
-    debuffs = {slow:false, heavy:false, reverse:false};
-
-    if(rand === 0){
-      debuffs.slow = true;
-      addChat("enemy","SIAL! Kamu melambat 🐢");
-    }
-    else if(rand === 1){
-      debuffs.heavy = true;
-      addChat("enemy","SIAL! Gravity berat 💀");
-    }
-    else{
-      debuffs.reverse = true;
-      addChat("enemy","SIAL! Kontrol terbalik 🔄");
-    }
-
-    debuffEnd = Date.now() + 5000; // 5 detik
-  }
-    }
+  
 
 // ===== REGEN =====
 let regen = {x:0,y:0,w:120,h:20,active:false};
@@ -488,11 +488,11 @@ if(
 
   // ===== ENEMY LOGIC =====
 if(enemy.active){
-  
-  let dx = p.x - enemy.x;
+
+  let dx = p.x - enemy.x; // ✅ HARUS PALING ATAS
 
   if(Math.abs(dx) < 40){
-  enemy.x += dx>0 ? -1 : 1; // jaga jarak
+    enemy.x += dx>0 ? -1 : 1;
   }
 
   // MODE LENGAH
