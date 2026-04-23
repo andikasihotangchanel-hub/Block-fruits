@@ -148,6 +148,10 @@ let enemy = {
 
   state:"normal", // normal / lemah
   lastSwitch:0
+
+ai:"idle",
+lastThink:0
+  
 };
 
   let chats = [];
@@ -396,18 +400,64 @@ if(Date.now() - jumpBuffer < 150 && p.onGround){
   // ===== ENEMY LOGIC =====
 if(enemy.active){
 
+  if(Math.abs(dx) < 40){
+  enemy.x += dx>0 ? -1 : 1; // jaga jarak
+  }
+
   // MODE LENGAH
   if(Date.now() - enemy.lastSwitch > (enemy.state=="normal" ? 50000 : 20000)){
     enemy.state = enemy.state=="normal" ? "lemah" : "normal";
     enemy.lastSwitch = Date.now();
   }
 
-  // GERAK MUSUH
+  // ===== AI THINK =====
+if(Date.now() - enemy.lastThink > 500){
+  enemy.lastThink = Date.now();
+
+  let dist = Math.abs(p.x - enemy.x);
+
+  if(enemy.hp <= 1){
+    enemy.ai = "retreat";
+  }
+  else if(dist < 60){
+    enemy.ai = "attack";
+  }
+  else if(dist < 300){
+    enemy.ai = "chase";
+  }
+  else{
+    enemy.ai = "idle";
+  }
+}
+
   let dx = p.x - enemy.x;
 
+// ===== AI ACTION =====
+if(enemy.ai == "idle"){
+  // diem aja / patroli dikit
+}
+
+else if(enemy.ai == "chase"){
   if(Math.abs(dx)>5){
     enemy.x += dx>0 ? 2 : -2;
   }
+}
+
+else if(enemy.ai == "attack"){
+  if(Math.abs(dx)>5){
+    enemy.x += dx>0 ? 3 : -3;
+  }
+
+  if(enemy.onGround){
+    enemy.vy = -10; // lompat serang
+  }
+}
+
+else if(enemy.ai == "retreat"){
+  // kabur dari player
+  enemy.x += dx>0 ? -2 : 2;
+}
+  
 // LOMPAT 
   if(Math.abs(dx) < 100 && enemy.onGround){
   enemy.vy = -8; // musuh bisa lompat
@@ -418,20 +468,22 @@ if(enemy.active){
   enemy.y += enemy.vy;
 
   // COLLISION MUSUH
-  for(let i of plat){
-    if(
-      enemy.x < i.x+i.w &&
-      enemy.x+enemy.w > i.x &&
-      enemy.y < i.y+i.h &&
-      enemy.y+enemy.h > i.y
-    ){
-      if(enemy.vy>0){
-        enemy.y = i.y - enemy.h;
-        enemy.vy = 0;
-      }
+  enemy.onGround = false;
+
+for(let i of plat){
+  if(
+    enemy.x < i.x+i.w &&
+    enemy.x+enemy.w > i.x &&
+    enemy.y < i.y+i.h &&
+    enemy.y+enemy.h > i.y
+  ){
+    if(enemy.vy>0){
+      enemy.y = i.y - enemy.h;
+      enemy.vy = 0;
+      enemy.onGround = true; // 🔥 penting
     }
   }
-
+}
 }
 
   // ===== KENA MUSUH =====
