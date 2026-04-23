@@ -118,6 +118,24 @@ let camX = 0;
   
 let gravity = 0.5;
 
+  let luckCount = 0;
+let lastStage = 1;
+
+let buffs = {
+  shield: false,
+  speed: false,
+  lowGravity: false
+};
+
+let debuffs = {
+  slow: false,
+  heavy: false,
+  reverse: false
+};
+
+let buffEnd = 0;
+let debuffEnd = 0;
+
 // ===== HP =====
 let maxHP = 3;
 let hp = 3;
@@ -297,9 +315,30 @@ function update(){
 
   let s = stage();
 
+  if(s !== lastStage){
+  lastStage = s;
+  luckCount++;
+  triggerLuckEvent();
+  }
+
   // gerak
-  p.vx = left?-5:right?5:0;
-  p.vy += gravity;
+  let moveSpeed = 5;
+
+if(buffs.speed) moveSpeed = 8;
+if(debuffs.slow) moveSpeed = 2;
+
+if(debuffs.reverse){
+  p.vx = left?moveSpeed:right?-moveSpeed:0;
+}else{
+  p.vx = left?-moveSpeed:right?moveSpeed:0;
+}
+  
+  let g = gravity;
+
+if(buffs.lowGravity) g *= 0.5;
+if(debuffs.heavy) g *= 2;
+
+p.vy += g;
   p.x += p.vx;
   p.y += p.vy;
 
@@ -340,6 +379,55 @@ coyoteTime = Date.now(); // simpan waktu terakhir nyentuh tanah
         location.reload();
       }
     }
+  }
+
+  function triggerLuckEvent(){
+
+  let isGood = Math.random() < 0.5;
+
+  if(isGood){
+    let rand = Math.floor(Math.random()*3);
+
+    // RESET dulu
+    buffs = {shield:false, speed:false, lowGravity:false};
+
+    if(rand === 0){
+      buffs.shield = true;
+      addChat("player","LUCKY! Dapat Shield 🛡️");
+    }
+    else if(rand === 1){
+      buffs.speed = true;
+      addChat("player","LUCKY! Speed naik ⚡");
+    }
+    else{
+      buffs.lowGravity = true;
+      addChat("player","LUCKY! Lompat tinggi 🌙");
+    }
+
+    buffEnd = Date.now() + 5000; // 5 detik
+
+  } else {
+
+    let rand = Math.floor(Math.random()*3);
+
+    // RESET dulu
+    debuffs = {slow:false, heavy:false, reverse:false};
+
+    if(rand === 0){
+      debuffs.slow = true;
+      addChat("enemy","SIAL! Kamu melambat 🐢");
+    }
+    else if(rand === 1){
+      debuffs.heavy = true;
+      addChat("enemy","SIAL! Gravity berat 💀");
+    }
+    else{
+      debuffs.reverse = true;
+      addChat("enemy","SIAL! Kontrol terbalik 🔄");
+    }
+
+    debuffEnd = Date.now() + 5000; // 5 detik
+  }
   }
 
   // ===== JUMP BUFFER =====
@@ -495,7 +583,12 @@ for(let i of plat){
     // ✅ kalau lompat dari atas & musuh lagi lemah
     if(p.vy > 0 && p.y + p.h <= enemy.y + 10 && enemy.state=="lemah"){
       
-      enemy.hp--;
+      enemy.if(!buffs.shield){
+  hp--;
+}else{
+  addChat("player","Shield aktif! Aman 😎");
+    }
+    
       p.vy = -8; // mantul dikit
 
       addChat("player","Hancur sekarang!");
@@ -540,6 +633,14 @@ function reset(){
   p.x=spawn.x;
   p.y=spawn.y;
   p.vy=0;
+}
+
+  if(Date.now() > buffEnd){
+  buffs = {shield:false, speed:false, lowGravity:false};
+}
+
+if(Date.now() > debuffEnd){
+  debuffs = {slow:false, heavy:false, reverse:false};
 }
 
 // ===== DRAW =====
