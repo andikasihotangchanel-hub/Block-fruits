@@ -110,6 +110,8 @@ function triggerBan(level="normal"){
 let spawn = {x:50,y:400};
 let p = {x:50,y:400,w:30,h:30,vx:0,vy:0,onGround:false};
 
+  let coyoteTime = 0;
+
 let jumpBuffer = 0;
   
 let camX = 0;
@@ -330,6 +332,7 @@ function update(){
         p.y = i.y - p.h;
         p.vy = 0;
         p.onGround = true;
+coyoteTime = Date.now(); // simpan waktu terakhir nyentuh tanah
       }
 
       if(i.finish){
@@ -340,7 +343,10 @@ function update(){
   }
 
   // ===== JUMP BUFFER =====
-if(Date.now() - jumpBuffer < 150 && p.onGround){
+if(
+  Date.now() - jumpBuffer < 150 &&
+  (p.onGround || Date.now() - coyoteTime < 150)
+){
   p.vy = -10;
   p.onGround = false;
   jumpBuffer = 0;
