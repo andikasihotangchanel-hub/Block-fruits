@@ -342,7 +342,11 @@ const jumpBtn = document.getElementById("jump");
 
 video.onended = function(){
   showTamat = true;
-}; 
+
+  setTimeout(()=>{
+    location.reload(); // reset game
+  }, 3000); // tunggu 3 detik biar tulisan TAMAT kelihatan
+};
   
 // ===== CONTROL =====
 let left=false,right=false;
