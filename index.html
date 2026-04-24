@@ -623,37 +623,36 @@ for(let i of plat){
 
     // ✅ kalau lompat dari atas & musuh lagi lemah
     if(p.vy > 0 && p.y + p.h <= enemy.y + 10 && enemy.state=="lemah"){
-      
-      if(!buffs.shield){
-  hp--;
-}else{
-  addChat("player","Shield aktif! Aman 😎");
+  
+  enemy.hp--; // 🔥 ini yang benar
+
+  p.vy = -8; // mantul
+
+  addChat("player","Hancur sekarang!");
+  addChat("enemy","Kau berani juga...");
+
+  if(enemy.hp <= 0){
+    enemy.active = false;
+    spawnParticles(enemy.x, enemy.y);
+    addChat("player","Selesai akhirnya.");
+  }
     }
-    
-      p.vy = -8; // mantul dikit
+  
+        else {
+  if(!buffs.shield){
+    hp--;
+  }else{
+    addChat("player","Shield aktif! Aman 😎");
+  }
 
-      addChat("player","Hancur sekarang!");
-      addChat("enemy","Kau berani juga...");
+  reset();
+  safeTime = Date.now();
 
-      if(enemy.hp <= 0){
-        enemy.active = false;
-        spawnParticles(enemy.x, enemy.y);
-        addChat("player","Selesai akhirnya.");
-      }
-
-    } else {
-      // ❌ kena biasa
-      hp--;
-      reset();
-      safeTime = Date.now();
-
-      addChat("enemy","Kau tidak bisa mengalahkanku!");
-
-      if(hp<=0){
-        alert("GAME OVER");
-        location.reload();
-      }
-    }
+  if(hp<=0){
+    alert("GAME OVER");
+    location.reload();
+  }
+        }
   }
   }
 
