@@ -176,6 +176,21 @@ let debuffs = {
   document.getElementById("endingVideo").style.display = "block";
 
   let vid = document.getElementById("endingVideo");
+
+video.onended = function(){
+
+  // sembunyikan video
+  video.style.display = "none";
+
+  // tampilkan layar hitam + TAMAT
+  document.getElementById("tamatText").style.display = "flex";
+
+  // reset setelah 3 detik
+  setTimeout(()=>{
+    location.reload();
+  }, 3000);
+};
+    
   vid.currentTime = 0;
   vid.play();
   }
