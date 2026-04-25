@@ -622,7 +622,9 @@ for(let i of plat){
      p.y < enemy.y+enemy.h && p.y+p.h > enemy.y){
 
     // ✅ kalau lompat dari atas & musuh lagi lemah
-    if(p.vy > 0 && p.y + p.h <= enemy.y + enemy.h/2 <= enemy && enemy.state=="lemah"){
+    if(p.vy > 0 && let injak = p.vy > 0 && p.y + p.h <= enemy.y + enemy.h;
+
+    if(injak && enemy.state == "lemah"){
   
   enemy.hp--; // 🔥 ini yang benar
 
