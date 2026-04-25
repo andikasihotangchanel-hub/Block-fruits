@@ -622,11 +622,11 @@ for(let i of plat){
      p.y < enemy.y+enemy.h && p.y+p.h > enemy.y){
 
     // ✅ kalau lompat dari atas & musuh lagi lemah
-    if(p.vy > 0 && let injak = p.vy > 0 && p.y + p.h <= enemy.y + enemy.h;
+    let injak = p.vy > 0 && p.y + p.h <= enemy.y + enemy.h;
 
-    if(injak && enemy.state == "lemah"){
-  enemy.hp--; // 🔥 ini yang benar
-  p.vy = -8; // mantul
+if(injak && enemy.state == "lemah"){
+  enemy.hp--;
+  p.vy = -8;
 
   addChat("player","Hancur sekarang!");
   addChat("enemy","Kau berani juga...");
@@ -636,12 +636,11 @@ for(let i of plat){
     spawnParticles(enemy.x, enemy.y);
     addChat("player","Selesai akhirnya.");
   }
-    }
-  
-        else {
+
+} else {
   if(!buffs.shield){
     hp--;
-  }else{
+  } else {
     addChat("player","Shield aktif! Aman 😎");
   }
 
@@ -652,7 +651,7 @@ for(let i of plat){
     alert("GAME OVER");
     location.reload();
   }
-        }
+}
   }
   }
 
