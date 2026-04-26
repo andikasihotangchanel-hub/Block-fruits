@@ -631,6 +631,11 @@ if(enemy.active){
 
   let dx = p.x - enemy.x; // ✅ HARUS PALING ATAS
 
+  // kalau ada heal → prioritas ke sana walaupun jauh
+if(enemyRegen.active && enemy.hp < enemy.maxHP){
+  enemy.ai = "heal";
+}
+
   // spawn heal musuh saat kena damage
 if(enemy.hp < enemy.maxHP && !enemyRegen.active && Math.random()<0.01){
   enemyRegen.active = true;
@@ -654,8 +659,24 @@ if(Date.now() - enemy.lastThink > 500){
 
   let dist = Math.abs(p.x - enemy.x);
 
-  if(enemy.hp <= 1){
-    enemy.ai = "retreat";
+  if(enemy.hp <= 1 && enemyRegen.active){
+  enemy.ai = "heal"; // 🔥 mode baru
+}
+else if(enemy.hp <= 1){
+  enemy.ai = "retreat";
+}
+  else if(enemy.ai == "heal"){
+  let dxHeal = enemyRegen.x - enemy.x;
+
+  // gerak ke arah heal
+  if(Math.abs(dxHeal) > 5){
+    enemy.x += dxHeal > 0 ? 2 : -2;
+  }
+
+  // lompat kalau posisi heal lebih tinggi
+  if(enemyRegen.y < enemy.y && enemy.onGround){
+    enemy.vy = -10;
+  }
   }
   else if(dist < 60){
     enemy.ai = "attack";
