@@ -750,6 +750,8 @@ for(let i of plat){
   if(p.x < enemy.x+enemy.w && p.x+p.w > enemy.x &&
      p.y < enemy.y+enemy.h && p.y+p.h > enemy.y){
 
+    if(Date.now() - safeTime > 500){
+
     // ✅ kalau lompat dari atas & musuh lagi lemah
     let injak =
   p.vy > 0 && // lagi turun
@@ -758,7 +760,7 @@ for(let i of plat){
   p.x < enemy.x + enemy.w - 5;
 
 if(injak && enemy.state == "lemah"){
-  hp--;
+  enemy.hp--; // ✅ BENAR
 lastDamage = "enemy";
   p.vy = -8;
 
@@ -774,6 +776,10 @@ lastDamage = "enemy";
 } else {
   if(!buffs.shield){
     hp--;
+    lastDamage = "enemy";
+
+safeTime = Date.now();
+    
   } else {
     addChat("player","Shield aktif! Aman 😎");
   }
