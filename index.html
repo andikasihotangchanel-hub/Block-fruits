@@ -782,10 +782,12 @@ if(hp <= 0){
   alert("GAME OVER");
 
   if(lastDamage == "enemyHeal"){
-    hp = 2; // ✅ respawn sisa 2 nyawa
+    hp = 2; // respawn sisa 2
   } else {
-    hp = 3; // ✅ mati biasa full
+    hp = 3; // mati biasa full
   }
+
+  lastDamage = ""; // reset biar gak kebawa
 
   reset();
   safeTime = Date.now();
