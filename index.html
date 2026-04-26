@@ -312,6 +312,18 @@ function spawnParticles(x,y){
 let regen = {x:0,y:0,w:120,h:20,active:false};
 let healing = false;
 let healStart = 0;
+  
+// REGEN MUSUH
+  let enemyRegen = {
+  x:0,
+  y:0,
+  w:120,
+  h:20,
+  active:false
+};
+
+let enemyHealing = false;
+let enemyHealStart = 0;
 
 // ===== MODE =====
 let mode = "main"; // main / ending
@@ -554,16 +566,77 @@ if(
     healing = false;
     regen.active = false;
   }
+  
+// HEAL MUSUH
+  if(enemyHealing && Date.now()-enemyHealStart > 1000){
+  enemy.hp = enemy.maxHP;
+  enemyHealing = false;
+  enemyRegen.active = false;
+
+  addChat("enemy","Aku pulih kembali!");
+  }
 
   // ===== ENEMY =====
   if(s==2){
     enemy.active=true;
   }
 
+  // ===== HEAL MUSUH =====
+if(enemyRegen.active){
+
+  // musuh injak heal → sembuh
+  if(
+    enemy.x < enemyRegen.x+enemyRegen.w &&
+    enemy.x+enemy.w > enemyRegen.x &&
+    enemy.y < enemyRegen.y+enemyRegen.h &&
+    enemy.y+enemy.h > enemyRegen.y
+  ){
+    if(enemy.y + enemy.h <= enemyRegen.y + 10){
+      enemy.y = enemyRegen.y - enemy.h;
+      enemy.vy = 0;
+      enemy.onGround = true;
+
+      if(!enemyHealing){
+        enemyHealing = true;
+        enemyHealStart = Date.now();
+      }
+    }
+  }
+
+  // player injak heal musuh → kena damage 2
+  if(
+    p.x < enemyRegen.x+enemyRegen.w &&
+    p.x+p.w > enemyRegen.x &&
+    p.y < enemyRegen.y+enemyRegen.h &&
+    p.y+p.h > enemyRegen.y
+  ){
+    if(p.y + p.h <= enemyRegen.y + 10){
+
+      hp -= 2; // 🔥 DAMAGE BESAR
+
+      enemyRegen.active = false;
+
+      addChat("enemy","Kau ceroboh! Itu milikku!");
+
+      if(hp <= 0){
+        alert("GAME OVER");
+        location.reload();
+      }
+    }
+  }
+}
+
   // ===== ENEMY LOGIC =====
 if(enemy.active){
 
   let dx = p.x - enemy.x; // ✅ HARUS PALING ATAS
+
+  // spawn heal musuh saat kena damage
+if(enemy.hp < enemy.maxHP && !enemyRegen.active && Math.random()<0.01){
+  enemyRegen.active = true;
+  enemyRegen.x = enemy.x + (Math.random()*200 - 100);
+  enemyRegen.y = enemy.y - 50;
+}
 
   if(Math.abs(dx) < 40){
     enemy.x += dx>0 ? -1 : 1;
@@ -779,6 +852,12 @@ ctx.translate(-camX,0);
     ctx.fillStyle="#00FFFF";
     ctx.fillRect(regen.x,regen.y,regen.w,regen.h);
   }
+
+  // heal musuh (warna oren)
+if(enemyRegen.active){
+  ctx.fillStyle = "orange";
+  ctx.fillRect(enemyRegen.x, enemyRegen.y, enemyRegen.w, enemyRegen.h);
+}
 
   // enemy
 if(enemy.active){
