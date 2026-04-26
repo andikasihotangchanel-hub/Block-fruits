@@ -778,10 +778,17 @@ if(injak && enemy.state == "lemah"){
   reset();
   safeTime = Date.now();
 
-  if(hp<=0){
-    alert("GAME OVER");
-    location.reload();
+if(hp <= 0){
+  alert("GAME OVER");
+
+  if(lastDamage == "enemyHeal"){
+    hp = 2; // 🔥 khusus injak heal musuh
+  } else {
+    hp = 3; // 🔥 mati biasa balik full
   }
+
+  reset();
+  safeTime = Date.now();
 }
   }
   }
