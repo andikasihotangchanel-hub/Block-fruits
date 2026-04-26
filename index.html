@@ -248,6 +248,8 @@ function triggerLuckEvent(){
 let maxHP = 3;
 let hp = 3;
 
+  let lastDamage = "";
+
 // ===== SAFE TIME (ANTI BAN SALAH) =====
 let safeTime = 0;
 
@@ -756,7 +758,8 @@ for(let i of plat){
   p.x < enemy.x + enemy.w - 5;
 
 if(injak && enemy.state == "lemah"){
-  enemy.hp--;
+  hp--;
+lastDamage = "enemy";
   p.vy = -8;
 
   addChat("player","Hancur sekarang!");
@@ -775,14 +778,12 @@ if(injak && enemy.state == "lemah"){
     addChat("player","Shield aktif! Aman 😎");
   }
 
-  reset();
-  safeTime = Date.now();
-
 if(hp <= 0){
   alert("GAME OVER");
 
   if(lastDamage == "enemyHeal"){
-    hp = 2; // 🔥 khusus injak heal musuh
+    hp -= 2;
+lastDamage = "enemyHeal"; // 🔥 khusus injak heal musuh
   } else {
     hp = 3; // 🔥 mati biasa balik full
   }
