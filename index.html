@@ -782,15 +782,15 @@ if(hp <= 0){
   alert("GAME OVER");
 
   if(lastDamage == "enemyHeal"){
-    hp -= 2;
-lastDamage = "enemyHeal"; // 🔥 khusus injak heal musuh
+    hp = 2; // ✅ respawn sisa 2 nyawa
   } else {
-    hp = 3; // 🔥 mati biasa balik full
+    hp = 3; // ✅ mati biasa full
   }
 
   reset();
   safeTime = Date.now();
 }
+  }
   }
   }
 
