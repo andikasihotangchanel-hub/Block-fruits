@@ -749,7 +749,11 @@ for(let i of plat){
      p.y < enemy.y+enemy.h && p.y+p.h > enemy.y){
 
     // ✅ kalau lompat dari atas & musuh lagi lemah
-    let injak = p.vy > 0 && p.y + p.h <= enemy.y + enemy.h;
+    let injak =
+  p.vy > 0 && // lagi turun
+  p.y + p.h <= enemy.y + 10 && // benar-benar dari atas
+  p.x + p.w > enemy.x + 5 &&   // masuk area musuh
+  p.x < enemy.x + enemy.w - 5;
 
 if(injak && enemy.state == "lemah"){
   enemy.hp--;
