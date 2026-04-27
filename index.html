@@ -244,6 +244,24 @@ function triggerLuckEvent(){
   }
 }
 
+  let ranks = [
+  {name:"Warrior", icon:"🧢"},
+  {name:"Master", icon:"🪖"},
+  {name:"Grand Master", icon:"⛑️"},
+  {name:"Epic", icon:"🎩"},
+  {name:"Legend", icon:"💎"},
+  {name:"Mythic", icon:"💍"},
+  {name:"Immortal", icon:"👑"}
+];
+
+let rankIndex = Number(localStorage.getItem("rankIndex")) || 0;
+let winPoint = Number(localStorage.getItem("winPoint")) || 0;
+
+function saveRank(){
+  localStorage.setItem("rankIndex", rankIndex);
+  localStorage.setItem("winPoint", winPoint);
+}
+  
 // ===== HP =====
 let maxHP = 3;
 let hp = 3;
@@ -434,6 +452,20 @@ rightBtn.addEventListener("pointerleave", releaseRight);
 // JUMP
 jumpBtn.addEventListener("pointerdown", pressJump);
 
+  // ===== DIFFICULTY BY RANK =====
+let difficulty = rankIndex;
+
+// contoh efek:
+enemy.maxHP = 3 + difficulty;
+enemy.hp = Math.min(enemy.hp, enemy.maxHP);
+
+if(difficulty >= 2){
+  enemy.speed = 3;
+}
+if(difficulty >= 4){
+  gravity += 0.02;
+}
+
 // ===== STAGE =====
 function stage(){
   if(p.x < 800){ gravity=0.5; return 1; }
@@ -513,7 +545,22 @@ p.vy += g;
     }
 
     if(i.finish){
-      startEnding();
+
+  winPoint++;
+
+  if(winPoint >= 5){
+    winPoint = 0;
+
+    if(rankIndex < ranks.length - 1){
+      rankIndex++;
+      addChat("player","Naik Rank ke " + ranks[rankIndex].name + "!");
+    } else {
+      addChat("player","Rank MAX 🔥");
+    }
+  }
+
+  saveRank();
+  startEnding();
     }
   }
   }
@@ -951,6 +998,18 @@ for(let i=chats.length-1;i>=0;i--){
 
   yPos -= 20;
 }
+
+  // ===== RANK UI =====
+ctx.fillStyle = "white";
+ctx.font = "16px Arial";
+
+let r = ranks[rankIndex];
+
+ctx.fillText(
+  r.icon + " " + r.name + " (" + winPoint + "/5)",
+  20,
+  30
+);
   
 }
 
