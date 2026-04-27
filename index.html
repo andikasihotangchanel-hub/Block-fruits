@@ -498,7 +498,11 @@ if(buffs.speed) moveSpeed = 8;
 if(debuffs.slow) moveSpeed = 2;
 
 if(debuffs.reverse){
-  p.vx = left?moveSpeed:right?-moveSpeed:0;
+  if(controlMode == "joystick"){
+  p.vx = joystickX * moveSpeed; // -1 sampai 1
+}else{
+  p.vx = left?-moveSpeed:right?moveSpeed:0;
+  }
 }else{
   p.vx = left?-moveSpeed:right?moveSpeed:0;
 }
@@ -678,11 +682,25 @@ if(enemyRegen.active){
   // ===== ENEMY LOGIC =====
 if(enemy.active){
 
-  let dx = p.x - enemy.x; // ✅ HARUS PALING ATAS
+  let predictX = p.x + p.vx * 10; // prediksi posisi player
+
+let dx = predictX - enemy.x; // ✅ HARUS PALING ATAS
+
+  let difficulty = rankIndex; // 0 = warrior, 6 = immortal
+
+  let enemySpeed = 2 + difficulty * 0.5;
+  let predictPower = 5 + difficulty * 3;
+
+let predictX = p.x + p.vx * predictPower;
 
   // kalau ada heal → prioritas ke sana walaupun jauh
 if(enemyRegen.active && enemy.hp < enemy.maxHP){
   enemy.ai = "heal";
+}
+
+  // lompat ke platform tinggi
+if(enemy.onGround && Math.abs(p.y - enemy.y) > 40){
+  enemy.vy = -10;
 }
 
   // spawn heal musuh saat kena damage
@@ -717,6 +735,14 @@ else if(enemy.hp <= 1){
   else if(enemy.ai == "heal"){
   let dxHeal = enemyRegen.x - enemy.x;
 
+function triggerEnemyLuck(){
+  let rand = Math.floor(Math.random()*3);
+
+  if(rand == 0) enemy.speed = true;
+  if(rand == 1) enemy.jumpBoost = true;
+  if(rand == 2) enemy.lowGravity = true;
+}
+    
   // gerak ke arah heal
   if(Math.abs(dxHeal) > 5){
     enemy.x += dxHeal > 0 ? 2 : -2;
