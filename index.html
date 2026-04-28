@@ -23,6 +23,27 @@ canvas {
   position:fixed;
   bottom:20px;
 }
+
+#joyBase {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+}
+
+#joyStick {
+  position: fixed;
+  bottom: 50px;
+  left: 50px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.7);
+}
+  
 #left { left:20px; }
 #right { left:100px; }
 
@@ -43,6 +64,9 @@ canvas {
 </style>
 </head>
 <body>
+
+  <div id="joyBase"></div>
+<div id="joyStick"></div>
 
 <canvas id="c"></canvas>
 
@@ -75,8 +99,6 @@ align-items:center;
 TAMAT
   </div>
   
-<div id="left" class="circle"></div>
-<div id="right" class="circle"></div>
 <div id="jump"></div>
 
 <script>
@@ -84,6 +106,9 @@ TAMAT
   window.onerror = function(msg, url, line){
   alert("ERROR: " + msg + " di baris " + line);
   }
+
+  let joystickActive = false;
+let joystickX = 0; // -1 sampai 1
 
 // ===== CANVAS =====
 const c = document.getElementById("c");
@@ -398,9 +423,6 @@ function generatePlatform(){
   
 generatePlatform();
 
-
-  const leftBtn = document.getElementById("left");
-const rightBtn = document.getElementById("right");
 const jumpBtn = document.getElementById("jump");
 
  let video = document.getElementById("endingVideo");
@@ -414,23 +436,6 @@ video.onended = function(){
 };
   
 // ===== CONTROL =====
-let left=false,right=false;
-
-function pressLeft(e){
-  e.preventDefault();
-  left = true;
-}
-function releaseLeft(){
-  left = false;
-}
-
-function pressRight(e){
-  e.preventDefault();
-  right = true;
-}
-function releaseRight(){
-  right = false;
-}
 
 function pressJump(e){
   e.preventDefault();
@@ -453,7 +458,6 @@ rightBtn.addEventListener("pointerleave", releaseRight);
 jumpBtn.addEventListener("pointerdown", pressJump);
 
   // ===== DIFFICULTY BY RANK =====
-let difficulty = rankIndex;
 
 // contoh efek:
 enemy.maxHP = 3 + difficulty;
@@ -465,6 +469,38 @@ if(difficulty >= 2){
 if(difficulty >= 4){
   gravity += 0.02;
 }
+
+  const joyBase = document.getElementById("joyBase");
+const joyStick = document.getElementById("joyStick");
+
+let baseRect;
+
+joyBase.addEventListener("pointerdown", (e)=>{
+  joystickActive = true;
+  baseRect = joyBase.getBoundingClientRect();
+});
+
+window.addEventListener("pointermove", (e)=>{
+  if(!joystickActive) return;
+
+  let centerX = baseRect.left + baseRect.width/2;
+  let dx = e.clientX - centerX;
+
+  // batas gerakan
+  let max = 40;
+  dx = Math.max(-max, Math.min(max, dx));
+
+  joystickX = dx / max;
+
+  // gerakin stick UI
+  joyStick.style.transform = `translate(${dx}px, 0px)`;
+});
+
+window.addEventListener("pointerup", ()=>{
+  joystickActive = false;
+  joystickX = 0;
+  joyStick.style.transform = `translate(0px,0px)`;
+});
 
 // ===== STAGE =====
 function stage(){
@@ -499,10 +535,11 @@ if(debuffs.slow) moveSpeed = 2;
 
 if(debuffs.reverse){
   if(controlMode == "joystick"){
-  p.vx = joystickX * moveSpeed; // -1 sampai 1
-}else{
-  p.vx = left?-moveSpeed:right?moveSpeed:0;
+  p.vx = joystickX * moveSpeed; // -1 
   }
+
+p.vx = joystickX * moveSpeed;
+  
 }else{
   p.vx = left?-moveSpeed:right?moveSpeed:0;
 }
@@ -682,7 +719,11 @@ if(enemyRegen.active){
   // ===== ENEMY LOGIC =====
 if(enemy.active){
 
-  let predictX = p.x + p.vx * 10; // prediksi posisi player
+  let difficulty = rankIndex;
+
+  if(Math.random() < 0.01){
+  triggerEnemyLuck();
+    }
 
 let dx = predictX - enemy.x; // ✅ HARUS PALING ATAS
 
@@ -719,6 +760,7 @@ if(enemy.hp < enemy.maxHP && !enemyRegen.active && Math.random()<0.01){
     enemy.state = enemy.state=="normal" ? "lemah" : "normal";
     enemy.lastSwitch = Date.now();
   }
+}
 
   // ===== AI THINK =====
 if(Date.now() - enemy.lastThink > 500){
@@ -734,6 +776,9 @@ else if(enemy.hp <= 1){
 }
   else if(enemy.ai == "heal"){
   let dxHeal = enemyRegen.x - enemy.x;
+
+    function triggerLuckEvent(){
+    }
 
 function triggerEnemyLuck(){
   let rand = Math.floor(Math.random()*3);
@@ -777,7 +822,7 @@ else if(enemy.ai == "chase"){
 
 else if(enemy.ai == "attack"){
   if(Math.abs(dx)>5){
-    enemy.x += dx>0 ? 3 : -3;
+    enemy.x += dx>0 ? enemySpeed : -enemySpeed;
   }
 
   if(enemy.onGround){
