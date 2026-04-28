@@ -444,16 +444,6 @@ function pressJump(e){
   jumpBuffer = Date.now();
 }
 
-// LEFT
-leftBtn.addEventListener("pointerdown", pressLeft);
-leftBtn.addEventListener("pointerup", releaseLeft);
-leftBtn.addEventListener("pointerleave", releaseLeft);
-
-// RIGHT
-rightBtn.addEventListener("pointerdown", pressRight);
-rightBtn.addEventListener("pointerup", releaseRight);
-rightBtn.addEventListener("pointerleave", releaseRight);
-
 // JUMP
 jumpBtn.addEventListener("pointerdown", pressJump);
 
@@ -533,16 +523,11 @@ function update(){
 if(buffs.speed) moveSpeed = 8;
 if(debuffs.slow) moveSpeed = 2;
 
-if(debuffs.reverse){
-  if(controlMode == "joystick"){
-  p.vx = joystickX * moveSpeed; // -1 
-  }
-
-p.vx = joystickX * moveSpeed;
-  
+  if(debuffs.reverse){
+  p.vx = -joystickX * moveSpeed; // kebalik
 }else{
-  p.vx = left?-moveSpeed:right?moveSpeed:0;
-}
+  p.vx = joystickX * moveSpeed;
+  }
   
   let g = gravity;
 
@@ -727,12 +712,13 @@ if(enemy.active){
 
 let dx = predictX - enemy.x; // ✅ HARUS PALING ATAS
 
-  let difficulty = rankIndex; // 0 = warrior, 6 = immortal
+  let difficulty = rankIndex;
 
-  let enemySpeed = 2 + difficulty * 0.5;
-  let predictPower = 5 + difficulty * 3;
+let enemySpeed = 2 + difficulty * 0.5;
+let predictPower = 5 + difficulty * 3;
 
 let predictX = p.x + p.vx * predictPower;
+let dx = predictX - enemy.x;
 
   // kalau ada heal → prioritas ke sana walaupun jauh
 if(enemyRegen.active && enemy.hp < enemy.maxHP){
