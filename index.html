@@ -332,6 +332,9 @@ function addChat(sender, text){
   });
 }
 
+  function triggerEnemyLuck(){
+  let rand = Math.floor(Math.random()*3);
+
 //==== PARTICLE ====
   let particles = [];
 
@@ -706,6 +709,9 @@ if(enemy.active){
 
   let difficulty = rankIndex;
 
+enemy.maxHP = 3 + difficulty;
+enemy.hp = Math.min(enemy.hp, enemy.maxHP);
+
   if(Math.random() < 0.01){
   triggerEnemyLuck();
     }
@@ -766,9 +772,6 @@ else if(enemy.hp <= 1){
     function triggerLuckEvent(){
     }
 
-function triggerEnemyLuck(){
-  let rand = Math.floor(Math.random()*3);
-
   if(rand == 0) enemy.speed = true;
   if(rand == 1) enemy.jumpBoost = true;
   if(rand == 2) enemy.lowGravity = true;
@@ -802,7 +805,7 @@ if(enemy.ai == "idle"){
 
 else if(enemy.ai == "chase"){
   if(Math.abs(dx)>5){
-    enemy.x += dx>0 ? 2 : -2;
+    enemy.x += dx>0 ? enemySpeed : -enemySpeed;
   }
 }
 
