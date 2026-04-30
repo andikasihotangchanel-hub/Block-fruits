@@ -334,7 +334,8 @@ function addChat(sender, text){
 
   function triggerEnemyLuck(){
   let rand = Math.floor(Math.random()*3);
-
+  }
+    
 //==== PARTICLE ====
   let particles = [];
 
@@ -711,10 +712,6 @@ if(enemy.active){
 
 enemy.maxHP = 3 + difficulty;
 enemy.hp = Math.min(enemy.hp, enemy.maxHP);
-
-  if(Math.random() < 0.01){
-  triggerEnemyLuck();
-    }
 
 let dx = predictX - enemy.x; // ✅ HARUS PALING ATAS
 
