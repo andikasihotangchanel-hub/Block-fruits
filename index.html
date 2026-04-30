@@ -713,10 +713,6 @@ if(enemy.active){
 enemy.maxHP = 3 + difficulty;
 enemy.hp = Math.min(enemy.hp, enemy.maxHP);
 
-let dx = predictX - enemy.x; // ✅ HARUS PALING ATAS
-
-  let difficulty = rankIndex;
-
 let enemySpeed = 2 + difficulty * 0.5;
 let predictPower = 5 + difficulty * 3;
 
