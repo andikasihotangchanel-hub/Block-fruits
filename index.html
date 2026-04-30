@@ -752,30 +752,34 @@ if(Date.now() - enemy.lastThink > 500){
   let dist = Math.abs(p.x - enemy.x);
 
   if(enemy.hp <= 1 && enemyRegen.active){
-  enemy.ai = "heal"; // 🔥 mode baru
+    enemy.ai = "heal";
+  }
+  else if(enemy.hp <= 1){
+    enemy.ai = "retreat";
+  }
+  else if(dist < 60){
+    enemy.ai = "attack";
+  }
+  else if(dist < 300){
+    enemy.ai = "chase";
+  }
+  else{
+    enemy.ai = "idle";
+  }
+
+  // 🔥 KHUSUS MODE HEAL
+  if(enemy.ai == "heal"){
+    let dxHeal = enemyRegen.x - enemy.x;
+
+    if(Math.abs(dxHeal) > 5){
+      enemy.x += dxHeal > 0 ? 2 : -2;
+    }
+
+    if(enemyRegen.y < enemy.y && enemy.onGround){
+      enemy.vy = -10;
+    }
+  }
 }
-else if(enemy.hp <= 1){
-  enemy.ai = "retreat";
-}
-  else if(enemy.ai == "heal"){
-  let dxHeal = enemyRegen.x - enemy.x;
-
-  let rand = Math.floor(Math.random()*3);
-
-  if(rand == 0) enemy.speed = true;
-  if(rand == 1) enemy.jumpBoost = true;
-  if(rand == 2) enemy.lowGravity = true;
-
-  // ✅ PINDAH KE SINI
-  if(Math.abs(dxHeal) > 5){
-    enemy.x += dxHeal > 0 ? 2 : -2;
-  }
-
-  // lompat kalau posisi heal lebih tinggi
-  if(enemyRegen.y < enemy.y && enemy.onGround){
-    enemy.vy = -10;
-  }
-  }
   else if(dist < 60){
     enemy.ai = "attack";
   }
