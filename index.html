@@ -201,10 +201,10 @@ let debuffs = {
 
   let vid = document.getElementById("endingVideo");
 
-video.onended = function(){
+vid.onended = function(){
 
   // sembunyikan video
-  video.style.display = "none";
+  vid.style.display = "none";
 
   // tampilkan layar hitam + TAMAT
   document.getElementById("tamatText").style.display = "flex";
@@ -424,16 +424,6 @@ function generatePlatform(){
 generatePlatform();
 
 const jumpBtn = document.getElementById("jump");
-
- let video = document.getElementById("endingVideo");
-
-video.onended = function(){
-  showTamat = true;
-
-  setTimeout(()=>{
-    location.reload(); // reset game
-  }, 3000); // tunggu 3 detik biar tulisan TAMAT kelihatan
-};
   
 // ===== CONTROL =====
 
