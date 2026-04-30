@@ -760,14 +760,13 @@ else if(enemy.hp <= 1){
   else if(enemy.ai == "heal"){
   let dxHeal = enemyRegen.x - enemy.x;
 
-    let rand = Math.floor(Math.random()*3); // ✅ TAMBAH INI
+  let rand = Math.floor(Math.random()*3);
 
   if(rand == 0) enemy.speed = true;
   if(rand == 1) enemy.jumpBoost = true;
   if(rand == 2) enemy.lowGravity = true;
-}
-    
-  // gerak ke arah heal
+
+  // ✅ PINDAH KE SINI
   if(Math.abs(dxHeal) > 5){
     enemy.x += dxHeal > 0 ? 2 : -2;
   }
