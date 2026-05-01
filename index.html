@@ -747,15 +747,6 @@ if(Date.now() - enemy.lastThink > 500){
   else if(enemy.hp <= 1){
     enemy.ai = "retreat";
   }
-  else if(dist < 60){
-    enemy.ai = "attack";
-  }
-  else if(dist < 300){
-    enemy.ai = "chase";
-  }
-  else{
-    enemy.ai = "idle";
-  }
 
   // 🔥 KHUSUS MODE HEAL
   if(enemy.ai == "heal"){
