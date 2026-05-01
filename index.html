@@ -123,6 +123,11 @@ ${error && error.stack ? error.stack : "Tidak ada stack trace"}
   return false;
 };
 
+  window.addEventListener("unhandledrejection", function(e){
+  alert("❌ PROMISE ERROR:\n" + e.reason);
+  console.error(e.reason);
+});
+
   let joystickActive = false;
 let joystickX = 0; // -1 sampai 1
 
@@ -510,6 +515,7 @@ function stage(){
 
 // ===== UPDATE =====
 function update(){
+try{
 
   if(banned) return;
 
@@ -786,7 +792,6 @@ if(Date.now() - enemy.lastThink > 500){
   else{
     enemy.ai = "idle";
   }
-}
 
 // ===== AI ACTION =====
 if(enemy.ai == "idle"){
@@ -918,9 +923,21 @@ if(Date.now() > buffEnd){
 if(Date.now() > debuffEnd){
   debuffs = {slow:false, heavy:false, reverse:false};
 }
-  
-}
+    } catch(err){
 
+    alert(`
+💥 CRASH DI UPDATE()
+
+${err.message}
+
+${err.stack}
+    `);
+
+    console.error(err);
+
+                }
+}
+  
 // ===== RESET =====
 function reset(){
   p.x=spawn.x;
@@ -1063,9 +1080,21 @@ ctx.fillText(
 }
 
 // ===== LOOP =====
+let lastFrame = Date.now();
+
 function loop(){
+
+  let now = Date.now();
+
+  if(now - lastFrame > 1000){
+    console.warn("⚠️ FRAME DROP / FREEZE TERDETEKSI");
+  }
+
+  lastFrame = now;
+
   update();
   draw();
+
   requestAnimationFrame(loop);
 }
 
