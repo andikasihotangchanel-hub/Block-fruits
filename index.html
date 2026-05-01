@@ -103,9 +103,25 @@ TAMAT
 
 <script>
 
-  window.onerror = function(msg, url, line){
-  alert("ERROR: " + msg + " di baris " + line);
-  }
+  window.onerror = function(message, source, lineno, colno, error){
+
+  let msg = `
+❌ ERROR TERDETEKSI
+
+Pesan : ${message}
+File  : ${source}
+Baris : ${lineno}
+Kolom : ${colno}
+
+Detail:
+${error && error.stack ? error.stack : "Tidak ada stack trace"}
+`;
+
+  alert(msg);
+  console.error(msg);
+
+  return false;
+};
 
   let joystickActive = false;
 let joystickX = 0; // -1 sampai 1
