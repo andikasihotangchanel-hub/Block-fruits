@@ -718,8 +718,9 @@ if(enemyRegen.active){
   // ===== ENEMY LOGIC ====
 if(enemy.active){
 
-  let predictX = p.x + p.vx * predictPower;
-  dx = predictX - enemy.x; // overwrite, BUKAN let
+  let dx = 0;
+let enemySpeed = 0;
+let predictPower = 0;
 
   let difficulty = rankIndex;
 
@@ -727,7 +728,11 @@ enemy.maxHP = 3 + difficulty;
 enemy.hp = Math.min(enemy.hp, enemy.maxHP);
 
 let enemySpeed = 2 + difficulty * 0.5;
-let predictPower = 5 + difficulty * 3;2
+let predictPower = 5 + difficulty * 3;
+
+  let predictX = p.x + p.vx * predictPower;
+  dx = predictX - enemy.x; // overwrite, BUKAN let
+
 
   // kalau ada heal → prioritas ke sana walaupun jauh
 if(enemyRegen.active && enemy.hp < enemy.maxHP){
