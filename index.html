@@ -715,7 +715,7 @@ if(enemyRegen.active){
   }
 }
 
-  // ===== ENEMY LOGIC =====
+  // ===== ENEMY LOGIC ====
 if(enemy.active){
 
   let difficulty = rankIndex;
@@ -727,7 +727,8 @@ let enemySpeed = 2 + difficulty * 0.5;
 let predictPower = 5 + difficulty * 3;
 
 let predictX = p.x + p.vx * predictPower;
-let dx = predictX - enemy.x;
+
+dx = predictX - enemy.x;
 
   // kalau ada heal → prioritas ke sana walaupun jauh
 if(enemyRegen.active && enemy.hp < enemy.maxHP){
