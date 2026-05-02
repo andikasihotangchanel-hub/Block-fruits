@@ -718,17 +718,16 @@ if(enemyRegen.active){
   // ===== ENEMY LOGIC ====
 if(enemy.active){
 
+  let predictX = p.x + p.vx * predictPower;
+  dx = predictX - enemy.x; // overwrite, BUKAN let
+
   let difficulty = rankIndex;
 
 enemy.maxHP = 3 + difficulty;
 enemy.hp = Math.min(enemy.hp, enemy.maxHP);
 
 let enemySpeed = 2 + difficulty * 0.5;
-let predictPower = 5 + difficulty * 3;
-
-let predictX = p.x + p.vx * predictPower;
-
-dx = predictX - enemy.x;
+let predictPower = 5 + difficulty * 3;2
 
   // kalau ada heal → prioritas ke sana walaupun jauh
 if(enemyRegen.active && enemy.hp < enemy.maxHP){
@@ -795,29 +794,30 @@ if(Date.now() - enemy.lastThink > 500){
   }
 
 // ===== AI ACTION =====
-if(enemy.ai == "idle"){
-  // diem aja / patroli dikit
-}
+if(enemy.active){ // 🔥 TARUH DI SINI
 
-else if(enemy.ai == "chase"){
-  if(Math.abs(dx)>5){
-    enemy.x += dx>0 ? enemySpeed : -enemySpeed;
-  }
-}
+  if(enemy.ai == "idle"){}
 
-else if(enemy.ai == "attack"){
-  if(Math.abs(dx)>5){
-    enemy.x += dx>0 ? enemySpeed : -enemySpeed;
+  else if(enemy.ai == "chase"){
+    if(Math.abs(dx)>5){
+      enemy.x += dx>0 ? enemySpeed : -enemySpeed;
+    }
   }
 
-  if(enemy.onGround){
-    enemy.vy = -10; // lompat serang
-  }
-}
+  else if(enemy.ai == "attack"){
+    if(Math.abs(dx)>5){
+      enemy.x += dx>0 ? enemySpeed : -enemySpeed;
+    }
 
-else if(enemy.ai == "retreat"){
-  // kabur dari player
-  enemy.x += dx>0 ? -2 : 2;
+    if(enemy.onGround){
+      enemy.vy = -10;
+    }
+  }
+
+  else if(enemy.ai == "retreat"){
+    enemy.x += dx>0 ? -2 : 2;
+  }
+
 }
   
 // LOMPAT 
